@@ -1535,6 +1535,7 @@
     }
   },
   "quota_management": {
+    "no_reset_pending": "No reset pending",
     "search_label": "Search accounts",
     "search_placeholder": "Search by filename or email",
     "search_empty_title": "No matching accounts",

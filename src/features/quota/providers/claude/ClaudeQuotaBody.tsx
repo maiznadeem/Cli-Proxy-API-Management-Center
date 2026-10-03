@@ -68,8 +68,10 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
                 <span className={classes.quotaModel}>{windowLabel}</span>
                 <div className={classes.quotaMeta}>
                   <span className={classes.quotaPercent}>{percentLabel}</span>
-                  {resetDisplay && (
+                  {resetDisplay ? (
                     <QuotaResetLabel display={resetDisplay} classes={classes} soon={soon} />
+                  ) : (
+                    <span className={classes.quotaReset}>{t('quota_management.no_reset_pending')}</span>
                   )}
                 </div>
               </div>

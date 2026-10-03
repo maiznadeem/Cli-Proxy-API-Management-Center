@@ -1539,6 +1539,7 @@
     }
   },
   "quota_management": {
+    "no_reset_pending": "Сброс не запланирован",
     "search_label": "Поиск аккаунтов",
     "search_placeholder": "Поиск по имени файла или электронной почте",
     "search_empty_title": "Аккаунты не найдены",
