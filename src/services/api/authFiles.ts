@@ -5,7 +5,7 @@
 import { apiClient } from './client';
 import { getConfigValue, guardConfigConnection } from './configValue';
 import { isRecord } from '@/utils/helpers';
-import type { AuthFilesResponse } from '@/types/authFile';
+import type { AuthFilesResponse, RoutingMode } from '@/types/authFile';
 import type { OAuthModelAliasEntry } from '@/types';
 import { normalizeOAuthProviderKey } from '@/utils/providerKeys';
 import { getQuotaCacheKey } from '@/utils/quota/identity';
@@ -40,6 +40,8 @@ export type AuthFileFieldsPatch = {
   headers?: Record<string, string>;
   priority?: number;
   weight?: number | null;
+  /** null clears the override (normal). */
+  routing_mode?: RoutingMode | null;
   disable_cooling?: boolean;
   'disable-cooling'?: boolean;
   websockets?: boolean;
@@ -242,6 +244,13 @@ const readIntegerField = (value: unknown): number | undefined => {
   return Number.isSafeInteger(parsed) ? parsed : undefined;
 };
 
+/** Unknown or absent values map to undefined so older servers behave as normal. */
+export const readRoutingModeField = (value: unknown): RoutingMode | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const mode = value.trim().toLowerCase();
+  return mode === 'normal' || mode === 'preserve' || mode === 'focus' ? mode : undefined;
+};
+
 const readRuntimeOnlyField = (entry: AuthFileEntry): boolean => {
   const raw = entry['runtime_only'] ?? entry.runtimeOnly;
   if (typeof raw === 'boolean') return raw;
@@ -270,6 +279,7 @@ const normalizeAuthFileEntry = (
   const modified = readDateField(entry);
   const priority = readIntegerField(entry['priority']);
   const weight = readIntegerField(entry['weight']);
+  const routingMode = readRoutingModeField(entry['routing_mode']);
 
   return {
     ...entry,
@@ -283,6 +293,7 @@ const normalizeAuthFileEntry = (
     ...(modified > 0 ? { modified } : {}),
     priority,
     weight,
+    ...(routingMode ? { routingMode } : {}),
     ...(note ? { note } : {}),
     ...(email ? { email } : {}),
     ...(projectId ? { projectId } : {}),

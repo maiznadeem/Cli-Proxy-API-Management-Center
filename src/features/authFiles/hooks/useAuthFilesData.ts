@@ -5,7 +5,8 @@ import type { AuthFileRefreshResult } from '@/services/api/authFiles';
 import { getAuthFileRefreshKey } from '@/features/authFiles/manualRefresh';
 import { notifyAuthFilesChanged } from '@/features/authFiles/authFilesEvents';
 import { useNotificationStore } from '@/stores';
-import type { AuthFileItem } from '@/types';
+import type { AuthFileItem, RoutingMode } from '@/types';
+import { useRoutingModeControl } from '@/features/authFiles/hooks/useRoutingModeControl';
 import { formatFileSize } from '@/utils/format';
 import { MAX_AUTH_FILE_SIZE } from '@/utils/constants';
 import { downloadBlob } from '@/utils/download';
@@ -66,6 +67,8 @@ export type UseAuthFilesDataResult = {
   handleManualRefresh: (item: AuthFileItem) => Promise<void>;
   handleCooldownReset: (item: AuthFileItem) => void;
   handleStatusToggle: (item: AuthFileItem, enabled: boolean) => Promise<void>;
+  routingUpdating: Record<string, boolean>;
+  handleRoutingModeChange: (item: AuthFileItem, mode: RoutingMode) => Promise<void>;
   toggleSelect: (name: string) => void;
   selectAllVisible: (visibleFiles: AuthFileItem[]) => void;
   invertVisibleSelection: (visibleFiles: AuthFileItem[]) => void;
@@ -110,6 +113,11 @@ export function useAuthFilesData(options?: UseAuthFilesDataOptions): UseAuthFile
     setLoading(false);
     setRefreshing(false);
   }, []);
+  const { routingUpdating, setRoutingMode: handleRoutingModeChange } = useRoutingModeControl({
+    files,
+    setFiles,
+    onBeforeMutate: invalidateInFlightLoads,
+  });
   const onFilesMutatedRef = useRef(onFilesMutated);
   useEffect(() => {
     onFilesMutatedRef.current = onFilesMutated;
@@ -970,6 +978,8 @@ export function useAuthFilesData(options?: UseAuthFilesDataOptions): UseAuthFile
     handleManualRefresh,
     handleCooldownReset,
     handleStatusToggle,
+    routingUpdating,
+    handleRoutingModeChange,
     toggleSelect,
     selectAllVisible,
     invertVisibleSelection,

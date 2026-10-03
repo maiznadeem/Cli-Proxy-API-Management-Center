@@ -55,6 +55,9 @@ export interface AuthFileWindows {
   seven_day_pct?: number;
 }
 
+/** Manual per-credential routing override. Absent on the wire means normal. */
+export type RoutingMode = 'normal' | 'preserve' | 'focus';
+
 export interface AuthFileItem {
   name: string;
   type?: AuthFileType | string;
@@ -79,6 +82,8 @@ export interface AuthFileItem {
   modified?: number;
   priority?: number;
   weight?: number;
+  /** Normalized from `routing_mode`; undefined when the server omits it (older servers). */
+  routingMode?: RoutingMode;
   note?: string;
   success?: unknown;
   failed?: unknown;

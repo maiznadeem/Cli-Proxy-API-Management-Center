@@ -144,6 +144,8 @@ export function AuthFilesPage() {
     handleManualRefresh,
     handleCooldownReset,
     handleStatusToggle,
+    routingUpdating,
+    handleRoutingModeChange,
     toggleSelect,
     selectAllVisible,
     invertVisibleSelection,
@@ -707,6 +709,8 @@ export function AuthFilesPage() {
                 onOpenPrefixProxyEditor={openPrefixProxyEditor}
                 onDelete={handleDelete}
                 onToggleStatus={handleStatusToggle}
+                routingUpdating={routingUpdating}
+                onRoutingModeChange={handleRoutingModeChange}
                 onToggleSelect={toggleSelect}
               />
             ))}

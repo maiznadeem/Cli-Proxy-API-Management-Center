@@ -10,13 +10,17 @@
 import { useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconRefreshCw } from '@/components/ui/icons';
-import type { ResolvedTheme } from '@/types';
+import type { ResolvedTheme, RoutingMode } from '@/types';
+import { getRoutingMode } from '@/features/authFiles/routingMode';
+import { RoutingModeBadge } from '@/features/authFiles/components/RoutingModeBadge';
+import { RoutingModeControl } from '@/features/authFiles/components/RoutingModeControl';
 import { resolveQuotaErrorMessage } from '@/utils/quota';
 import { getQuotaDisplayName } from '@/utils/quota/identity';
 import {
   getAuthFileIcon,
   getThemeSurfaceIconBackground,
   getTypeLabel,
+  isRuntimeOnlyAuthFile,
   isThemeSurfaceIconProvider,
 } from '@/features/authFiles/constants';
 import { bindQuotaClasses } from '../types';
@@ -39,6 +43,10 @@ export type QuotaCardProps = {
   entranceDelayMs?: number | null;
   onRefresh: () => void;
   onReset: () => void;
+  /** When omitted the routing control is not rendered. */
+  onRoutingModeChange?: (mode: RoutingMode) => void;
+  routingBusy?: boolean;
+  routingDisabled?: boolean;
 };
 
 export function QuotaCard(props: QuotaCardProps) {
@@ -51,11 +59,16 @@ export function QuotaCard(props: QuotaCardProps) {
     entranceDelayMs,
     onRefresh,
     onReset,
+    onRoutingModeChange,
+    routingBusy = false,
+    routingDisabled = false,
   } = props;
   const { t } = useTranslation();
   const adapter = QUOTA_ADAPTERS[entry.type];
   const file = entry.file;
   const displayName = getQuotaDisplayName(file);
+  const routingMode = getRoutingMode(file);
+  const showRouting = Boolean(onRoutingModeChange) && !isRuntimeOnlyAuthFile(file);
 
   // 挂载时捕获一次延迟：后续 props 变 null 不影响本卡（React 19 禁渲染期读 ref）
   const [mountEntranceDelayMs] = useState<number | null>(entranceDelayMs ?? null);
@@ -111,6 +124,7 @@ export function QuotaCard(props: QuotaCardProps) {
           <span className={styles.fileName} title={displayName}>
             {displayName}
           </span>
+          <RoutingModeBadge mode={routingMode} />
         </div>
         {entry.type === 'claude' && status === 'success' && (
           <div className={styles.facts}>
@@ -159,9 +173,18 @@ export function QuotaCard(props: QuotaCardProps) {
         )}
       </div>
 
-      {status !== 'idle' && (
+      {(status !== 'idle' || showRouting) && (
         <footer className={styles.actionRow}>
-          {entry.type === 'claude' && (
+          {showRouting && onRoutingModeChange && (
+            <RoutingModeControl
+              className={styles.routing}
+              name={displayName}
+              value={routingMode}
+              disabled={routingDisabled || routingBusy}
+              onChange={onRoutingModeChange}
+            />
+          )}
+          {status !== 'idle' && entry.type === 'claude' && (
             <button
               type="button"
               className={styles.actionPill}
@@ -185,16 +208,18 @@ export function QuotaCard(props: QuotaCardProps) {
               {t('codex_quota.reset_button')}
             </button>
           )}
-          <button
-            type="button"
-            className={styles.actionPill}
-            onClick={onRefresh}
-            disabled={isQuotaRefreshDisabled(canRefresh, loading, resetting || claudeReset.busy)}
-            title={t('auth_files.quota_refresh_hint')}
-          >
-            <IconRefreshCw size={13} className={loading ? styles.spinning : undefined} />
-            {t('auth_files.quota_refresh_single')}
-          </button>
+          {status !== 'idle' && (
+            <button
+              type="button"
+              className={styles.actionPill}
+              onClick={onRefresh}
+              disabled={isQuotaRefreshDisabled(canRefresh, loading, resetting || claudeReset.busy)}
+              title={t('auth_files.quota_refresh_hint')}
+            >
+              <IconRefreshCw size={13} className={loading ? styles.spinning : undefined} />
+              {t('auth_files.quota_refresh_single')}
+            </button>
+          )}
         </footer>
       )}
     </article>

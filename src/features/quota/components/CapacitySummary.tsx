@@ -18,6 +18,8 @@ import {
   getTypeLabel,
   isThemeSurfaceIconProvider,
 } from '@/features/authFiles/constants';
+import { deriveAuthFileIdentity } from '@/features/authFiles/identity';
+import { summarizeRouting } from '@/features/authFiles/routingMode';
 import type { QuotaFileEntry } from '../logic';
 import type { QuotaCardState } from '../providers';
 import { summarizeCapacity } from '../capacitySummaryModel';
@@ -30,10 +32,18 @@ const relativeReset = (
 ): string => {
   const diff = Math.max(0, targetMs - now);
   const hours = Math.round(diff / 3_600_000);
-  if (hours < 1) return t('quota_management.summary_reset_soon', { defaultValue: 'within the hour' });
-  if (hours < 48) return t('quota_management.summary_reset_hours', { defaultValue: 'in {{count}} h', count: hours });
+  if (hours < 1)
+    return t('quota_management.summary_reset_soon', { defaultValue: 'within the hour' });
+  if (hours < 48)
+    return t('quota_management.summary_reset_hours', {
+      defaultValue: 'in {{count}} h',
+      count: hours,
+    });
   const days = Math.round(hours / 24);
-  return t('quota_management.summary_reset_days', { defaultValue: 'in {{count}} days', count: days });
+  return t('quota_management.summary_reset_days', {
+    defaultValue: 'in {{count}} days',
+    count: days,
+  });
 };
 
 export interface CapacitySummaryProps {
@@ -49,6 +59,10 @@ export function CapacitySummary(props: CapacitySummaryProps) {
   const { entries, quotaFor, resolvedTheme, activeTab, onSelect, now } = props;
   const { t, i18n } = useTranslation();
   const summaries = useMemo(() => summarizeCapacity(entries, quotaFor), [entries, quotaFor]);
+  const routing = useMemo(
+    () => summarizeRouting(entries, (file) => deriveAuthFileIdentity(file).primary),
+    [entries]
+  );
 
   if (summaries.length === 0) return null;
 
@@ -61,107 +75,141 @@ export function CapacitySummary(props: CapacitySummaryProps) {
     });
 
   return (
-    <div className={styles.strip} role="list">
-      {summaries.map((summary) => {
-        const iconSrc = getAuthFileIcon(summary.provider, resolvedTheme);
-        const typeLabel = getTypeLabel(t, summary.provider);
-        const selected = activeTab === summary.provider;
-        const loadedAny = summary.loaded > 0;
-        const capacity = summary.loaded * 100;
-        return (
-          <button
-            key={summary.provider}
-            type="button"
-            role="listitem"
-            className={`${styles.panel} ${selected ? styles.panelSelected : ''}`}
-            aria-pressed={selected}
-            onClick={() => onSelect(selected ? 'all' : summary.provider)}
-          >
-            <span className={styles.head}>
-              <span
-                className={styles.iconWrap}
-                style={
-                  isThemeSurfaceIconProvider(summary.provider)
-                    ? { background: getThemeSurfaceIconBackground(resolvedTheme) }
-                    : undefined
-                }
-              >
-                {iconSrc ? (
-                  <img src={iconSrc} alt="" className={styles.icon} />
-                ) : (
-                  <span className={styles.iconFallback}>{typeLabel.slice(0, 1).toUpperCase()}</span>
-                )}
-              </span>
-              <span className={styles.name}>{typeLabel}</span>
-              <span className={styles.count}>
-                {t('quota_management.summary_credentials', {
-                  defaultValue: '{{count}} credentials',
-                  count: summary.total,
-                })}
-              </span>
-            </span>
-
-            <span className={styles.label}>
-              {summary.headlineLabel ??
-                t('quota_management.summary_remaining', { defaultValue: 'Remaining' })}
-            </span>
-            <span className={styles.figure}>
-              {loadedAny ? (
-                <>
-                  <span className={styles.figureMain}>{Math.round(summary.remainingSum)}%</span>
-                  <span className={styles.figureOf}>
-                    {t('quota_management.summary_of', { defaultValue: 'of {{total}}%', total: capacity })}
-                  </span>
-                </>
-              ) : (
-                <span className={styles.figureMuted}>
-                  {t('quota_management.summary_not_loaded', { defaultValue: 'Not loaded' })}
-                </span>
-              )}
-            </span>
-
-            <span className={styles.segments} aria-hidden="true">
-              {summary.segments.map((remaining, index) => (
+    <>
+      <div className={styles.strip} role="list">
+        {summaries.map((summary) => {
+          const iconSrc = getAuthFileIcon(summary.provider, resolvedTheme);
+          const typeLabel = getTypeLabel(t, summary.provider);
+          const selected = activeTab === summary.provider;
+          const loadedAny = summary.loaded > 0;
+          const capacity = summary.loaded * 100;
+          return (
+            <button
+              key={summary.provider}
+              type="button"
+              role="listitem"
+              className={`${styles.panel} ${selected ? styles.panelSelected : ''}`}
+              aria-pressed={selected}
+              onClick={() => onSelect(selected ? 'all' : summary.provider)}
+            >
+              <span className={styles.head}>
                 <span
-                  key={index}
-                  className={styles.segment}
-                  data-tone={
-                    remaining === null
-                      ? 'none'
-                      : remaining >= 70
-                        ? 'plenty'
-                        : remaining >= 30
-                          ? 'watch'
-                          : 'depleted'
+                  className={styles.iconWrap}
+                  style={
+                    isThemeSurfaceIconProvider(summary.provider)
+                      ? { background: getThemeSurfaceIconBackground(resolvedTheme) }
+                      : undefined
                   }
                 >
-                  {remaining !== null && (
-                    <span
-                      className={styles.segmentFill}
-                      style={{ width: `${remaining}%`, '--meter-value': remaining } as CSSProperties}
-                    />
+                  {iconSrc ? (
+                    <img src={iconSrc} alt="" className={styles.icon} />
+                  ) : (
+                    <span className={styles.iconFallback}>
+                      {typeLabel.slice(0, 1).toUpperCase()}
+                    </span>
                   )}
                 </span>
-              ))}
-            </span>
-
-            <span className={styles.reset}>
-              {summary.nextResetMs !== null ? (
-                <>
-                  <span className={styles.resetRelative}>
-                    {relativeReset(summary.nextResetMs, now, t)}
-                  </span>
-                  <span className={styles.resetAbsolute}>{absolute(summary.nextResetMs)}</span>
-                </>
-              ) : (
-                <span className={styles.resetAbsolute}>
-                  {t('quota_management.summary_no_reset', { defaultValue: 'No reset scheduled' })}
+                <span className={styles.name}>{typeLabel}</span>
+                <span className={styles.count}>
+                  {t('quota_management.summary_credentials', {
+                    defaultValue: '{{count}} credentials',
+                    count: summary.total,
+                  })}
                 </span>
-              )}
-            </span>
-          </button>
-        );
-      })}
-    </div>
+              </span>
+
+              <span className={styles.label}>
+                {summary.headlineLabel ??
+                  t('quota_management.summary_remaining', { defaultValue: 'Remaining' })}
+              </span>
+              <span className={styles.figure}>
+                {loadedAny ? (
+                  <>
+                    <span className={styles.figureMain}>{Math.round(summary.remainingSum)}%</span>
+                    <span className={styles.figureOf}>
+                      {t('quota_management.summary_of', {
+                        defaultValue: 'of {{total}}%',
+                        total: capacity,
+                      })}
+                    </span>
+                  </>
+                ) : (
+                  <span className={styles.figureMuted}>
+                    {t('quota_management.summary_not_loaded', { defaultValue: 'Not loaded' })}
+                  </span>
+                )}
+              </span>
+
+              <span className={styles.segments} aria-hidden="true">
+                {summary.segments.map((remaining, index) => (
+                  <span
+                    key={index}
+                    className={styles.segment}
+                    data-tone={
+                      remaining === null
+                        ? 'none'
+                        : remaining >= 70
+                          ? 'plenty'
+                          : remaining >= 30
+                            ? 'watch'
+                            : 'depleted'
+                    }
+                  >
+                    {remaining !== null && (
+                      <span
+                        className={styles.segmentFill}
+                        style={
+                          { width: `${remaining}%`, '--meter-value': remaining } as CSSProperties
+                        }
+                      />
+                    )}
+                  </span>
+                ))}
+              </span>
+
+              <span className={styles.reset}>
+                {summary.nextResetMs !== null ? (
+                  <>
+                    <span className={styles.resetRelative}>
+                      {relativeReset(summary.nextResetMs, now, t)}
+                    </span>
+                    <span className={styles.resetAbsolute}>{absolute(summary.nextResetMs)}</span>
+                  </>
+                ) : (
+                  <span className={styles.resetAbsolute}>
+                    {t('quota_management.summary_no_reset', { defaultValue: 'No reset scheduled' })}
+                  </span>
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {routing.size > 0 && (
+        <ul className={styles.routingNotes}>
+          {summaries.map((summary) => {
+            const note = routing.get(summary.provider);
+            if (!note) return null;
+            return (
+              <li key={summary.provider} className={styles.routingNote}>
+                <span className={styles.routingProvider}>{getTypeLabel(t, summary.provider)}</span>
+                {note.focused.length > 0 && (
+                  <span className={styles.routingFocused}>
+                    {t('auth_files.routing_mode.note_focused', {
+                      account: note.focused.join(', '),
+                    })}
+                  </span>
+                )}
+                {note.preservedCount > 0 && (
+                  <span>
+                    {t('auth_files.routing_mode.note_preserved', { n: note.preservedCount })}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </>
   );
 }

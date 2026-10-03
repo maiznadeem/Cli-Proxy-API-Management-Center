@@ -8,6 +8,36 @@
   gap: 12px;
 }
 
+/* One quiet line per provider with a focused or preserved credential. */
+.routingNotes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
+}
+
+.routingNote {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.routingProvider {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.routingFocused {
+  color: var(--accent);
+}
+
 .panel {
   display: flex;
   flex-direction: column;

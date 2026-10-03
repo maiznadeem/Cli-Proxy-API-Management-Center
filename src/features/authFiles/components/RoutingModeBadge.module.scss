@@ -1,0 +1,21 @@
+@use '../../../styles/mixins' as *;
+
+.badge {
+  flex: 0 0 auto;
+  margin-left: 8px;
+  padding: 0 8px;
+  border: 1px solid currentColor;
+  border-radius: $radius-full;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.preserved {
+  color: var(--ink-muted);
+}
+
+.focused {
+  color: var(--accent);
+}

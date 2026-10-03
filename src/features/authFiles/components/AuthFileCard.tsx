@@ -13,7 +13,10 @@ import {
   IconTrash2,
 } from '@/components/ui/icons';
 import { ProviderStatusBar } from '@/components/providers/ProviderStatusBar';
-import type { AuthFileItem } from '@/types';
+import type { AuthFileItem, RoutingMode } from '@/types';
+import { getRoutingMode } from '@/features/authFiles/routingMode';
+import { RoutingModeBadge } from '@/features/authFiles/components/RoutingModeBadge';
+import { RoutingModeControl } from '@/features/authFiles/components/RoutingModeControl';
 import { statusBarDataFromRecentRequests } from '@/utils/recentRequests';
 import { formatFileSize } from '@/utils/format';
 import {
@@ -58,6 +61,10 @@ export type AuthFileCardProps = {
   onOpenPrefixProxyEditor: (file: AuthFileItem) => void;
   onDelete: (name: string) => void;
   onToggleStatus: (file: AuthFileItem, enabled: boolean) => void;
+  /** Keys (getAuthFileRefreshKey) with a routing-mode patch in flight. */
+  routingUpdating?: Record<string, boolean>;
+  /** When omitted the routing control is not rendered. */
+  onRoutingModeChange?: (file: AuthFileItem, mode: RoutingMode) => void;
   onToggleSelect: (name: string) => void;
 };
 
@@ -88,6 +95,8 @@ export function AuthFileCard(props: AuthFileCardProps) {
     onOpenPrefixProxyEditor,
     onDelete,
     onToggleStatus,
+    routingUpdating,
+    onRoutingModeChange,
     onToggleSelect,
   } = props;
 
@@ -120,6 +129,7 @@ export function AuthFileCard(props: AuthFileCardProps) {
   const identity = deriveAuthFileIdentity(file);
   const isExhausted = file.quota?.exhausted === true;
   const isOnCredits = isExhausted && file.quota?.usage_credits?.enabled === true;
+  const routingMode = getRoutingMode(file);
 
   // Capture the entrance delay once on mount so a later null does not cut the fade short.
   const [mountEntranceDelayMs] = useState<number | null>(entranceDelayMs ?? null);
@@ -189,6 +199,7 @@ export function AuthFileCard(props: AuthFileCardProps) {
                 {t('auth_files.badge_on_credits')}
               </span>
             )}
+            <RoutingModeBadge mode={routingMode} />
           </h3>
           <p className={styles.facts}>
             <span>{typeLabel}</span>
@@ -244,6 +255,18 @@ export function AuthFileCard(props: AuthFileCardProps) {
                 isManualRefreshing
               }
               onChange={(value) => onToggleStatus(file, value)}
+            />
+          )}
+          {!isRuntimeOnly && onRoutingModeChange && (
+            <RoutingModeControl
+              name={file.name}
+              value={routingMode}
+              disabled={
+                disableControls ||
+                routingUpdating?.[getAuthFileRefreshKey(file)] === true ||
+                isManualRefreshing
+              }
+              onChange={(mode) => onRoutingModeChange(file, mode)}
             />
           )}
           <span className={styles.healthCounts}>

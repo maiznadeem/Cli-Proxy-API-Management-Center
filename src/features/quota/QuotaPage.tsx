@@ -48,6 +48,10 @@ import { nextRecoveryMs } from './resetSchedule';
 import { QUOTA_ADAPTERS, getQuotaSetter, type QuotaCardState } from './providers';
 import type { QuotaProviderType } from './providers/types';
 import { useDevinQuotaAutoLoad } from './providers/devin/useDevinQuotaAutoLoad';
+import {
+  isRoutingUpdating,
+  useRoutingModeControl,
+} from '@/features/authFiles/hooks/useRoutingModeControl';
 import { useQuotaActions } from './hooks/useQuotaActions';
 import { useQuotaBatchLoader } from './hooks/useQuotaBatchLoader';
 import { readQuotaUiState, writeQuotaUiState } from './uiState';
@@ -288,6 +292,7 @@ export function QuotaPage() {
   );
 
   const canUseActions = !disableControls && !loading && filesGeneration === sessionGeneration;
+  const { routingUpdating, setRoutingMode } = useRoutingModeControl({ files, setFiles });
 
   /* ---------- 首屏卡片一次性级联入场 ----------
    * 首批数据渲染后立即翻转 cardsAnimated；已挂载的卡片在挂载时捕获过自己的
@@ -436,6 +441,9 @@ export function QuotaPage() {
                 entranceDelayMs={cardEntranceDelay(index)}
                 onRefresh={() => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
                 onReset={() => resetQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
+                onRoutingModeChange={(mode) => void setRoutingMode(entry.file, mode)}
+                routingBusy={isRoutingUpdating(routingUpdating, entry.file)}
+                routingDisabled={!canUseActions}
               />
             ))}
           </div>

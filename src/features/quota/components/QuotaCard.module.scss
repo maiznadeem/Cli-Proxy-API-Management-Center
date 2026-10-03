@@ -300,6 +300,11 @@
   }
 }
 
+/* Routing control sits at the start of the footer; the pills stay right-aligned. */
+.routing {
+  margin-right: auto;
+}
+
 .spinning {
   animation: quota-card-spin 0.8s linear infinite;
 }
