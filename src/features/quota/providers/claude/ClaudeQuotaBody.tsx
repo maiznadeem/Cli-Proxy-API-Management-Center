@@ -84,7 +84,7 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
       )}
       {allowances.map((bucket: ClaudeDollarBucket) => {
         if (bucket.limitDollars === null) return null;
-        const used = formatUsd(bucket.usedDollars ?? 0, language);
+        const used = formatUsd(Math.max(bucket.limitDollars - (bucket.usedDollars ?? 0), 0), language);
         const limit = formatUsd(bucket.limitDollars, language);
         return (
           <div key={bucket.id} className={styles.credits}>
