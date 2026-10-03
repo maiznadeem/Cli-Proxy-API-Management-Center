@@ -39,37 +39,26 @@ describe('Claude Fable quota', () => {
     ]);
   });
 
-  test('falls back to the legacy Fable field', () => {
+  test('does not treat the monthly dollar bucket as a Fable window', () => {
     const windows = buildClaudeQuotaWindows(
       {
         iguana_necktie: {
-          utilization: 41,
+          utilization: 0,
           resets_at: legacyReset,
+          limit_dollars: 250,
+          used_dollars: 0,
         },
       },
       t
     );
 
-    expect(windows).toEqual([
-      {
-        id: 'seven-day-fable',
-        label: 'claude_quota.seven_day_fable',
-        labelKey: 'claude_quota.seven_day_fable',
-        usedPercent: 41,
-        resetLabel: formatQuotaResetTime(legacyReset),
-        resetAtMs: Date.parse(legacyReset),
-        periodHours: 24 * 7,
-      },
-    ]);
+    expect(windows).toEqual([]);
   });
 
-  test('falls back to the legacy field when the modern percent is invalid', () => {
+  test('ignores the monthly bucket when the modern percent is invalid', () => {
     const windows = buildClaudeQuotaWindows(
       {
-        iguana_necktie: {
-          utilization: 41,
-          resets_at: legacyReset,
-        },
+        iguana_necktie: { utilization: 41, resets_at: legacyReset, limit_dollars: 250 },
         limits: [
           {
             kind: 'weekly_scoped',
@@ -83,17 +72,7 @@ describe('Claude Fable quota', () => {
       t
     );
 
-    expect(windows).toEqual([
-      {
-        id: 'seven-day-fable',
-        label: 'claude_quota.seven_day_fable',
-        labelKey: 'claude_quota.seven_day_fable',
-        usedPercent: 41,
-        resetLabel: formatQuotaResetTime(legacyReset),
-        resetAtMs: Date.parse(legacyReset),
-        periodHours: 24 * 7,
-      },
-    ]);
+    expect(windows).toEqual([]);
   });
 
   test('prefers the active modern field without rendering a duplicate', () => {
@@ -102,6 +81,7 @@ describe('Claude Fable quota', () => {
         iguana_necktie: {
           utilization: 41,
           resets_at: legacyReset,
+          limit_dollars: 250,
         },
         limits: [
           {

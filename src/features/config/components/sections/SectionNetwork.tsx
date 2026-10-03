@@ -198,6 +198,15 @@ export function SectionNetwork({
         </FieldGrid>
 
         <FieldGrid>
+          <FieldAnchor fieldId="routingSpendUsageCredits">
+            <ToggleRow
+              title={t('config_management.visual.additions.routingSpendUsageCredits.label')}
+              description={t('config_management.visual.additions.routingSpendUsageCredits.hint')}
+              checked={values.routingSpendUsageCredits}
+              disabled={disabled}
+              onChange={(routingSpendUsageCredits) => onChange({ routingSpendUsageCredits })}
+            />
+          </FieldAnchor>
           <FieldAnchor fieldId="routingSessionAffinitySubagents">
             <ToggleRow
               title={t('config_management.visual.additions.routingSessionAffinitySubagents.label')}

@@ -31,6 +31,7 @@ import {
   IconSidebarSystem,
   IconChevronDown,
 } from '@/components/ui/icons';
+import { IconSidebarUsage } from '@/features/usage/UsageIcon';
 import { BrandMark } from '@/components/brand/BrandMark';
 import {
   useAuthStore,
@@ -61,6 +62,7 @@ const sidebarIcons: Record<string, ReactNode> = {
   oauth: <IconSidebarOauth size={18} />,
   quota: <IconSidebarQuota size={18} />,
   routing: <IconSidebarRouting size={18} />,
+  usage: <IconSidebarUsage size={18} />,
   plugins: <IconSidebarPlugins size={18} />,
   pluginStore: <IconSidebarStore size={18} />,
   config: <IconSidebarConfig size={18} />,
@@ -665,6 +667,12 @@ export function MainLayout() {
           labelKey: 'nav.routing',
           metaKey: 'nav_meta.routing',
           icon: sidebarIcons.routing,
+        },
+        {
+          path: '/usage',
+          labelKey: 'nav.usage',
+          metaKey: 'nav_meta.usage',
+          icon: sidebarIcons.usage,
         },
         {
           path: '/logs',

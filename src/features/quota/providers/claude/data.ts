@@ -6,6 +6,8 @@
 import type { TFunction } from 'i18next';
 import type {
   AuthFileItem,
+  ClaudeCredits,
+  ClaudeDollarBucket,
   ClaudeExtraUsage,
   ClaudeProfileResponse,
   ClaudeQuotaState,
@@ -34,7 +36,60 @@ import type { QuotaProviderData } from '../types';
 export type ClaudeQuotaData = {
   windows: ClaudeQuotaWindow[];
   extraUsage?: ClaudeExtraUsage | null;
+  credits?: ClaudeCredits;
+  allowances?: ClaudeDollarBucket[];
   planType?: string | null;
+};
+
+/** Minor units at `decimalPlaces` -> cents. Null when the amount is absent. */
+const toCents = (minor: unknown, decimalPlaces: number): number | null => {
+  const value = normalizeNumberValue(minor);
+  if (value === null) return null;
+  return Math.round(value * 10 ** (2 - decimalPlaces));
+};
+
+export const deriveClaudeCredits = (payload: ClaudeUsagePayload): ClaudeCredits => {
+  const extra = payload.extra_usage ?? null;
+  const spend = payload.spend ?? null;
+  const decimalPlaces = normalizeNumberValue(extra?.decimal_places) ?? 2;
+  const usedCents =
+    toCents(extra?.used_credits, decimalPlaces) ??
+    toCents(spend?.used?.amount_minor, normalizeNumberValue(spend?.used?.exponent) ?? 2);
+  const limitCents =
+    toCents(extra?.monthly_limit, decimalPlaces) ??
+    toCents(spend?.limit?.amount_minor, normalizeNumberValue(spend?.limit?.exponent) ?? 2);
+
+  let status: ClaudeCredits['status'] = 'unknown';
+  if (extra) {
+    if (extra.is_enabled === true) status = 'enabled';
+    else if (extra.disabled_reason === 'out_of_credits') status = 'off_out_of_credits';
+    else if (extra.user_disabled === true) status = 'off_user_disabled';
+    else if (extra.spend_limit_reached === true) status = 'off_limit_reached';
+    else if (extra.credits_ever_enabled === false) status = 'never_enabled';
+  }
+
+  return { status, usedCents, limitCents, canToggle: spend?.can_toggle === true };
+};
+
+export const buildClaudeAllowances = (
+  payload: ClaudeUsagePayload,
+  t: TFunction
+): ClaudeDollarBucket[] => {
+  const bucket = payload.iguana_necktie;
+  if (!bucket || typeof bucket !== 'object') return [];
+  const labelKey = 'claude_quota.monthly_allowance';
+  return [
+    {
+      id: 'monthly-allowance',
+      label: t(labelKey),
+      labelKey,
+      usedDollars: normalizeNumberValue(bucket.used_dollars),
+      limitDollars: normalizeNumberValue(bucket.limit_dollars),
+      remainingDollars: normalizeNumberValue(bucket.remaining_dollars),
+      resetAtMs: resolveResetMs([bucket.resets_at]),
+      lockedReason: normalizeStringValue(bucket.locked_reason) ?? null,
+    },
+  ];
 };
 
 const findFableUsageLimit = (payload: ClaudeUsagePayload) => {
@@ -60,7 +115,6 @@ export const buildClaudeQuotaWindows = (
   const fableLimit = findFableUsageLimit(payload);
 
   for (const { key, id, labelKey } of CLAUDE_USAGE_WINDOW_KEYS) {
-    if (key === 'iguana_necktie' && fableLimit) continue;
     const window = payload[key as keyof ClaudeUsagePayload];
     if (!window || typeof window !== 'object' || !('utilization' in window)) continue;
     const typedWindow = window as { utilization: number; resets_at: string | null };
@@ -201,7 +255,13 @@ const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<Claud
         )
       : null;
 
-  return { windows, extraUsage: payload.extra_usage, planType };
+  return {
+    windows,
+    extraUsage: payload.extra_usage,
+    credits: deriveClaudeCredits(payload),
+    allowances: buildClaudeAllowances(payload, t),
+    planType,
+  };
 };
 
 export const CLAUDE_CONFIG: QuotaProviderData<ClaudeQuotaState, ClaudeQuotaData> = {
@@ -216,6 +276,8 @@ export const CLAUDE_CONFIG: QuotaProviderData<ClaudeQuotaState, ClaudeQuotaData>
     status: 'success',
     windows: data.windows,
     extraUsage: data.extraUsage,
+    credits: data.credits,
+    allowances: data.allowances,
     planType: data.planType,
   }),
   buildErrorState: (message, status) => ({

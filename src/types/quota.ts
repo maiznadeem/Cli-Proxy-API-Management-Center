@@ -118,9 +118,68 @@ export interface ClaudeUsageLimit {
 
 export interface ClaudeExtraUsage {
   is_enabled: boolean;
-  monthly_limit: number;
-  used_credits: number;
-  utilization: number | null;
+  /** Minor units (cents when decimal_places is 2). Null when no cap is set. */
+  monthly_limit: number | null;
+  used_credits: number | null;
+  utilization?: number | null;
+  currency?: string | null;
+  decimal_places?: number | null;
+  disabled_reason?: string | null;
+  user_disabled?: boolean | null;
+  spend_limit_reached?: boolean | null;
+  credits_ever_enabled?: boolean | null;
+}
+
+export interface ClaudeMoney {
+  amount_minor: number;
+  currency?: string | null;
+  exponent?: number | null;
+}
+
+export interface ClaudeSpend {
+  used?: ClaudeMoney | null;
+  limit?: ClaudeMoney | null;
+  percent?: number | null;
+  enabled?: boolean | null;
+  disabled_reason?: string | null;
+  can_purchase_credits?: boolean | null;
+  can_toggle?: boolean | null;
+}
+
+/** Monthly dollar allowance (`iguana_necktie`), not a time window. */
+export interface ClaudeDollarBucketPayload {
+  utilization?: number | null;
+  resets_at?: string | null;
+  limit_dollars?: number | null;
+  used_dollars?: number | null;
+  remaining_dollars?: number | null;
+  locked_reason?: string | null;
+}
+
+export interface ClaudeDollarBucket {
+  id: string;
+  label: string;
+  labelKey: string;
+  usedDollars: number | null;
+  limitDollars: number | null;
+  remainingDollars: number | null;
+  resetAtMs: number | null;
+  lockedReason: string | null;
+}
+
+export type ClaudeCreditsStatus =
+  | 'enabled'
+  | 'off_out_of_credits'
+  | 'off_user_disabled'
+  | 'off_limit_reached'
+  | 'never_enabled'
+  | 'unknown';
+
+export interface ClaudeCredits {
+  status: ClaudeCreditsStatus;
+  usedCents: number | null;
+  limitCents: number | null;
+  canToggle: boolean;
 }
 
 export interface ClaudeUsagePayload {
@@ -130,9 +189,10 @@ export interface ClaudeUsagePayload {
   seven_day_opus?: ClaudeUsageWindow | null;
   seven_day_sonnet?: ClaudeUsageWindow | null;
   seven_day_cowork?: ClaudeUsageWindow | null;
-  iguana_necktie?: ClaudeUsageWindow | null;
+  iguana_necktie?: ClaudeDollarBucketPayload | null;
   limits?: ClaudeUsageLimit[] | null;
   extra_usage?: ClaudeExtraUsage | null;
+  spend?: ClaudeSpend | null;
 }
 
 export interface ClaudeProfileResponse {
@@ -177,6 +237,8 @@ export interface ClaudeQuotaState {
   status: 'idle' | 'loading' | 'success' | 'error';
   windows: ClaudeQuotaWindow[];
   extraUsage?: ClaudeExtraUsage | null;
+  credits?: ClaudeCredits;
+  allowances?: ClaudeDollarBucket[];
   planType?: string | null;
   error?: string;
   errorStatus?: number;

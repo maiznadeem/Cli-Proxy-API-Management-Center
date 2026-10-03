@@ -1,16 +1,32 @@
 /**
- * Claude 额度渲染体：套餐/额外用量 chip 行 + 用量窗口水位条。
+ * Claude 额度渲染体：套餐 chip 行 + 用量积分行 + 月度额度行 + 用量窗口水位条。
  */
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ClaudeQuotaState } from '@/types';
+import type { ClaudeDollarBucket, ClaudeQuotaState } from '@/types';
 import { buildResetDisplay } from '@/utils/quota';
 import { useNow } from '@/hooks/useNow';
 import { QuotaMeter } from '../../components/QuotaMeter';
 import { QuotaResetLabel } from '../../components/QuotaResetLabel';
 import { collectQuotaRowInstants, pickUrgentRowId } from '../../resetSchedule';
 import type { QuotaBodyProps } from '../../types';
+import styles from './ClaudeCredits.module.scss';
+
+export const CLAUDE_USAGE_SETTINGS_URL = 'https://claude.ai/settings/usage';
+
+const formatUsd = (amount: number, language?: string): string => {
+  const whole = Number.isInteger(amount);
+  return new Intl.NumberFormat(language, {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
+const formatResetDate = (ms: number, language?: string): string =>
+  new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short' }).format(new Date(ms));
 
 export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaState>) {
   const { t, i18n } = useTranslation();
@@ -20,7 +36,9 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
     [quota, now]
   );
   const windows = quota.windows ?? [];
-  const extraUsage = quota.extraUsage ?? null;
+  const credits = quota.credits ?? null;
+  const allowances = quota.allowances ?? [];
+  const language = i18n.resolvedLanguage;
   const planType = quota.planType ?? null;
 
   return (
@@ -31,14 +49,65 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
           <span className={classes.codexPlanValue}>{t(`claude_quota.${planType}`)}</span>
         </div>
       )}
-      {extraUsage && extraUsage.is_enabled && (
-        <div className={classes.codexPlan}>
-          <span className={classes.codexPlanLabel}>{t('claude_quota.extra_usage_label')}</span>
-          <span className={classes.codexPlanValue}>
-            {`$${(extraUsage.used_credits / 100).toFixed(2)} / $${(extraUsage.monthly_limit / 100).toFixed(2)}`}
-          </span>
+      {credits && credits.status !== 'unknown' && (
+        <div className={styles.credits}>
+          <div className={styles.line}>
+            <span className={styles.label}>{t('claude_quota.credits_label')}</span>
+            <span
+              className={`${styles.pill} ${credits.status === 'enabled' ? styles.pillOn : ''}`}
+            >
+              <span className={styles.dot} aria-hidden="true" />
+              {t(`claude_quota.credits_${credits.status}`)}
+            </span>
+            {credits.limitCents !== null && (
+              <span className={styles.amount}>
+                {t('claude_quota.credits_spent', {
+                  used: formatUsd((credits.usedCents ?? 0) / 100, language),
+                  limit: formatUsd(credits.limitCents / 100, language),
+                })}
+              </span>
+            )}
+          </div>
+          {!credits.canToggle && (
+            <div className={styles.line}>
+              <a
+                className={styles.link}
+                href={CLAUDE_USAGE_SETTINGS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('claude_quota.credits_hint')}
+              </a>
+            </div>
+          )}
         </div>
       )}
+      {allowances.map((bucket: ClaudeDollarBucket) => {
+        if (bucket.limitDollars === null) return null;
+        const used = formatUsd(bucket.usedDollars ?? 0, language);
+        const limit = formatUsd(bucket.limitDollars, language);
+        return (
+          <div key={bucket.id} className={styles.credits}>
+            <div className={styles.line}>
+              <span className={styles.label}>{t(bucket.labelKey)}</span>
+              <span className={styles.amount}>
+                {bucket.resetAtMs !== null
+                  ? t('claude_quota.allowance_amount', {
+                      used,
+                      limit,
+                      date: formatResetDate(bucket.resetAtMs, language),
+                    })
+                  : t('claude_quota.allowance_amount_no_reset', { used, limit })}
+              </span>
+              {bucket.lockedReason && (
+                <span className={styles.hint}>
+                  {t('claude_quota.allowance_locked', { reason: bucket.lockedReason })}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
       {windows.length === 0 ? (
         <div className={classes.quotaMessage}>{t('claude_quota.empty_windows')}</div>
       ) : (

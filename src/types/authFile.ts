@@ -40,6 +40,21 @@ export interface AuthFileCooldownSnapshot {
   records: AuthFileCooldown[] | null;
 }
 
+/** Per-credential Claude usage-credits (extra usage) state from the credentials endpoint. */
+export interface AuthFileUsageCredits {
+  enabled?: boolean;
+  known?: boolean;
+  reason?: string;
+  used_cents?: number;
+  limit_cents?: number;
+  ever_enabled?: boolean;
+}
+
+export interface AuthFileWindows {
+  five_hour_pct?: number;
+  seven_day_pct?: number;
+}
+
 export interface AuthFileItem {
   name: string;
   type?: AuthFileType | string;
@@ -72,6 +87,10 @@ export interface AuthFileItem {
   failureCount?: number;
   recent_requests?: RecentRequestBucket[];
   recentRequests?: RecentRequestBucket[];
+  /** All limit windows are used up. Absent on older servers. */
+  exhausted?: boolean;
+  usage_credits?: AuthFileUsageCredits;
+  windows?: AuthFileWindows;
   /** Absent on older servers. Never interpreted as credential health. */
   cooldownSnapshot?: AuthFileCooldownSnapshot;
   [key: string]: unknown;

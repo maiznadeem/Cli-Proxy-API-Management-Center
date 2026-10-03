@@ -1,0 +1,524 @@
+@use '../../styles/mixins' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: $text-page;
+  line-height: $lh-page;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.meta {
+  margin: 0;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.iconButton {
+  width: 32px;
+  padding: 0;
+  justify-content: center;
+}
+
+.segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  padding: 2px;
+  border-radius: var(--radius-control);
+  background: var(--panel-raised);
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  transition:
+    color var(--dur-hover) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard),
+    transform var(--dur-press) var(--ease-standard);
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .segment:hover:not(.segmentActive) {
+    color: var(--ink);
+    background: var(--panel-hover);
+  }
+}
+
+.segmentActive {
+  color: var(--ink);
+  background: var(--panel);
+  border-color: var(--hairline);
+}
+
+.errorBanner {
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--cap-depleted);
+  background: color-mix(in srgb, var(--cap-depleted) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cap-depleted) 32%, transparent);
+  border-radius: var(--radius-control);
+  padding: 8px 12px;
+  overflow-wrap: anywhere;
+}
+
+.notice {
+  margin: 0;
+  font-size: $text-body;
+  color: var(--ink-muted);
+}
+
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.muted {
+  margin: 0;
+  padding: 16px;
+  font-size: $text-dense;
+  color: var(--ink-muted);
+}
+
+/* ---------- Tiles ---------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+
+  @include mobile {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+}
+
+.tileLabel {
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
+}
+
+.tileValue {
+  font-size: $text-title;
+  line-height: $lh-title;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.tileSub,
+.tileSubWarn {
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.tileSubWarn {
+  color: var(--cap-watch);
+}
+
+/* ---------- Panels ---------- */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: $text-lead;
+  line-height: $lh-lead;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-control);
+  background: var(--panel-raised);
+  flex-wrap: wrap;
+}
+
+/* ---------- Chart ---------- */
+
+.legend {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.swatchInput,
+.segInput {
+  background: var(--accent);
+}
+
+.swatchCache,
+.segCache {
+  background: color-mix(in srgb, var(--accent) 45%, var(--panel));
+}
+
+.swatchOutput,
+.segOutput {
+  background: var(--ink-muted);
+}
+
+.chart {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  height: 200px;
+  overflow-x: auto;
+  padding-top: 8px;
+}
+
+.column {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 18px;
+  border-radius: var(--radius-control);
+  outline: none;
+
+  &:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.columnActive .bar {
+  filter: brightness(1.15);
+}
+
+.barSlot {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  min-height: 0;
+}
+
+.bar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 2px;
+  overflow: hidden;
+  border-radius: 3px 3px 0 0;
+}
+
+.segInput,
+.segCache,
+.segOutput {
+  flex-basis: 0;
+  min-height: 1px;
+}
+
+.dayLabel {
+  height: 18px;
+  font-size: $text-caption;
+  line-height: 18px;
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  z-index: 5;
+  transform: translateX(-50%);
+  min-width: 168px;
+  padding: 8px 12px;
+  background: var(--panel-raised);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-popover);
+  pointer-events: none;
+}
+
+.tooltipTitle {
+  margin-bottom: 4px;
+  font-size: $text-dense;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tooltipRows {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 16px;
+  margin: 0;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-variant-numeric: tabular-nums;
+
+  dt {
+    color: var(--ink-muted);
+  }
+
+  dd {
+    margin: 0;
+    text-align: right;
+    color: var(--ink);
+  }
+}
+
+/* ---------- Tables ---------- */
+
+.table {
+  font-size: $text-dense;
+}
+
+.labelCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+}
+
+.cellMain {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.cellSub {
+  font-size: $text-caption;
+  color: var(--ink-faint);
+}
+
+.mono {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: $text-caption;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.failed {
+  color: var(--cap-depleted);
+}
+
+.noPrice {
+  color: var(--ink-faint);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  background: var(--count-badge-bg);
+  color: var(--count-badge-text);
+  font-size: $text-caption;
+  line-height: 18px;
+}
+
+/* ---------- Footer and pricing editor ---------- */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editorNote {
+  margin: 0;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
+}
+
+.editorScroll {
+  overflow-x: auto;
+}
+
+.editorTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $text-dense;
+
+  th {
+    padding: 4px 8px;
+    text-align: left;
+    font-weight: 500;
+    color: var(--ink-muted);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 2px 4px;
+  }
+}
+
+.alignRight {
+  text-align: right;
+}
+
+.editorInput {
+  width: 100%;
+  min-width: 72px;
+  height: 28px;
+  padding: 0 8px;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  background: var(--panel-sunken);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.iconBtn {
+  @include button-reset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-control);
+  color: var(--ink-muted);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.editorError {
+  margin: 0;
+  font-size: $text-dense;
+  color: var(--cap-depleted);
+}
+
+.editorActions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment {
+    transition: none;
+  }
+}

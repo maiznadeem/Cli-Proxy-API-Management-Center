@@ -11,6 +11,11 @@ import { readConfigBoolean } from './visualConfigBoolean';
 // Source: backend config_v8.go/config_types.go; provider paths are OAuth-only.
 export const ADDITION_FIELDS = [
   {
+    key: 'routingSpendUsageCredits',
+    path: 'routing.spend-usage-credits'.split('.'),
+    kind: 'boolean',
+  },
+  {
     key: 'routingSessionAffinitySubagents',
     path: 'routing.session-affinity-subagents'.split('.'),
     kind: 'boolean',

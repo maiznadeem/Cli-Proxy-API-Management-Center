@@ -38,6 +38,14 @@ const L = (key: string) => `config_management.visual.${key}`;
 
 export const CONFIG_FIELD_SEARCH_INDEX: ConfigFieldSearchEntry[] = [
   {
+    fieldId: 'routingSpendUsageCredits',
+    sectionId: 'network',
+    labelKey: L('additions.routingSpendUsageCredits.label'),
+    hintKey: L('additions.routingSpendUsageCredits.hint'),
+    yamlKeys: ['routing', 'spend-usage-credits'],
+    keywords: ['extra usage', 'overage', 'paid', 'claude'],
+  },
+  {
     fieldId: 'routingSessionAffinitySubagents',
     sectionId: 'network',
     labelKey: L('additions.routingSessionAffinitySubagents.label'),

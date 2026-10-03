@@ -119,6 +119,8 @@
 }
 
 .identity {
+  display: flex;
+  align-items: center;
   margin: 0;
   min-width: 0;
   font-size: $text-body;
@@ -140,6 +142,27 @@
 }
 
 /* Small facts under the name: provider, filename, size, modified, priority, weight. */
+/* Exhausted / on-credits markers sit after the account name. */
+.badge {
+  flex: 0 0 auto;
+  margin-left: 8px;
+  padding: 0 8px;
+  border: 1px solid currentColor;
+  border-radius: $radius-full;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badgeExhausted {
+  color: var(--cap-depleted);
+}
+
+.badgeOnCredits {
+  color: var(--warning-text);
+}
+
 .facts {
   margin: 0;
   display: flex;

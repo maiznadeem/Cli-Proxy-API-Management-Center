@@ -131,6 +131,7 @@ export type VisualConfigValues = {
   discoveryAuthRequired: boolean;
   discoveryAdvertiseManagement: boolean;
 
+  routingSpendUsageCredits: boolean;
   routingSessionAffinitySubagents: boolean;
   saveCooldownStatus: boolean;
   transientErrorCooldownSeconds: string;
@@ -235,6 +236,7 @@ export const DEFAULT_VISUAL_VALUES: VisualConfigValues = {
   discoveryAuthRequired: true,
   discoveryAdvertiseManagement: false,
 
+  routingSpendUsageCredits: true,
   routingSessionAffinitySubagents: true,
   saveCooldownStatus: false,
   transientErrorCooldownSeconds: '',
