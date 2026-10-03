@@ -85,12 +85,14 @@ $desktop-min: $breakpoint-mobile + 1px;
   background: var(--panel);
   border-right: 1px solid var(--hairline);
 
+  // The brand row is independent of the 40px status strip: a taller row, with the mark's
+  // left edge on the same 18px line as the nav icons below it.
   .sidebar-header {
     display: flex;
     align-items: center;
     gap: $spacing-sm;
-    height: $strip-height;
-    padding: 0 $spacing-sm 0 14px;
+    height: 56px;
+    padding: 0 $spacing-sm 0 18px;
     flex-shrink: 0;
   }
 
