@@ -118,8 +118,8 @@ export function AuthFileCard(props: AuthFileCardProps) {
   const weightValue = Number.isSafeInteger(file.weight) ? file.weight : undefined;
   const noteValue = typeof file.note === 'string' ? file.note.trim() : '';
   const identity = deriveAuthFileIdentity(file);
-  const isExhausted = file.exhausted === true;
-  const isOnCredits = isExhausted && file.usage_credits?.enabled === true;
+  const isExhausted = file.quota?.exhausted === true;
+  const isOnCredits = isExhausted && file.quota?.usage_credits?.enabled === true;
 
   // Capture the entrance delay once on mount so a later null does not cut the fade short.
   const [mountEntranceDelayMs] = useState<number | null>(entranceDelayMs ?? null);

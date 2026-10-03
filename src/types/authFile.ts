@@ -87,12 +87,19 @@ export interface AuthFileItem {
   failureCount?: number;
   recent_requests?: RecentRequestBucket[];
   recentRequests?: RecentRequestBucket[];
+  /** Server quota observation; carries exhausted / usage_credits / windows on fork.3+. */
+  quota?: AuthFileQuotaObservation;
+  /** Absent on older servers. Never interpreted as credential health. */
+  cooldownSnapshot?: AuthFileCooldownSnapshot;
+  [key: string]: unknown;
+}
+
+export interface AuthFileQuotaObservation {
+  reset_at?: string;
   /** All limit windows are used up. Absent on older servers. */
   exhausted?: boolean;
   usage_credits?: AuthFileUsageCredits;
   windows?: AuthFileWindows;
-  /** Absent on older servers. Never interpreted as credential health. */
-  cooldownSnapshot?: AuthFileCooldownSnapshot;
   [key: string]: unknown;
 }
 
