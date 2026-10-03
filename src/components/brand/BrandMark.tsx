@@ -1,20 +1,24 @@
 /**
- * Manifold product mark.
+ * Agent Tracker product mark.
  *
- * One inlet splitting into three outlets: the proxy takes one stream of requests and
- * distributes it across accounts. The three outlets carry the capacity scale so the
- * mark shares its palette with the meters rather than introducing a brand colour.
- * Decorative only; callers provide the accessible name where one is needed.
+ * A tracking reticle: an open ring, a fixed centre point, and the tracked point breaking
+ * out through the ring's gap. One white glyph on a solid accent tile so it stays legible
+ * at favicon size and in both themes. Decorative only; callers provide the accessible
+ * name where one is needed.
  */
 
 export interface BrandMarkProps {
   size?: number;
   className?: string;
-  /** Draw the raised tile behind the glyph. Off for inline use next to text. */
+  /** Draw the accent tile behind the glyph. Off for inline use next to text. */
   tile?: boolean;
 }
 
+// Ring of radius 11 around (20, 20) with a 70° gap centred on the top-right diagonal.
+const RING_ARC = 'M 27.4 12.6 A 11 11 0 1 0 29.3 15.7';
+
 export function BrandMark({ size = 24, className, tile = true }: BrandMarkProps) {
+  const glyph = tile ? 'var(--accent-contrast)' : 'var(--accent)';
   return (
     <svg
       className={className}
@@ -24,25 +28,22 @@ export function BrandMark({ size = 24, className, tile = true }: BrandMarkProps)
       aria-hidden="true"
       focusable="false"
     >
-      {tile && <rect width="40" height="40" rx="10" fill="var(--panel-raised)" />}
-      <g fill="none" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M8 20h7c4 0 4-8 8-8h9" stroke="var(--accent)" />
-        <path d="M8 20h24" stroke="var(--cap-plenty)" />
-        <path d="M8 20h7c4 0 4 8 8 8h9" stroke="var(--cap-watch)" />
-      </g>
+      {tile && <rect width="40" height="40" rx="10" fill="var(--accent)" />}
+      <path d={RING_ARC} fill="none" stroke={glyph} strokeWidth="3.5" strokeLinecap="round" />
+      <circle cx="20" cy="20" r="3.25" fill={glyph} />
+      <circle cx="31" cy="9" r="3.25" fill={glyph} />
     </svg>
   );
 }
 
 /** Same glyph as a favicon-safe data URI (fixed colours; CSS variables do not apply there). */
 export const BRAND_MARK_DATA_URI =
-  "data:image/svg+xml," +
+  'data:image/svg+xml,' +
   encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">' +
-      '<rect width="40" height="40" rx="10" fill="#121a24"/>' +
-      '<g fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M8 20h7c4 0 4-8 8-8h9" stroke="#6fa2ff"/>' +
-      '<path d="M8 20h24" stroke="#5bd6a5"/>' +
-      '<path d="M8 20h7c4 0 4 8 8 8h9" stroke="#f0b94a"/>' +
-      '</g></svg>'
+      '<rect width="40" height="40" rx="10" fill="#2f6fe4"/>' +
+      `<path d="${RING_ARC}" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>` +
+      '<circle cx="20" cy="20" r="3.25" fill="#fff"/>' +
+      '<circle cx="31" cy="9" r="3.25" fill="#fff"/>' +
+      '</svg>'
   );

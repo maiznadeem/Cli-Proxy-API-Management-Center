@@ -57,11 +57,11 @@
     "unsaved_changes_message": "You have unsaved changes. Leaving now will discard them. Do you want to leave?"
   },
   "title": {
-    "login": "Manifold",
-    "abbr": "Manifold"
+    "login": "Agent Tracker",
+    "abbr": "Agent Tracker"
   },
   "splash": {
-    "title": "Manifold",
+    "title": "Agent Tracker",
     "subtitle": "Proxy control room"
   },
   "login": {
@@ -1814,7 +1814,7 @@
     "updates_title": "Updates",
     "models_col_model": "Model",
     "models_col_provider": "Provider",
-    "about_title": "Manifold",
+    "about_title": "Agent Tracker",
     "models_title": "Available Models",
     "models_desc": "Shows the /models response and uses saved API keys for auth automatically.",
     "models_loading": "Loading available models...",

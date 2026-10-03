@@ -293,7 +293,7 @@ export function MainLayout() {
   useEffect(() => {
     const active = document.querySelector<HTMLElement>('.sidebar a[aria-current="page"]');
     const label = active?.textContent?.trim().replace(/\s*\d+$/, '') ?? '';
-    document.title = label ? `${label} – Manifold` : 'Manifold';
+    document.title = label ? `${label} – Agent Tracker` : 'Agent Tracker';
   }, [location.pathname]);
 
   const logout = useAuthStore((state) => state.logout);

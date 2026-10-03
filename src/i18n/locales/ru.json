@@ -57,11 +57,11 @@
     "unsaved_changes_message": "У вас есть несохранённые изменения. Если вы уйдёте, они будут потеряны. Выйти?"
   },
   "title": {
-    "login": "Manifold",
-    "abbr": "Manifold"
+    "login": "Agent Tracker",
+    "abbr": "Agent Tracker"
   },
   "splash": {
-    "title": "Manifold",
+    "title": "Agent Tracker",
     "subtitle": "Пульт управления прокси"
   },
   "login": {
@@ -1804,7 +1804,7 @@
     "updates_title": "Обновления",
     "models_col_model": "Модель",
     "models_col_provider": "Провайдер",
-    "about_title": "Manifold",
+    "about_title": "Agent Tracker",
     "models_title": "Доступные модели",
     "models_desc": "Показывает ответ /models и автоматически использует сохранённые API-ключи для авторизации.",
     "models_loading": "Загрузка доступных моделей...",

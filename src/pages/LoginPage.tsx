@@ -106,7 +106,7 @@ function getLocalizedErrorMessage(error: unknown, t: (key: string) => string): s
 export function LoginPage() {
   const { t } = useTranslation();
   useEffect(() => {
-    document.title = `${t('login.title')} – Manifold`;
+    document.title = `${t('login.title')} – Agent Tracker`;
   }, [t]);
   const navigate = useNavigate();
   const location = useLocation();

@@ -57,11 +57,11 @@
     "unsaved_changes_message": "你有未儲存的變更，離開後將遺失這些變更。確定要離開嗎？"
   },
   "title": {
-    "login": "Manifold",
-    "abbr": "Manifold"
+    "login": "Agent Tracker",
+    "abbr": "Agent Tracker"
   },
   "splash": {
-    "title": "Manifold",
+    "title": "Agent Tracker",
     "subtitle": "代理控制台"
   },
   "login": {
@@ -1831,7 +1831,7 @@
     "updates_title": "更新",
     "models_col_model": "模型",
     "models_col_provider": "提供者",
-    "about_title": "Manifold",
+    "about_title": "Agent Tracker",
     "models_title": "可用模型清單",
     "models_desc": "展示 /models 回傳的模型，並自動使用伺服器儲存的 API Key 進行驗證。",
     "models_loading": "正在載入可用模型...",
