@@ -1809,8 +1809,8 @@
   },
   "theme": {
     "switch": "Theme",
-    "light": "Wool Paper",
-    "white": "Pure White",
+    "light": "Light",
+    "white": "White",
     "dark": "Dark",
     "auto": "Follow system"
   },
