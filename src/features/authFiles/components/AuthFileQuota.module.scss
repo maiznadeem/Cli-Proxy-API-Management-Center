@@ -16,7 +16,7 @@ $quota-font-size: 11.5px;
 .quotaSection {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 10px 20px;
   min-width: 0;
   font-size: $text-caption;
@@ -112,9 +112,12 @@ button.quotaMessageAction {
 
 /* ---------- Capacity columns ---------- */
 
+/* Columns stretch to the tallest sibling and pin their meter to the bottom, so a
+   wrapped reset label never pushes one meter below its neighbours. */
 .quotaRow {
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   gap: 4px;
   flex: 1 1 120px;
   min-width: 110px;
@@ -125,6 +128,7 @@ button.quotaMessageAction {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  flex: 1 0 auto;
   gap: 0;
   min-width: 0;
 }
