@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import i18n from '@/i18n';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../src/i18n/index';
@@ -71,7 +72,9 @@ describe('QuotaTimeline rendering', () => {
 
     expect(markup).toContain('<section');
     expect(markup).toContain('aria-pressed="true"');
-    expect(markup).toContain('role="status"');
+    // A loaded credential without a 5-hour window stays visible as an idle lane
+    // instead of disappearing from the calendar.
+    expect(markup).toContain(i18n.t('quota_management.windows_idle_session'));
   });
 
   test('renders a Kimi 5-hour lane from the protobuf-style time unit', () => {
