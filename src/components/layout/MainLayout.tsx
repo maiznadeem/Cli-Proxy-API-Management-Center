@@ -291,8 +291,10 @@ export function MainLayout() {
   const { showNotification } = useNotificationStore();
   const location = useLocation();
   useEffect(() => {
-    const active = document.querySelector<HTMLElement>('.sidebar a[aria-current="page"]');
-    const label = active?.textContent?.trim().replace(/\s*\d+$/, '') ?? '';
+    const active = document.querySelector<HTMLElement>(
+      '.sidebar a[aria-current="page"] .nav-label'
+    );
+    const label = active?.textContent?.trim() ?? '';
     document.title = label ? `${label} – Agent Tracker` : 'Agent Tracker';
   }, [location.pathname]);
 
