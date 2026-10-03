@@ -1,0 +1,280 @@
+@use '../../styles/mixins' as *;
+
+/* ============================================================
+ * Routing page shell: header, toolbar, thread list. Ribbon and
+ * account panel detail lives in each component module.
+ * ============================================================ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* ---------- Header (matches the Capacity header) ---------- */
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: $text-page;
+  line-height: $lh-page;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.meta {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+
+.metaSep {
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  background: var(--hairline-strong);
+}
+
+.metaStrong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.metaWatch {
+  color: var(--cap-watch);
+  font-weight: 500;
+}
+
+.metaMuted {
+  color: var(--ink-faint);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.iconButton {
+  width: 32px;
+  padding: 0;
+  justify-content: center;
+}
+
+.errorBanner {
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--cap-depleted);
+  background: color-mix(in srgb, var(--cap-depleted) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cap-depleted) 32%, transparent);
+  border-radius: var(--radius-control);
+  padding: 8px 12px;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Toolbar ---------- */
+
+.workbench {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 0 1 320px;
+  min-width: 0;
+  height: 32px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--panel-sunken);
+  color: var(--ink-muted);
+  transition: border-color var(--dur-hover) var(--ease-standard);
+
+  &:focus-within {
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  pointer-events: none;
+  color: var(--ink-faint);
+}
+
+.searchInput {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0 36px 0 32px;
+  border: 0;
+  border-radius: inherit;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: $text-dense;
+  appearance: none;
+
+  &::placeholder {
+    color: var(--ink-faint);
+  }
+
+  &::-webkit-search-cancel-button,
+  &::-webkit-search-decoration {
+    appearance: none;
+  }
+}
+
+.clearSearch {
+  position: absolute;
+  right: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-hover) var(--ease-standard),
+    transform var(--dur-press) var(--ease-standard);
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .clearSearch:hover {
+    background: var(--panel-hover);
+    color: var(--ink);
+  }
+}
+
+.accountFilter {
+  flex: 0 0 auto;
+  min-width: 200px;
+  max-width: 100%;
+}
+
+.filterCount {
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+/* ---------- Body ---------- */
+
+.threads {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 16px 20px;
+  font-size: $text-body;
+  line-height: $lh-body;
+  color: var(--ink-muted);
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+}
+
+.noticeText {
+  margin: 0;
+  color: var(--ink);
+}
+
+@include mobile {
+  .page {
+    gap: 16px;
+  }
+
+  .header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .search {
+    flex: 1 1 200px;
+    height: 36px;
+  }
+
+  .accountFilter {
+    flex: 1 1 200px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search,
+  .clearSearch {
+    transition: none;
+  }
+
+  .clearSearch:active {
+    transform: none;
+  }
+}

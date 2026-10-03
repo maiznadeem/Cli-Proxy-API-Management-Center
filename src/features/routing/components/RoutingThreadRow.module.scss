@@ -1,0 +1,231 @@
+@use '../../../styles/mixins' as *;
+
+/* ============================================================
+ * Thread ribbon: one full-width band per session key.
+ *   [ client + session ] [ account, requests, models, last seen ] [ expand ]
+ * The only colour is the status dot; the request table opens underneath.
+ * ============================================================ */
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  background: var(--panel);
+  transition: border-color var(--dur-hover) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .thread:hover {
+    border-color: var(--hairline-strong);
+  }
+}
+
+.ribbon {
+  display: grid;
+  grid-template-columns: minmax(200px, 320px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 24px;
+  padding: 12px 12px 12px 20px;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.client {
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.session {
+  min-width: 0;
+  font-family: $font-mono;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
+  color: var(--ink);
+  @include text-ellipsis;
+}
+
+.facts {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  min-width: 0;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-variant-numeric: tabular-nums;
+}
+
+.account {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.accountLabel {
+  min-width: 0;
+  font-weight: 500;
+  color: var(--ink);
+  @include text-ellipsis;
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--cap-plenty);
+
+  &[data-tone='watch'] {
+    background: var(--cap-watch);
+  }
+}
+
+.count {
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.models {
+  min-width: 0;
+  max-width: 100%;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
+  @include text-ellipsis;
+}
+
+.lastSeen {
+  margin-left: auto;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.iconButton {
+  width: 28px;
+  padding: 0;
+  justify-content: center;
+}
+
+.chevron {
+  transition: transform var(--dur-base) var(--ease-standard);
+}
+
+.thread[data-expanded] .chevron {
+  transform: rotate(180deg);
+}
+
+/* ---------- Expanded request table ---------- */
+
+.detail {
+  padding: 0 12px 12px;
+  --table-max-height: 420px;
+}
+
+.table {
+  td {
+    white-space: nowrap;
+  }
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.event {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eventDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--ink-faint);
+
+  &[data-kind='hit'] {
+    background: var(--cap-plenty);
+  }
+
+  &[data-kind='rebind'] {
+    background: var(--cap-watch);
+  }
+}
+
+.cellAccount {
+  display: inline-block;
+  max-width: 260px;
+  vertical-align: bottom;
+  @include text-ellipsis;
+}
+
+.cellModel {
+  color: var(--ink-muted);
+}
+
+.status {
+  font-weight: 500;
+  color: var(--ink);
+
+  &[data-tone='warn'] {
+    color: var(--cap-watch);
+  }
+
+  &[data-tone='error'] {
+    color: var(--cap-depleted);
+  }
+
+  &[data-tone='pending'] {
+    font-weight: 400;
+    color: var(--ink-faint);
+  }
+}
+
+.requestId {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mono {
+  font-family: $font-mono;
+  font-size: $text-dense;
+  color: var(--ink-muted);
+}
+
+@include mobile {
+  .ribbon {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 12px;
+  }
+
+  .facts {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .lastSeen {
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thread,
+  .chevron {
+    transition: none;
+  }
+}
