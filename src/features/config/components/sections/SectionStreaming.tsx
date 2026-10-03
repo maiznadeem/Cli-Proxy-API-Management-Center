@@ -1,7 +1,6 @@
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/Input';
-import { CONFIG_TAB_ICONS, SECTION_INDEX_LABELS } from '../../constants';
 import type { ConfigSectionProps } from '../../types';
 import { SectionCard } from '../SectionCard';
 import {
@@ -14,14 +13,11 @@ import {
 } from '../fields/FieldPrimitives';
 import { getValidationMessage } from '../blocks/shared';
 
-const Icon = CONFIG_TAB_ICONS.streaming;
-
 /** 05 流式传输：keepalive 与 bootstrap 重试；nonstream-keepalive-interval 是顶层 YAML 键。 */
 export function SectionStreaming({
   values,
   validationErrors,
   disabled,
-  animateIn,
   onChange,
 }: ConfigSectionProps) {
   const { t } = useTranslation();
@@ -47,11 +43,8 @@ export function SectionStreaming({
 
   return (
     <SectionCard
-      indexLabel={SECTION_INDEX_LABELS.streaming}
-      icon={<Icon size={16} />}
       title={t('config_management.visual.sections.streaming.title')}
       description={t('config_management.visual.sections.streaming.description')}
-      animateIn={animateIn}
     >
       <FieldStack>
         <FieldGrid>

@@ -1,155 +1,235 @@
 @use '../../../../styles/mixins' as *;
 
-/* 字段原语：表单控件的 scoped 覆盖 + 开关行 / 网格 / 字段组 / 搜索锚点。
-   交互反馈一律引用全局动效 tokens（--dur-* / --ease-out-strong）。 */
+/* Field primitives: scoped form-control overrides, the two-column field row
+   (240px label column + control column), toggle rows, groups and the search anchor. */
 
-/* ---------- 表单控件宿主（原 .visualEditor 的 :global 覆盖收编于此） ---------- */
+$label-column: 240px;
+
+/* ---------- Form-control host (scoped overrides for everything inside a section) ---------- */
 
 .fieldsRoot {
   :global(.form-group) {
-    gap: 7px;
+    gap: 4px;
     margin-bottom: 0;
   }
 
   :global(.form-group > label) {
-    color: var(--text-secondary);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
+    color: var(--ink);
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    font-weight: 500;
   }
 
   :global(.input) {
-    min-height: 42px;
-    border-radius: 10px;
-    background: var(--bg-secondary);
-    border-color: var(--border-color);
-    box-shadow: none;
-    transition:
-      border-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-      background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-      box-shadow var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
-  }
-
-  :global(.input:focus) {
-    background: var(--bg-primary);
-    border-color: var(--text-primary);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-primary) 12%, transparent);
+    min-height: 32px;
   }
 
   :global(textarea.input) {
-    min-height: 112px;
+    min-height: 96px;
+    resize: vertical;
   }
 
   :global(.hint) {
-    color: var(--text-secondary);
-    font-size: 12px;
-    line-height: 1.55;
+    color: var(--ink-faint);
+    font-size: $text-caption;
+    line-height: $lh-caption;
   }
 
+  /* Validation text: plain 12px depleted ink, no box. */
   :global(.error-box) {
-    border-radius: 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--cap-depleted);
+    font-size: $text-caption;
+    line-height: $lh-caption;
   }
 
   :global(.item-list) {
-    gap: 8px;
-    margin-top: 8px;
+    gap: 0;
+    margin-top: 0;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-panel);
+    overflow: hidden;
   }
 
   :global(.item-row) {
-    border-radius: 10px;
-    padding: 12px;
+    flex-wrap: nowrap;
+    gap: 12px;
+    min-height: 48px;
+    padding: 8px 8px 8px 12px;
+    border: 0;
+    border-radius: 0;
     background: transparent;
-    border-color: var(--border-color);
+  }
+
+  :global(.item-row + .item-row) {
+    border-top: 1px solid var(--hairline);
   }
 
   :global(.item-row .item-meta) {
-    gap: 4px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  :global(.item-row .item-title) {
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    @include text-ellipsis;
+  }
+
+  :global(.item-row .item-subtitle) {
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    color: var(--ink-muted);
+    @include text-ellipsis;
   }
 
   :global(.item-row .item-actions) {
-    flex-wrap: wrap;
+    flex-shrink: 0;
+    gap: 2px;
   }
 
   :global(.pill) {
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background: transparent;
-    color: var(--text-secondary);
+    flex-shrink: 0;
+    min-width: 28px;
+    justify-content: center;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--panel-raised);
+    color: var(--ink-muted);
+    font-size: $text-caption;
+    line-height: $lh-caption;
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* ---------- 开关行 ---------- */
+/* ---------- Two-column field row ----------
+   Applies to a top-level field (Input form-group or FieldShell) directly inside its
+   search anchor. Label and helper sit in the label column; control and validation in
+   the control column. Nested editors keep the stacked label-over-control layout. */
 
-.toggleRow {
+.fieldAnchor > :global(.form-group),
+.fieldAnchor > .fieldShell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: center;
-  min-height: 74px;
-  padding: 14px;
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  background: transparent;
-  transition:
-    border-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+  grid-template-columns: $label-column minmax(0, 1fr);
+  column-gap: 24px;
+  row-gap: 4px;
+  align-items: start;
+
+  > * {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  > label {
+    grid-column: 1;
+    grid-row: 1;
+    padding-top: 7px;
+  }
+
+  > :global(.hint),
+  > .fieldHint,
+  > .fieldSponsorHint {
+    grid-column: 1;
+    grid-row: 2;
+  }
 
   @include mobile {
     grid-template-columns: minmax(0, 1fr);
+
+    > *,
+    > label,
+    > :global(.hint),
+    > .fieldHint,
+    > .fieldSponsorHint {
+      grid-column: 1;
+      grid-row: auto;
+    }
+
+    > label {
+      padding-top: 0;
+    }
   }
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .toggleRow:hover {
-    border-color: var(--border-hover);
-    background: color-mix(in srgb, var(--bg-tertiary) 40%, transparent);
+/* ---------- Toggle row ---------- */
+
+.toggleRow {
+  display: grid;
+  grid-template-columns: $label-column minmax(0, 1fr);
+  column-gap: 24px;
+  align-items: start;
+  min-width: 0;
+
+  > :last-child {
+    justify-self: start;
+  }
+
+  @include mobile {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 16px;
   }
 }
 
 .toggleCopy {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 2px;
   min-width: 0;
 }
 
 .toggleTitle {
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.25;
+  color: var(--ink);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
 }
 
 .toggleDescription {
-  color: var(--text-secondary);
-  font-size: 12px;
-  line-height: 1.55;
+  color: var(--ink-faint);
+  font-size: $text-caption;
+  line-height: $lh-caption;
 }
 
-/* ---------- 布局原语 ---------- */
+/* ---------- Layout ---------- */
 
+/* Nested grids (inside list editors) stay multi-column; top-level fields take a full row. */
 .fieldGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
+  gap: 20px 16px;
+
+  > .fieldAnchor {
+    grid-column: 1 / -1;
+  }
 
   @include mobile {
     grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
   }
 }
 
 .fieldStack {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 20px;
+
+  @include mobile {
+    gap: 16px;
+  }
 }
 
 .divider {
   height: 1px;
-  background: var(--border-color);
+  background: var(--hairline);
 }
 
-/* ---------- 搜索锚点与脉冲高亮 ---------- */
+/* ---------- Search anchor and jump highlight ---------- */
 
 .fieldAnchor {
   display: block;
@@ -157,127 +237,121 @@
   scroll-margin-top: calc(var(--header-height, 64px) + 16px);
 }
 
-/* 跨两列的字段（如长文本的代理 URL）；移动端单列布局下回退为一列。 */
+/* Kept for API compatibility: rows already span the full width. */
 .fieldAnchorWide {
-  grid-column: span 2;
-
-  @include mobile {
-    grid-column: auto;
-  }
+  grid-column: 1 / -1;
 }
 
-/* 字段标签下方的赞助跳转小字行（代理 URL 字段）。 */
+/* Sponsor line under the proxy URL label. */
 .fieldSponsorHint {
-  margin: -2px 0 0;
-  color: var(--text-secondary);
-  font-size: 12px;
-  line-height: 1.5;
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: $text-caption;
+  line-height: $lh-caption;
 }
 
-/* 与赞助行同字号同高度的隐形占位：同排右侧字段用它补齐标签区高度，让输入框与代理 URL 对齐。
-   移动端单列堆叠时无需对齐，直接隐藏。 */
+/* Alignment spacer from the old multi-column grid; rows no longer need it. */
 .fieldSponsorSpacer {
-  margin: -2px 0 0;
-  font-size: 12px;
-  line-height: 1.5;
-  visibility: hidden;
-
-  @include mobile {
-    display: none;
-  }
+  display: none;
 }
 
-/* 与正文融为一体的高亮链接：同字号，复用全站金色（amber）badge 配方，hover 底色加深。 */
 .fieldSponsorLink {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 1px 5px;
-  border: 1px solid var(--amber-30);
-  border-radius: 5px;
-  background: var(--amber-10);
-  color: var(--amber-text);
-  font-weight: 600;
+  border-radius: 4px;
+  color: var(--accent);
+  font-weight: 500;
   text-decoration: none;
   vertical-align: baseline;
-  transition: background-color 0.15s ease;
 
   &:hover {
-    background: var(--amber-30);
-    text-decoration: none;
+    color: var(--accent-hover);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
 .fieldSponsorLogo {
   display: block;
   width: auto;
-  height: 13px;
+  height: 12px;
 }
 
 .fieldHighlightActive {
-  border-radius: 10px;
-  animation: config-field-highlight 1.8s ease-out;
+  border-radius: var(--radius-control);
+  animation: config-field-highlight 1.8s var(--ease-standard);
 }
 
 @keyframes config-field-highlight {
-  0% {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-primary) 55%, transparent);
-  }
-  55% {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-primary) 32%, transparent);
+  0%,
+  40% {
+    box-shadow:
+      0 0 0 4px var(--accent-10),
+      0 0 0 5px var(--accent);
   }
   100% {
-    box-shadow: 0 0 0 3px transparent;
+    box-shadow:
+      0 0 0 4px transparent,
+      0 0 0 5px transparent;
   }
 }
 
-/* ---------- 字段组（原 subsection） ---------- */
+/* ---------- Field group (subsection) ---------- */
 
 .group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   padding: 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
   background: transparent;
+
+  @include mobile {
+    padding: 12px;
+  }
 }
 
 .groupHeader {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 2px;
 }
 
 .groupTitle {
   margin: 0;
-  color: var(--text-primary);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.25;
+  color: var(--ink);
+  font-size: $text-body;
+  line-height: $lh-body;
+  font-weight: 600;
 }
 
 .groupDescription {
   margin: 0;
-  color: var(--text-secondary);
-  font-size: 12px;
-  line-height: 1.6;
+  color: var(--ink-muted);
+  font-size: $text-dense;
+  line-height: $lh-dense;
 }
 
-/* ---------- 字段外壳 ---------- */
+/* ---------- Field shell ---------- */
 
 .fieldShell {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 4px;
   min-width: 0;
 }
 
 .fieldLabel {
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  color: var(--ink);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
 }
 
 .fieldControl {
@@ -285,54 +359,35 @@
 }
 
 .fieldHint {
-  color: var(--text-secondary);
-  font-size: 12px;
-  line-height: 1.55;
+  color: var(--ink-faint);
+  font-size: $text-caption;
+  line-height: $lh-caption;
 }
 
 .inlinePill {
   position: absolute;
-  right: 8px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
+  height: 20px;
   padding: 0 8px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 700;
+  border-radius: var(--radius-pill);
+  background: var(--panel-raised);
+  color: var(--ink-muted);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  pointer-events: none;
 }
 
-/* ---------- 响应式 ---------- */
-
-@include mobile {
-  .group,
-  .toggleRow {
-    padding: 14px;
-  }
-}
-
-@media (max-width: 380px) {
-  .group,
-  .toggleRow {
-    padding: 12px;
-  }
-}
-
-/* ---------- 无障碍 ---------- */
+/* ---------- Reduced motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .fieldsRoot :global(.input),
-  .toggleRow {
-    transition: none;
-  }
-
   .fieldHighlightActive {
     animation: none;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-primary) 32%, transparent);
+    box-shadow:
+      0 0 0 4px var(--accent-10),
+      0 0 0 5px var(--accent);
   }
 }

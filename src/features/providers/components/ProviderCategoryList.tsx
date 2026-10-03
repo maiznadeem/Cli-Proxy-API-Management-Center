@@ -31,30 +31,18 @@ export function ProviderCategoryList({ groups, activeBrand, onSelect }: Provider
         const total = group.resources.length;
         const activeCount = group.resources.filter((r) => !r.disabled).length;
         const logo = PROVIDER_LOGOS[group.id];
-        const itemClass = [
-          styles.item,
-          active ? styles.active : '',
-          group.id === 'kimi' ? styles.itemKimi : '',
-        ]
+        const itemClass = [styles.item, active ? styles.active : ''].filter(Boolean).join(' ');
+        const tileClassName = [styles.tile, logo?.themeSurface ? styles.tileThemeSurface : '']
           .filter(Boolean)
           .join(' ');
         const logoClassName = [
           styles.logo,
-          logo?.transparent ? styles.logoTransparent : '',
-          logo?.themeSurface ? styles.logoThemeSurface : '',
           logo?.darkSrc ? styles.logoThemeLight : '',
           logo?.invertOnDark ? styles.logoInvertOnDark : '',
         ]
           .filter(Boolean)
           .join(' ');
-        const darkLogoClassName = [
-          styles.logo,
-          logo?.transparent ? styles.logoTransparent : '',
-          logo?.themeSurface ? styles.logoThemeSurface : '',
-          styles.logoThemeDark,
-        ]
-          .filter(Boolean)
-          .join(' ');
+        const darkLogoClassName = [styles.logo, styles.logoThemeDark].join(' ');
 
         return (
           <button
@@ -64,41 +52,22 @@ export function ProviderCategoryList({ groups, activeBrand, onSelect }: Provider
             onClick={() => onSelect(group.id)}
             aria-current={active ? 'page' : undefined}
           >
-            <span className={styles.itemLeft}>
+            <span className={tileClassName} aria-hidden="true">
               {logo ? (
                 <>
-                  <img src={logo.src} alt="" aria-hidden="true" className={logoClassName} />
+                  <img src={logo.src} alt="" className={logoClassName} />
                   {logo.darkSrc ? (
-                    <img
-                      src={logo.darkSrc}
-                      alt=""
-                      aria-hidden="true"
-                      className={darkLogoClassName}
-                    />
+                    <img src={logo.darkSrc} alt="" className={darkLogoClassName} />
                   ) : null}
                 </>
               ) : null}
-              <span className={styles.itemText}>
-                <span className={styles.itemTitle}>
-                  {t(`providersPage.providerNames.${group.id}`)}
-                </span>
-                <span className={styles.itemSubtitle}>
-                  {t('providersPage.categories.activeCount', {
-                    active: activeCount,
-                    total,
-                  })}
-                </span>
-              </span>
             </span>
-            <span
-              className={[
-                styles.badge,
-                total === 0 ? (group.id === 'kimi' ? styles.badgeKimi : styles.badgeAmber) : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              {total}
+            <span className={styles.name}>{t(`providersPage.providerNames.${group.id}`)}</span>
+            <span className={total === 0 ? `${styles.count} ${styles.countEmpty}` : styles.count}>
+              {t('providersPage.categories.activeCount', {
+                active: activeCount,
+                total,
+              })}
             </span>
           </button>
         );
@@ -107,17 +76,17 @@ export function ProviderCategoryList({ groups, activeBrand, onSelect }: Provider
   );
 
   return (
-    <div className={styles.stack}>
-      <aside className={styles.aside}>
-        <p className={styles.eyebrow}>{t('providersPage.categories.title')}</p>
+    <nav className={styles.navigator} aria-label={t('providersPage.categories.title')}>
+      <div className={styles.group}>
+        <p className={styles.groupLabel}>{t('providersPage.categories.title')}</p>
         {renderGroups(providerGroups)}
-      </aside>
+      </div>
       {quickFillGroups.length > 0 && (
-        <aside className={styles.aside}>
-          <p className={styles.eyebrow}>{t('providersPage.categories.quickFill')}</p>
+        <div className={styles.group}>
+          <p className={styles.groupLabel}>{t('providersPage.categories.quickFill')}</p>
           {renderGroups(quickFillGroups)}
-        </aside>
+        </div>
       )}
-    </div>
+    </nav>
   );
 }

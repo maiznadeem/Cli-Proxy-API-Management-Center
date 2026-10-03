@@ -2,6 +2,7 @@ import { memo, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { IconCopy, IconPencil, IconTrash2 } from '@/components/ui/icons';
 import { useAuthStore, useNotificationStore } from '@/stores';
 import { apiKeyNameFingerprint, readApiKeyNames, saveApiKeyName } from '../../apiKeyNames';
 import { copyToClipboard } from '@/utils/clipboard';
@@ -150,15 +151,12 @@ function ScopedApiKeysCardEditor({
     <div className="form-group" style={{ marginBottom: 0 }}>
       <div className={styles.blockHeaderRow}>
         <label style={{ margin: 0 }}>{t('config_management.visual.api_keys.label')}</label>
-        <Button size="sm" onClick={openAddModal} disabled={disabled}>
-          {t('config_management.visual.api_keys.add')}
-        </Button>
       </div>
 
       {apiKeys.length === 0 ? (
         <div className={styles.emptyState}>{t('config_management.visual.api_keys.empty')}</div>
       ) : (
-        <div className="item-list" style={{ marginTop: 4 }}>
+        <div className="item-list">
           {apiKeys.map((key, index) => (
             <div key={renderApiKeyIds[index] ?? `${key}-${index}`} className="item-row">
               <div className="item-meta">
@@ -171,34 +169,46 @@ function ScopedApiKeysCardEditor({
               </div>
               <div className="item-actions">
                 <Button
-                  variant="secondary"
-                  size="sm"
+                  variant="ghost"
+                  className={styles.iconAction}
                   onClick={() => handleCopy(key)}
                   disabled={disabled}
+                  title={t('common.copy')}
+                  aria-label={t('common.copy')}
                 >
-                  {t('common.copy')}
+                  <IconCopy size={16} />
                 </Button>
                 <Button
-                  variant="secondary"
-                  size="sm"
+                  variant="ghost"
+                  className={styles.iconAction}
                   onClick={() => openEditModal(renderApiKeyIds[index] ?? '')}
                   disabled={disabled}
+                  title={t('config_management.visual.common.edit')}
+                  aria-label={t('config_management.visual.common.edit')}
                 >
-                  {t('config_management.visual.common.edit')}
+                  <IconPencil size={16} />
                 </Button>
                 <Button
-                  variant="danger"
-                  size="sm"
+                  variant="ghost"
+                  className={`${styles.iconAction} ${styles.iconActionDanger}`}
                   onClick={() => handleDelete(renderApiKeyIds[index] ?? '')}
                   disabled={disabled}
+                  title={t('config_management.visual.common.delete')}
+                  aria-label={t('config_management.visual.common.delete')}
                 >
-                  {t('config_management.visual.common.delete')}
+                  <IconTrash2 size={16} />
                 </Button>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      <div className={styles.actionRow}>
+        <Button variant="secondary" onClick={openAddModal} disabled={disabled}>
+          {t('config_management.visual.api_keys.add')}
+        </Button>
+      </div>
 
       <div className="hint">{t('config_management.visual.api_keys.hint')}</div>
 

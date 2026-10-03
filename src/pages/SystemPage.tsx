@@ -1,53 +1,47 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
-import { IconGithub, IconBookOpen, IconExternalLink, IconCode } from '@/components/ui/icons';
 import {
-  useAuthStore,
-  useConfigStore,
-  useNotificationStore,
-  useModelsStore,
-  useThemeStore,
-} from '@/stores';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/Table';
+import { IconExternalLink } from '@/components/ui/icons';
+import { useAuthStore, useConfigStore, useNotificationStore, useModelsStore } from '@/stores';
 import { configApi, versionApi } from '@/services/api';
 import { useApiKeysForModels } from '@/hooks/useApiKeysForModels';
 import { formatDateTimeValue } from '@/utils/format';
 import { classifyModels } from '@/utils/models';
 import { STORAGE_KEY_AUTH } from '@/utils/constants';
-import { INLINE_LOGO_JPEG } from '@/assets/logoInline';
-import iconGemini from '@/assets/icons/gemini.svg';
-import iconClaude from '@/assets/icons/claude.svg';
-import iconMeta from '@/assets/icons/meta.svg';
-import iconDevinLight from '@/assets/icons/devin.svg';
-import iconDevinDark from '@/assets/icons/devin-dark.svg';
-import iconOpenaiLight from '@/assets/icons/openai-light.svg';
-import iconOpenaiDark from '@/assets/icons/openai-dark.svg';
-import iconQwen from '@/assets/icons/qwen.svg';
-import iconKimiLight from '@/assets/icons/kimi-light.svg';
-import iconKimiDark from '@/assets/icons/kimi-dark.svg';
-import iconGlm from '@/assets/icons/glm.svg';
-import iconGrok from '@/assets/icons/grok.svg';
-import iconGrokDark from '@/assets/icons/grok-dark.svg';
-import iconDeepseek from '@/assets/icons/deepseek.svg';
-import iconMinimax from '@/assets/icons/minimax.svg';
 import styles from './SystemPage.module.scss';
 
-const MODEL_CATEGORY_ICONS: Record<string, string | { light: string; dark: string }> = {
-  devin: { light: iconDevinLight, dark: iconDevinDark },
-  gpt: { light: iconOpenaiLight, dark: iconOpenaiDark },
-  claude: iconClaude,
-  meta: iconMeta,
-  gemini: iconGemini,
-  qwen: iconQwen,
-  kimi: { light: iconKimiDark, dark: iconKimiLight },
-  glm: iconGlm,
-  grok: { light: iconGrok, dark: iconGrokDark },
-  deepseek: iconDeepseek,
-  minimax: iconMinimax,
-};
+type StatusTone = 'success' | 'warning' | 'error' | 'muted';
+
+const QUICK_LINKS = [
+  {
+    href: 'https://github.com/router-for-me/CLIProxyAPI',
+    titleKey: 'system_info.link_main_repo',
+    descKey: 'system_info.link_main_repo_desc',
+  },
+  {
+    href: 'https://github.com/router-for-me/Cli-Proxy-API-Management-Center',
+    titleKey: 'system_info.link_webui_repo',
+    descKey: 'system_info.link_webui_repo_desc',
+  },
+  {
+    href: 'https://help.router-for.me/',
+    titleKey: 'system_info.link_docs',
+    descKey: 'system_info.link_docs_desc',
+  },
+] as const;
+
+// Labels borrowed from other namespaces may carry a trailing colon for inline use.
+const stripTrailingColon = (label: string) => label.replace(/\s*[:：]\s*$/, '');
 
 const parseVersionSegments = (version?: string | null) => {
   if (!version) return null;
@@ -78,7 +72,6 @@ const compareVersions = (latest?: string | null, current?: string | null) => {
 export function SystemPage() {
   const { t, i18n } = useTranslation();
   const { showNotification, showConfirmation } = useNotificationStore();
-  const resolvedTheme = useThemeStore((state) => state.resolvedTheme);
   const auth = useAuthStore();
   const config = useConfigStore((state) => state.config);
   const fetchConfig = useConfigStore((state) => state.fetchConfig);
@@ -91,7 +84,11 @@ export function SystemPage() {
   const fetchModelsFromStore = useModelsStore((state) => state.fetchModels);
 
   const [modelStatus, setModelStatus] = useState<{
-    type: 'success' | 'warning' | 'error' | 'muted';
+    type: StatusTone;
+    message: string;
+  }>();
+  const [updateStatus, setUpdateStatus] = useState<{
+    type: StatusTone;
     message: string;
   }>();
   const [requestLogModalOpen, setRequestLogModalOpen] = useState(false);
@@ -102,6 +99,7 @@ export function SystemPage() {
 
   const versionTapCount = useRef(0);
   const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const headingId = useId();
 
   const otherLabel = useMemo(
     () => (i18n.language?.toLowerCase().startsWith('zh') ? '其他' : 'Other'),
@@ -116,13 +114,6 @@ export function SystemPage() {
   const apiVersion = auth.serverVersion || t('system_info.version_unknown');
   const buildTime =
     formatDateTimeValue(auth.serverBuildDate, i18n.language) || t('system_info.version_unknown');
-
-  const getIconForCategory = (categoryId: string): string | null => {
-    const iconEntry = MODEL_CATEGORY_ICONS[categoryId];
-    if (!iconEntry) return null;
-    if (typeof iconEntry === 'string') return iconEntry;
-    return resolvedTheme === 'dark' ? iconEntry.dark : iconEntry.light;
-  };
 
   const resolveApiKeysForModels = useApiKeysForModels();
 
@@ -236,6 +227,11 @@ export function SystemPage() {
   };
 
   const handleVersionCheck = useCallback(async () => {
+    // Result shows inline next to the button and as a toast, as before.
+    const report = (type: 'success' | 'warning' | 'error', message: string) => {
+      setUpdateStatus({ type, message });
+      showNotification(message, type);
+    };
     setCheckingVersion(true);
     try {
       const data = await versionApi.checkLatest();
@@ -244,25 +240,25 @@ export function SystemPage() {
       const comparison = compareVersions(latest, auth.serverVersion);
 
       if (!latest) {
-        showNotification(t('system_info.version_check_error'), 'error');
+        report('error', t('system_info.version_check_error'));
         return;
       }
 
       if (comparison === null) {
-        showNotification(t('system_info.version_current_missing'), 'warning');
+        report('warning', t('system_info.version_current_missing'));
         return;
       }
 
       if (comparison > 0) {
-        showNotification(t('system_info.version_update_available', { version: latest }), 'warning');
+        report('warning', t('system_info.version_update_available', { version: latest }));
       } else {
-        showNotification(t('system_info.version_is_latest'), 'success');
+        report('success', t('system_info.version_is_latest'));
       }
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : typeof error === 'string' ? error : '';
       const suffix = message ? `: ${message}` : '';
-      showNotification(`${t('system_info.version_check_error')}${suffix}`, 'error');
+      report('error', `${t('system_info.version_check_error')}${suffix}`);
     } finally {
       setCheckingVersion(false);
     }
@@ -293,122 +289,86 @@ export function SystemPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.connectionStatus, auth.apiBase]);
 
+  const sectionId = (name: string) => `${headingId}-${name}`;
+  const connectionTone: StatusTone =
+    auth.connectionStatus === 'connected'
+      ? 'success'
+      : auth.connectionStatus === 'error'
+        ? 'error'
+        : 'muted';
+
   return (
     <div className={styles.container}>
-      <h1 className={styles.pageTitle}>{t('system_info.title')}</h1>
+      <header className={styles.header}>
+        <h1 className={styles.pageTitle}>{t('system_info.title')}</h1>
+        <p className={styles.meta}>{t('system_info.about_title')}</p>
+      </header>
+
       <div className={styles.content}>
-        <Card className={styles.aboutCard}>
-          <div className={styles.aboutHeader}>
-            <img src={INLINE_LOGO_JPEG} alt="CPAMC" className={styles.aboutLogo} />
-            <div className={styles.aboutTitle}>{t('system_info.about_title')}</div>
-          </div>
+        <section className={styles.panel} aria-labelledby={sectionId('versions')}>
+          <h2 id={sectionId('versions')} className={styles.panelTitle}>
+            {t('system_info.versions_title')}
+          </h2>
+          <dl className={styles.definitions}>
+            <div className={styles.definitionRow}>
+              <dt>{t('footer.version')}</dt>
+              <dd>
+                <button type="button" className={styles.versionTap} onClick={handleInfoVersionTap}>
+                  {appVersion}
+                </button>
+              </dd>
+            </div>
+            <div className={styles.definitionRow}>
+              <dt>{t('footer.api_version')}</dt>
+              <dd className={styles.mono}>{apiVersion}</dd>
+            </div>
+            <div className={styles.definitionRow}>
+              <dt>{t('footer.build_date')}</dt>
+              <dd className={styles.numeric}>{buildTime}</dd>
+            </div>
+            <div className={styles.definitionRow}>
+              <dt>{stripTrailingColon(t('connection.status'))}</dt>
+              <dd>
+                <span className={styles.status} data-tone={connectionTone}>
+                  <span className={styles.statusDot} aria-hidden="true" />
+                  {t(`common.${auth.connectionStatus}_status`)}
+                </span>
+                <span className={`${styles.mono} ${styles.subValue}`}>{auth.apiBase || '-'}</span>
+              </dd>
+            </div>
+          </dl>
+        </section>
 
-          <div className={styles.aboutInfoGrid}>
-            <button
+        <section className={styles.panel} aria-labelledby={sectionId('updates')}>
+          <h2 id={sectionId('updates')} className={styles.panelTitle}>
+            {t('system_info.updates_title')}
+          </h2>
+          <div className={styles.updateRow}>
+            <Button
               type="button"
-              className={`${styles.infoTile} ${styles.tapTile}`}
-              onClick={handleInfoVersionTap}
+              variant="secondary"
+              onClick={() => void handleVersionCheck()}
+              loading={checkingVersion}
             >
-              <div className={styles.tileHeader}>
-                <div className={styles.tileLabel}>{t('footer.version')}</div>
-              </div>
-              <div className={styles.tileValue}>{appVersion}</div>
-            </button>
-
-            <div className={styles.infoTile}>
-              <div className={styles.tileHeader}>
-                <div className={styles.tileLabel}>{t('footer.api_version')}</div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className={styles.tileAction}
-                  onClick={() => void handleVersionCheck()}
-                  loading={checkingVersion}
-                  title={t('system_info.version_check_button')}
-                  aria-label={t('system_info.version_check_button')}
-                >
-                  {t('system_info.version_check_button')}
-                </Button>
-              </div>
-              <div className={styles.tileValue}>{apiVersion}</div>
-            </div>
-
-            <div className={styles.infoTile}>
-              <div className={styles.tileLabel}>{t('footer.build_date')}</div>
-              <div className={styles.tileValue}>{buildTime}</div>
-            </div>
-
-            <div className={styles.infoTile}>
-              <div className={styles.tileLabel}>{t('connection.status')}</div>
-              <div className={styles.tileValue}>{t(`common.${auth.connectionStatus}_status`)}</div>
-              <div className={styles.tileSub}>{auth.apiBase || '-'}</div>
-            </div>
+              {t('system_info.version_check_button')}
+            </Button>
+            {updateStatus && (
+              <span className={styles.status} data-tone={updateStatus.type} role="status">
+                <span className={styles.statusDot} aria-hidden="true" />
+                {updateStatus.message}
+              </span>
+            )}
           </div>
-        </Card>
+        </section>
 
-        <Card title={t('system_info.quick_links_title')}>
-          <p className={styles.sectionDescription}>{t('system_info.quick_links_desc')}</p>
-          <div className={styles.quickLinks}>
-            <a
-              href="https://github.com/router-for-me/CLIProxyAPI"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.linkCard}
-            >
-              <div className={`${styles.linkIcon} ${styles.github}`}>
-                <IconGithub size={22} />
-              </div>
-              <div className={styles.linkContent}>
-                <div className={styles.linkTitle}>
-                  {t('system_info.link_main_repo')}
-                  <IconExternalLink size={14} />
-                </div>
-                <div className={styles.linkDesc}>{t('system_info.link_main_repo_desc')}</div>
-              </div>
-            </a>
-
-            <a
-              href="https://github.com/router-for-me/Cli-Proxy-API-Management-Center"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.linkCard}
-            >
-              <div className={`${styles.linkIcon} ${styles.github}`}>
-                <IconCode size={22} />
-              </div>
-              <div className={styles.linkContent}>
-                <div className={styles.linkTitle}>
-                  {t('system_info.link_webui_repo')}
-                  <IconExternalLink size={14} />
-                </div>
-                <div className={styles.linkDesc}>{t('system_info.link_webui_repo_desc')}</div>
-              </div>
-            </a>
-
-            <a
-              href="https://help.router-for.me/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.linkCard}
-            >
-              <div className={`${styles.linkIcon} ${styles.docs}`}>
-                <IconBookOpen size={22} />
-              </div>
-              <div className={styles.linkContent}>
-                <div className={styles.linkTitle}>
-                  {t('system_info.link_docs')}
-                  <IconExternalLink size={14} />
-                </div>
-                <div className={styles.linkDesc}>{t('system_info.link_docs_desc')}</div>
-              </div>
-            </a>
-          </div>
-        </Card>
-
-        <Card
-          title={t('system_info.models_title')}
-          extra={
+        <section
+          className={`${styles.panel} ${styles.panelWide}`}
+          aria-labelledby={sectionId('models')}
+        >
+          <div className={styles.panelHeader}>
+            <h2 id={sectionId('models')} className={styles.panelTitle}>
+              {t('system_info.models_title')}
+            </h2>
             <Button
               variant="secondary"
               size="sm"
@@ -417,59 +377,85 @@ export function SystemPage() {
             >
               {t('common.refresh')}
             </Button>
-          }
-        >
-          <p className={styles.sectionDescription}>{t('system_info.models_desc')}</p>
+          </div>
+          <p className={styles.description}>{t('system_info.models_desc')}</p>
           {modelStatus && (
-            <div className={`status-badge ${modelStatus.type}`}>{modelStatus.message}</div>
+            <span className={styles.status} data-tone={modelStatus.type} role="status">
+              <span className={styles.statusDot} aria-hidden="true" />
+              {modelStatus.message}
+            </span>
           )}
           {modelsError && <div className="error-box">{modelsError}</div>}
           {modelsLoading ? (
-            <div className="hint">{t('common.loading')}</div>
+            <p className={styles.description}>{t('common.loading')}</p>
           ) : models.length === 0 ? (
-            <div className="hint">{t('system_info.models_empty')}</div>
+            <p className={styles.description}>{t('system_info.models_empty')}</p>
           ) : (
-            <div className="item-list">
-              {groupedModels.map((group) => {
-                const iconSrc = getIconForCategory(group.id);
-                return (
-                  <div key={group.id} className="item-row">
-                    <div className="item-meta">
-                      <div className={styles.groupTitle}>
-                        {iconSrc && <img src={iconSrc} alt="" className={styles.groupIcon} />}
-                        <span className="item-title">{group.label}</span>
-                      </div>
-                      <div className="item-subtitle">
-                        {t('system_info.models_count', { count: group.items.length })}
-                      </div>
-                    </div>
-                    <div className={styles.modelTags}>
-                      {group.items.map((model) => (
-                        <span
-                          key={`${model.name}-${model.alias ?? 'default'}`}
-                          className={styles.modelTag}
-                          title={model.description || ''}
-                        >
+            <div className={styles.modelsTable}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('system_info.models_col_model')}</TableHead>
+                    <TableHead>{t('system_info.models_col_provider')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {groupedModels.flatMap((group) =>
+                    group.items.map((model) => (
+                      <TableRow
+                        key={`${group.id}-${model.name}-${model.alias ?? 'default'}`}
+                        title={model.description || undefined}
+                      >
+                        <TableCell>
                           <span className={styles.modelName}>{model.name}</span>
                           {model.alias && <span className={styles.modelAlias}>{model.alias}</span>}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+                        </TableCell>
+                        <TableCell className={styles.providerCell}>{group.label}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
           )}
-        </Card>
+        </section>
 
-        <Card title={t('system_info.clear_login_title')}>
-          <p className={styles.sectionDescription}>{t('system_info.clear_login_desc')}</p>
-          <div className={styles.clearLoginActions}>
+        <section className={styles.panel} aria-labelledby={sectionId('links')}>
+          <h2 id={sectionId('links')} className={styles.panelTitle}>
+            {t('system_info.quick_links_title')}
+          </h2>
+          <p className={styles.description}>{t('system_info.quick_links_desc')}</p>
+          <ul className={styles.links}>
+            {QUICK_LINKS.map((link) => (
+              <li key={link.href}>
+                <a
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.link}
+                >
+                  <span className={styles.linkText}>
+                    <span className={styles.linkTitle}>{t(link.titleKey)}</span>
+                    <span className={styles.linkDesc}>{t(link.descKey)}</span>
+                  </span>
+                  <IconExternalLink size={14} className={styles.linkIcon} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className={styles.panel} aria-labelledby={sectionId('local')}>
+          <h2 id={sectionId('local')} className={styles.panelTitle}>
+            {t('system_info.clear_login_title')}
+          </h2>
+          <p className={styles.description}>{t('system_info.clear_login_desc')}</p>
+          <div>
             <Button variant="danger" onClick={handleClearLoginStorage}>
               {t('system_info.clear_login_button')}
             </Button>
           </div>
-        </Card>
+        </section>
       </div>
 
       <Modal

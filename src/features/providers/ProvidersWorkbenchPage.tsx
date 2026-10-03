@@ -285,7 +285,7 @@ export function ProvidersWorkbenchPage({ fixedBrand }: ProvidersWorkbenchPagePro
         : t('nav.quick_start')
       : undefined;
   const errorBanner = workbench.errorMessage ? (
-    <div className="error-box">{workbench.errorMessage}</div>
+    <div className={styles.errorBanner}>{workbench.errorMessage}</div>
   ) : null;
 
   const openCreate = useCallback(() => {
@@ -375,8 +375,8 @@ export function ProvidersWorkbenchPage({ fixedBrand }: ProvidersWorkbenchPagePro
   if (!workbench.snapshot && workbench.isPending) {
     return (
       <div className={styles.page}>
-        <Skeleton height={120} />
-        <div className={styles.layout}>
+        <Skeleton height={56} />
+        <div className={styles.loadingLayout}>
           <Skeleton height={420} />
           <Skeleton height={420} />
         </div>

@@ -2,14 +2,15 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
 import { useNotificationStore } from '@/stores';
-import { IconCheckCircle2, IconExternalLink, IconLoader2, IconPlus } from '@/components/ui/icons';
+import { Button } from '@/components/ui/Button';
+import { IconExternalLink, IconLoader2, IconPlus } from '@/components/ui/icons';
 import { PROVIDER_LOGOS } from '../brandLogos';
 import { APIKEY_FUN_AFFILIATE_URL, APIKEY_FUN_DASHBOARD_URL } from '../sponsor';
 import { isSponsorPartialMutationError } from '../sponsorMutationRecovery';
 import type { ProviderEntryFormInput, ProviderResource } from '../types';
 import type { UseProviderWorkbenchResult } from '../useProviderWorkbench';
 import { SponsorProviderForm } from '../sheets/forms/SponsorProviderForm';
-import formStyles from '../sheets/forms/sharedForm.module.scss';
+import { SaveBar } from './SaveBar';
 import styles from './SponsorQuickStartPanel.module.scss';
 
 interface SponsorQuickStartPanelProps {
@@ -82,7 +83,9 @@ export function SponsorQuickStartPanel({
       <section className={styles.panel}>
         <div className={styles.header}>
           <div className={styles.titleRow}>
-            <img src={logo.src} alt="" aria-hidden="true" className={styles.logo} />
+            <span className={styles.tile} aria-hidden="true">
+              <img src={logo.src} alt="" className={styles.logo} />
+            </span>
             <div className={styles.titleText}>
               <h2 className={styles.title}>{t('providersPage.providerNames.apikeyFun')}</h2>
             </div>
@@ -90,27 +93,25 @@ export function SponsorQuickStartPanel({
         </div>
 
         <div className={styles.empty}>
-          <div>{t('providersPage.sponsor.emptyRegisterHint')}</div>
-          <div className={styles.emptyActions}>
-            <button
-              type="button"
-              className={`${styles.emptyActionButton} ${styles.emptyActionButtonPrimary}`}
-              onClick={() => setShowCreateForm(true)}
-              disabled={formMutating}
-            >
-              <IconPlus size={16} />
-              <span>{t('providersPage.actions.new')}</span>
-            </button>
-            <a
-              className={`${styles.emptyActionButton} ${styles.emptyActionButtonEmphasis}`}
-              href={APIKEY_FUN_AFFILIATE_URL}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <IconExternalLink size={16} />
-              <span>{t('providersPage.sponsor.registerNow')}</span>
-            </a>
-          </div>
+          <p className={styles.emptyText}>{t('providersPage.sponsor.emptyRegisterHint')}</p>
+          <Button
+            variant="primary"
+            onClick={() => setShowCreateForm(true)}
+            disabled={formMutating}
+            className={styles.buttonWithIcon}
+          >
+            <IconPlus size={14} aria-hidden="true" />
+            {t('providersPage.actions.new')}
+          </Button>
+          <a
+            className={styles.textLink}
+            href={APIKEY_FUN_AFFILIATE_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <span>{t('providersPage.sponsor.registerNow')}</span>
+            <IconExternalLink size={14} aria-hidden="true" />
+          </a>
         </div>
       </section>
     );
@@ -122,16 +123,18 @@ export function SponsorQuickStartPanel({
     : t('providersPage.sponsor.registerLink');
 
   return (
-    <section className={styles.panel}>
+    <section className={`${styles.panel} ${styles.panelBare}`}>
       <div className={styles.header}>
         <div className={styles.titleRow}>
-          <img src={logo.src} alt="" aria-hidden="true" className={styles.logo} />
+          <span className={styles.tile} aria-hidden="true">
+            <img src={logo.src} alt="" className={styles.logo} />
+          </span>
           <div className={styles.titleText}>
             <h2 className={styles.title}>{t('providersPage.providerNames.apikeyFun')}</h2>
           </div>
           <a className={styles.topLink} href={actionHref} target="_blank" rel="noreferrer">
-            <IconExternalLink size={14} />
             <span>{actionLabel}</span>
+            <IconExternalLink size={14} aria-hidden="true" />
           </a>
         </div>
       </div>
@@ -147,11 +150,11 @@ export function SponsorQuickStartPanel({
         onDirtyChange={setIsDirty}
       />
 
-      <div className={styles.footer}>
+      {/* A new resource is unsaved by definition; an existing one only once it has edits. */}
+      <SaveBar visible={mode === 'create' || isDirty || submitting}>
         {!resource ? (
-          <button
-            type="button"
-            className={`${formStyles.footerBtn} ${formStyles.footerBtnGhost}`}
+          <Button
+            variant="ghost"
             onClick={() => {
               setShowCreateForm(false);
               setIsDirty(false);
@@ -160,30 +163,25 @@ export function SponsorQuickStartPanel({
             disabled={submitting}
           >
             {t('providersPage.actions.cancel')}
-          </button>
+          </Button>
         ) : null}
-        <button
+        <Button
           type="submit"
           form={formId}
-          className={`${formStyles.footerBtn} ${formStyles.footerBtnPrimary} ${
-            styles.primaryAction
-          }`}
+          variant="primary"
           disabled={submitDisabled}
+          className={styles.buttonWithIcon}
         >
           {submitting ? (
-            <IconLoader2 className={styles.spin} size={14} />
+            <IconLoader2 className={styles.spin} size={14} aria-hidden="true" />
           ) : mode === 'create' ? (
-            <IconPlus size={14} />
-          ) : (
-            <IconCheckCircle2 size={14} />
-          )}
-          <span>
-            {mode === 'create'
-              ? t('providersPage.actions.create')
-              : t('providersPage.actions.save')}
-          </span>
-        </button>
-      </div>
+            <IconPlus size={14} aria-hidden="true" />
+          ) : null}
+          {mode === 'create'
+            ? t('providersPage.actions.create')
+            : t('providersPage.actions.saveChanges')}
+        </Button>
+      </SaveBar>
     </section>
   );
 }

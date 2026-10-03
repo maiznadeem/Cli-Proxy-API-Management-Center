@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/Button';
 import { IconExternalLink, IconPlus, IconSearch } from '@/components/ui/icons';
 import type { ProviderRecentUsageMap } from '@/components/providers/utils';
 import { PROVIDER_LOGOS } from '../brandLogos';
@@ -72,33 +73,27 @@ export function ProviderResourcePanel({
     : t('providersPage.table.empty');
   const logoClassName = [
     styles.logo,
-    logo?.themeSurface ? styles.logoThemeSurface : '',
     logo?.darkSrc ? styles.logoThemeLight : '',
     logo?.invertOnDark ? styles.logoInvertOnDark : '',
   ]
     .filter(Boolean)
     .join(' ');
-  const darkLogoClassName = [
-    styles.logo,
-    logo?.themeSurface ? styles.logoThemeSurface : '',
-    styles.logoThemeDark,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const darkLogoClassName = `${styles.logo} ${styles.logoThemeDark}`;
 
   const titleContent = (
     <>
       {logo ? (
-        <>
-          <img src={logo.src} alt="" aria-hidden="true" className={logoClassName} />
-          {logo.darkSrc ? (
-            <img src={logo.darkSrc} alt="" aria-hidden="true" className={darkLogoClassName} />
-          ) : null}
-        </>
+        <span
+          className={logo.themeSurface ? `${styles.tile} ${styles.tileThemeSurface}` : styles.tile}
+          aria-hidden="true"
+        >
+          <img src={logo.src} alt="" className={logoClassName} />
+          {logo.darkSrc ? <img src={logo.darkSrc} alt="" className={darkLogoClassName} /> : null}
+        </span>
       ) : null}
       <h2 className={styles.title}>{providerTitle}</h2>
       {showSponsorDashboardLink ? (
-        <IconExternalLink className={styles.titleExternalIcon} size={16} />
+        <IconExternalLink className={styles.titleExternalIcon} size={14} />
       ) : null}
     </>
   );
@@ -136,13 +131,7 @@ export function ProviderResourcePanel({
             ) : registrationUrl ? (
               <>
                 <a
-                  className={[
-                    styles.sponsorLink,
-                    styles.sponsorLinkEmphasis,
-                    group.id === 'kimi' ? styles.sponsorLinkKimi : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
+                  className={styles.sponsorLink}
                   href={registrationUrl}
                   target="_blank"
                   rel="noreferrer"
@@ -158,7 +147,7 @@ export function ProviderResourcePanel({
           </div>
           <div className={styles.searchWrap}>
             <span className={styles.searchIcon} aria-hidden="true">
-              <IconSearch size={16} />
+              <IconSearch size={14} />
             </span>
             <input
               type="search"
@@ -187,25 +176,23 @@ export function ProviderResourcePanel({
 
       {filteredResources.length === 0 ? (
         <div className={styles.empty}>
-          <div>{emptyText}</div>
-          <div className={styles.emptyAction}>
-            {showSponsorRegistrationLink ? (
-              <a
-                className={`${styles.emptyActionButton} ${styles.emptyActionButtonEmphasis}`}
-                href={APIKEY_FUN_AFFILIATE_URL}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <IconExternalLink size={16} />
-                <span>{t('providersPage.sponsor.registerLink')}</span>
-              </a>
-            ) : (
-              <button type="button" className={styles.emptyActionButton} onClick={onCreate}>
-                <IconPlus size={16} />
-                <span>{t('providersPage.actions.new')}</span>
-              </button>
-            )}
-          </div>
+          <p className={styles.emptyText}>{emptyText}</p>
+          {showSponsorRegistrationLink ? (
+            <a
+              className="btn btn-primary"
+              href={APIKEY_FUN_AFFILIATE_URL}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <IconExternalLink size={14} aria-hidden="true" />
+              <span>{t('providersPage.sponsor.registerLink')}</span>
+            </a>
+          ) : (
+            <Button variant="primary" onClick={onCreate} className={styles.emptyButton}>
+              <IconPlus size={14} aria-hidden="true" />
+              {t('providersPage.actions.new')}
+            </Button>
+          )}
         </div>
       ) : (
         <ProviderResourceTable

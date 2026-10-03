@@ -59,6 +59,18 @@ export function ModelEntriesEditor({
 
   return (
     <>
+      {visible.length > 0 ? (
+        <div className={styles.modelAliasHeader} aria-hidden="true">
+          <span>{t('providersPage.modelOptions.modelName')}</span>
+          <span>
+            {t(
+              oauthAliasOnly
+                ? 'auth_files.policy_alias_name'
+                : 'providersPage.modelOptions.modelAlias'
+            )}
+          </span>
+        </div>
+      ) : null}
       {visible.map((entry, idx) => {
         const expanded = expandedIdx === idx;
         const hasThinking = entry.thinkingEnabled ?? Boolean(entry.thinkingJson?.trim());

@@ -1,56 +1,55 @@
 @use '../../../styles/mixins' as *;
 
-/* 源码模式：工具栏搜索条 + CodeMirror 编辑面板 */
+/* Source mode: header search bar + CodeMirror panel. Editor colours come from the
+   token theme in ConfigSourceEditor; this module owns the frame and search chrome. */
 
 .searchBar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex: 1 1 240px;
-  min-width: 0;
-  max-width: 560px;
+  gap: 4px;
+  flex: 0 1 360px;
+  min-width: 240px;
 }
 
 .searchInputWrapper {
-  min-width: 0;
-  flex: 1;
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1;
+  min-width: 0;
 
   :global(.form-group) {
-    margin-bottom: 0;
     width: 100%;
+    margin-bottom: 0;
   }
 }
 
 .searchInput {
-  height: 38px !important;
-  border-radius: 10px !important;
-  font-size: 13px !important;
-  padding-right: 128px !important;
+  height: 32px;
+  font-size: $text-dense !important;
+  padding-right: 112px !important;
 }
 
 .searchRight {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  margin-right: -4px;
 }
 
 .searchCount {
   display: inline-flex;
   align-items: center;
-  min-height: 26px;
-  padding: 0 8px;
-  border-radius: $radius-full;
-  color: var(--text-secondary);
-  font-family: $font-mono;
-  font-size: 11.5px;
-  font-weight: 650;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--panel-raised);
+  color: var(--ink-muted);
+  font-size: $text-caption;
+  line-height: $lh-caption;
   font-variant-numeric: tabular-nums;
-  background: color-mix(in srgb, var(--text-primary) 6%, transparent);
-  pointer-events: none;
   white-space: nowrap;
+  pointer-events: none;
 }
 
 .searchButton {
@@ -58,72 +57,64 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: $radius-full;
-  border: 1px solid var(--text-primary);
-  background: var(--text-primary);
-  color: var(--bg-secondary);
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-control);
+  color: var(--ink-muted);
   transition:
-    transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out),
-    background-color $transition-fast,
-    border-color $transition-fast,
-    opacity $transition-fast;
+    transform var(--dur-press) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard),
+    color var(--dur-hover) var(--ease-standard);
 
   &:active:not(:disabled) {
-    transform: scale(0.94);
+    transform: scale(0.98);
   }
 
   &:disabled {
-    opacity: 0.45;
     cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
 @media (hover: hover) and (pointer: fine) {
   .searchButton:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--text-primary) 86%, var(--bg-secondary));
-    border-color: transparent;
+    background: var(--panel-hover);
+    color: var(--ink);
   }
 }
 
 .searchActions {
   display: flex;
-  gap: 6px;
+  gap: 2px;
   flex-shrink: 0;
 
-  button {
-    min-width: 38px;
-    width: 38px;
-    height: 38px;
-    padding: 0 !important;
-    border-radius: 10px;
+  :global(.btn) {
+    width: 32px;
+    padding: 0;
   }
 }
 
-/* ---------- 编辑器面板 ---------- */
+/* ---------- Editor frame ---------- */
 
 .editorWrapper {
   width: 100%;
   flex: 0 0 auto;
-  height: clamp(500px, 70vh, 1040px);
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
+  height: clamp(480px, 70vh, 1040px);
   overflow: hidden;
-  background: var(--bg-primary);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  background: var(--panel-sunken);
 
   @supports (height: 100dvh) {
-    height: clamp(500px, 70dvh, 1040px);
+    height: clamp(480px, 70dvh, 1040px);
   }
 
   :global {
-    .cm-editor {
-      height: 100%;
-      font-size: 13px;
-      font-family: $font-mono;
-      background: transparent;
-    }
-
     .cm-scroller {
       overflow: auto;
       -webkit-overflow-scrolling: touch;
@@ -131,64 +122,21 @@
       overscroll-behavior: contain;
     }
 
-    .cm-gutters {
-      border-right: 1px solid var(--border-color);
-      background: color-mix(in srgb, var(--bg-secondary) 86%, transparent);
-    }
-
     .cm-lineNumbers .cm-gutterElement {
-      padding: 0 8px 0 12px;
       min-width: 40px;
-      color: var(--text-muted);
-    }
-
-    .cm-activeLine,
-    .cm-activeLineGutter {
-      background: color-mix(in srgb, var(--text-primary) 5%, transparent);
-    }
-
-    .cm-selectionMatch {
-      background: rgba(224, 170, 20, 0.24);
-    }
-
-    .cm-searchMatch {
-      background: rgba(224, 170, 20, 0.32);
-      outline: 1px solid rgba(224, 170, 20, 0.48);
-    }
-
-    .cm-searchMatch-selected {
-      background: rgba(198, 87, 70, 0.32);
+      padding: 0 8px 0 12px;
     }
   }
 }
 
-/* ---------- 响应式 ---------- */
+/* ---------- Responsive ---------- */
 
 @include mobile {
   .searchBar {
-    flex-basis: 100%;
-    max-width: none;
-    flex-wrap: wrap;
-  }
-
-  .searchActions {
-    justify-content: stretch;
-    flex: 1;
-
-    button {
-      flex: 1;
-      width: auto;
-    }
+    flex: 1 1 100%;
+    min-width: 0;
   }
 }
-
-@media (max-width: 480px) {
-  .searchInput {
-    padding-right: 108px !important;
-  }
-}
-
-/* ---------- 无障碍 ---------- */
 
 @media (prefers-reduced-motion: reduce) {
   .searchButton {

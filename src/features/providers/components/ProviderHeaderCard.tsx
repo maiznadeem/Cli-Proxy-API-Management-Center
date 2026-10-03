@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { IconLoader2, IconPlus, IconRefreshCw } from '@/components/ui/icons';
+import { Button } from '@/components/ui/Button';
+import { IconPlus, IconRefreshCw } from '@/components/ui/icons';
 import styles from './ProviderHeaderCard.module.scss';
 
 interface ProviderHeaderCardProps {
@@ -34,63 +35,61 @@ export function ProviderHeaderCard({
   onNew,
 }: ProviderHeaderCardProps) {
   const { t } = useTranslation();
-  const cardClassName = [styles.card, variant === 'quickStart' ? styles.quickStartCard : '']
+  const headerClassName = [styles.header, variant === 'quickStart' ? styles.quickStart : '']
     .filter(Boolean)
     .join(' ');
+  const refreshLabel = isFetching
+    ? t('providersPage.actions.syncing')
+    : t('providersPage.actions.refresh');
 
   return (
-    <section className={cardClassName}>
-      <div className={styles.row}>
-        <div className={styles.titleArea}>
-          <h1 className={styles.title}>{title ?? t('providersPage.header.title')}</h1>
-        </div>
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnOutline}`}
-            onClick={onRefresh}
-            disabled={isFetching}
-            aria-label={
-              isFetching ? t('providersPage.actions.syncing') : t('providersPage.actions.refresh')
-            }
-          >
-            <span className={`${styles.btnIcon} ${isFetching ? styles.spin : ''}`.trim()}>
-              {isFetching ? <IconLoader2 size={16} /> : <IconRefreshCw size={16} />}
+    <header className={headerClassName}>
+      <div className={styles.copy}>
+        <h1 className={styles.title}>{title ?? t('providersPage.header.title')}</h1>
+        {showSummary ? (
+          <p className={styles.meta}>
+            <span className={styles.metaStrong}>
+              {t('providersPage.header.activeResources', {
+                active: totalActive,
+                total: totalResources,
+              })}
             </span>
-            <span>
-              {isFetching ? t('providersPage.actions.syncing') : t('providersPage.actions.refresh')}
+            <span className={styles.metaSep} aria-hidden="true" />
+            <span>{t('providersPage.header.providerFamilies', { count: providerFamilies })}</span>
+            <span className={styles.metaSep} aria-hidden="true" />
+            <span className={styles.metaFaint}>
+              {t('providersPage.header.updatedAt', { time: updatedAtLabel })}
             </span>
-          </button>
-          {showNewAction ? (
-            <button
-              type="button"
-              className={`${styles.btn} ${styles.btnPrimary}`}
-              onClick={onNew}
-              disabled={isNewDisabled}
-            >
-              <IconPlus size={16} />
-              <span>{newLabel ?? t('providersPage.actions.new')}</span>
-            </button>
-          ) : null}
-        </div>
+          </p>
+        ) : null}
       </div>
-
-      {showSummary ? (
-        <div className={styles.chips}>
-          <span className={`${styles.chip} ${styles.chipPrimary}`}>
-            {t('providersPage.header.activeResources', {
-              active: totalActive,
-              total: totalResources,
-            })}
-          </span>
-          <span className={styles.chip}>
-            {t('providersPage.header.providerFamilies', { count: providerFamilies })}
-          </span>
-          <span className={styles.chip}>
-            {t('providersPage.header.updatedAt', { time: updatedAtLabel })}
-          </span>
-        </div>
-      ) : null}
-    </section>
+      <div className={styles.actions}>
+        <Button
+          variant={showNewAction ? 'secondary' : 'primary'}
+          onClick={onRefresh}
+          disabled={isFetching}
+          aria-label={refreshLabel}
+          className={styles.actionButton}
+        >
+          <IconRefreshCw
+            size={14}
+            aria-hidden="true"
+            className={isFetching ? styles.spinning : undefined}
+          />
+          {refreshLabel}
+        </Button>
+        {showNewAction ? (
+          <Button
+            variant="primary"
+            onClick={onNew}
+            disabled={isNewDisabled}
+            className={styles.actionButton}
+          >
+            <IconPlus size={14} aria-hidden="true" />
+            {newLabel ?? t('providersPage.actions.new')}
+          </Button>
+        ) : null}
+      </div>
+    </header>
   );
 }

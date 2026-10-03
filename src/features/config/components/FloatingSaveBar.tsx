@@ -2,17 +2,17 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { animate } from 'motion/mini';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { IconCheck } from '@/components/ui/icons';
+import { Button } from '@/components/ui/Button';
 import { prefersReducedMotion } from '@/hooks/motion';
 import { useActionBarHeightVar } from '@/hooks/useActionBarHeightVar';
 import type { ConfigStatusTone } from '../uiState';
 import styles from './FloatingSaveBar.module.scss';
 
-const easeOutQuart = (progress: number) => 1 - (1 - progress) ** 4;
-const easeInCubic = (progress: number) => progress ** 3;
+// --ease-standard, cubic-bezier(.2, .8, .2, 1), and --dur-base (220ms) in seconds.
+const EASE_STANDARD = [0.2, 0.8, 0.2, 1] as const;
+const DUR_BASE_S = 0.22;
 const BASE_TRANSFORM = 'translateX(-50%)';
-const HIDDEN_TRANSFORM = 'translateX(-50%) translateY(56px)';
+const HIDDEN_TRANSFORM = 'translateX(-50%) translateY(12px)';
 
 export type FloatingSaveBarProps = {
   /** 有未保存修改时可见（与未保存离开守卫的 block 条件一致）。 */
@@ -27,10 +27,10 @@ export type FloatingSaveBarProps = {
 };
 
 /**
- * 悬浮保存栏：portal 到 body 的玻璃工具栏，仅在 dirty 时出现。
- * - 上浮入场 0.28s 强减速，退场 0.22s 加速后卸载；
- * - reduced-motion 只做透明度淡入淡出（保留 translateX(-50%)，防止错位半宽）；
- * - 实时高度写入 --config-action-bar-height 供页面底部留白。
+ * Floating save bar: a raised bar portalled to body, shown only while there are changes.
+ * - Slides 12px with a fade over --dur-base on enter and exit, then unmounts;
+ * - reduced motion switches to an instant change (translateX(-50%) is kept for centring);
+ * - its live height is written to --config-action-bar-height for the page bottom padding.
  */
 export function FloatingSaveBar(props: FloatingSaveBarProps) {
   const {
@@ -72,24 +72,14 @@ export function FloatingSaveBar(props: FloatingSaveBarProps) {
     if (visible && !wasVisible) {
       if (reduced) {
         el.style.transform = BASE_TRANSFORM;
-        animationRef.current = animate(
-          el,
-          { opacity: [0, 1] },
-          {
-            duration: 0.15,
-            ease: 'linear',
-            onComplete: () => {
-              el.style.opacity = '1';
-            },
-          }
-        );
+        el.style.opacity = '1';
       } else {
         animationRef.current = animate(
           el,
           { transform: [HIDDEN_TRANSFORM, BASE_TRANSFORM], opacity: [0, 1] },
           {
-            duration: 0.28,
-            ease: easeOutQuart,
+            duration: DUR_BASE_S,
+            ease: EASE_STANDARD,
             onComplete: () => {
               el.style.transform = BASE_TRANSFORM;
               el.style.opacity = '1';
@@ -103,16 +93,12 @@ export function FloatingSaveBar(props: FloatingSaveBarProps) {
       };
       if (reduced) {
         el.style.transform = BASE_TRANSFORM;
-        animationRef.current = animate(
-          el,
-          { opacity: [1, 0] },
-          { duration: 0.12, ease: 'linear', onComplete: finishExit }
-        );
+        finishExit();
       } else {
         animationRef.current = animate(
           el,
           { transform: [BASE_TRANSFORM, HIDDEN_TRANSFORM], opacity: [1, 0] },
-          { duration: 0.22, ease: easeInCubic, onComplete: finishExit }
+          { duration: DUR_BASE_S, ease: EASE_STANDARD, onComplete: finishExit }
         );
       }
     }
@@ -145,23 +131,12 @@ export function FloatingSaveBar(props: FloatingSaveBarProps) {
           {statusText}
         </span>
         <div className={styles.actionsGroup}>
-          <button
-            type="button"
-            className={styles.ghostAction}
-            onClick={onDiscard}
-            disabled={discardDisabled}
-          >
+          <Button variant="ghost" onClick={onDiscard} disabled={discardDisabled}>
             {t('config_management.actions.discard')}
-          </button>
-          <button
-            type="button"
-            className={styles.savePill}
-            onClick={onSave}
-            disabled={saveDisabled}
-          >
-            {saving ? <LoadingSpinner size={14} /> : <IconCheck size={15} />}
+          </Button>
+          <Button variant="primary" onClick={onSave} disabled={saveDisabled} loading={saving}>
             {t('config_management.actions.save')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

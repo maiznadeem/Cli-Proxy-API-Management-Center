@@ -1,13 +1,15 @@
 @use '../../../styles/mixins' as *;
 
-/* 悬浮保存栏：底部居中的玻璃工具栏（--content-center-x 对齐内容列中心） */
+/* Floating save bar: bottom-centred raised bar over the content column
+   (--content-center-x aligns it with the content, not the viewport). */
 
 .container {
   position: fixed;
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   left: var(--content-center-x, 50%);
   transform: translateX(-50%);
-  width: min(720px, calc(100vw - 24px));
+  width: max-content;
+  max-width: calc(100vw - 24px);
   z-index: $z-dropdown;
   pointer-events: none;
 }
@@ -17,131 +19,44 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  padding: 10px 14px;
-  border-radius: 16px;
-  --glass-blur: 14px;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-backdrop-filter);
-  box-shadow: var(--shadow-lg);
+  gap: 8px 24px;
+  min-height: 48px;
+  padding: 8px 8px 8px 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  background: var(--panel-raised);
+  box-shadow: var(--shadow-popover);
 }
 
-/* 状态文案：mono 遥测 */
 .status {
-  font-family: $font-mono;
-  font-size: 12px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  padding-right: 4px;
   min-width: 0;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 
 .statusWarning {
-  color: var(--amber-text);
+  color: var(--ink);
+  font-weight: 500;
 }
 
 .statusError {
-  color: var(--viz-failure);
+  color: var(--cap-depleted);
+  font-weight: 500;
 }
 
 .statusBusy,
-.statusMuted {
-  color: var(--text-secondary);
-}
-
+.statusMuted,
 .statusOk {
-  color: var(--viz-success);
+  color: var(--ink-muted);
 }
 
 .actionsGroup {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
-}
-
-/* 保存：墨色药丸主按钮 */
-.savePill {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  border: 0;
-  cursor: pointer;
-  background: var(--text-primary);
-  color: var(--bg-secondary);
-  border-radius: $radius-full;
-  padding: 9px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1;
-  transition:
-    transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out),
-    background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    box-shadow var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0) scale(0.97);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-  }
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .savePill:hover:not(:disabled) {
-    transform: translateY(-1px);
-    background: color-mix(in srgb, var(--text-primary) 86%, var(--bg-secondary));
-    box-shadow: 0 12px 26px color-mix(in srgb, var(--text-primary) 22%, transparent);
-  }
-}
-
-/* 放弃更改：安静的文字链接 */
-.ghostAction {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 0;
-  cursor: pointer;
-  background: none;
-  color: var(--text-secondary);
-  border-radius: $radius-full;
-  padding: 9px 12px;
-  font-size: 12.5px;
-  font-weight: 550;
-  line-height: 1;
-  transition:
-    color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
-  }
-
-  &:active:not(:disabled) {
-    transform: scale(0.97);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-  }
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .ghostAction:hover:not(:disabled) {
-    color: var(--text-primary);
-  }
 }
 
 @include mobile {
@@ -152,26 +67,10 @@
   .bar {
     flex-direction: column;
     align-items: stretch;
+    padding: 12px;
   }
 
-  .actionsGroup {
-    justify-content: stretch;
-
-    > * {
-      flex: 1;
-      justify-content: center;
-    }
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .savePill,
-  .ghostAction {
-    transition: none;
-  }
-
-  .savePill:active:not(:disabled),
-  .ghostAction:active:not(:disabled) {
-    transform: none;
+  .actionsGroup > :global(.btn) {
+    flex: 1;
   }
 }

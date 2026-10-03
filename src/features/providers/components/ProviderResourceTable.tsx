@@ -1,12 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  IconAlertTriangle,
-  IconCheckCircle2,
-  IconEye,
-  IconPencil,
-  IconTrash2,
-} from '@/components/ui/icons';
+import { IconEye, IconPencil, IconTrash2 } from '@/components/ui/icons';
 import {
   Table,
   TableBody,
@@ -140,22 +134,14 @@ export function ProviderResourceTable({
     return <div className={styles.metricsCell}>{items}</div>;
   };
 
-  const renderStatus = (r: ProviderResource) => {
-    if (r.disabled) {
-      return (
-        <span className={`${styles.statusBadge} ${styles.statusDisabled}`}>
-          <IconAlertTriangle size={14} />
-          {t('providersPage.status.disabled')}
-        </span>
-      );
-    }
-    return (
-      <span className={`${styles.statusBadge} ${styles.statusActive}`}>
-        <IconCheckCircle2 size={14} />
-        {t('providersPage.status.active')}
-      </span>
-    );
-  };
+  const renderStatus = (r: ProviderResource) => (
+    <span
+      className={`${styles.status} ${r.disabled ? styles.statusDisabled : styles.statusActive}`}
+    >
+      <span className={styles.statusDot} aria-hidden="true" />
+      {r.disabled ? t('providersPage.status.disabled') : t('providersPage.status.active')}
+    </span>
+  );
 
   const renderPrimary = (r: ProviderResource) => {
     if (isSponsorResource(r)) {
@@ -169,17 +155,21 @@ export function ProviderResourceTable({
       );
     }
     if (r.brand === 'openaiCompatibility') {
-      const extra = r.apiKeyEntryCount > 1 ? ` · +${r.apiKeyEntryCount - 1}` : '';
       return (
         <div className={styles.primaryCell}>
           <span className={styles.primaryName}>{r.name ?? r.identifier}</span>
-          <span className={styles.primarySub}>{(r.apiKeyPreview ?? '—') + extra}</span>
+          <span className={styles.primarySub}>
+            {r.apiKeyPreview ?? '—'}
+            {r.apiKeyEntryCount > 1 ? (
+              <span className={styles.primaryExtra}>+{r.apiKeyEntryCount - 1}</span>
+            ) : null}
+          </span>
         </div>
       );
     }
     return (
       <div className={styles.primaryCell}>
-        <span className={styles.primaryName}>{r.apiKeyPreview ?? '—'}</span>
+        <span className={styles.primaryKey}>{r.apiKeyPreview ?? '—'}</span>
         {r.authIndex ? <span className={styles.primarySub}>auth: {r.authIndex}</span> : null}
       </div>
     );
@@ -241,11 +231,21 @@ export function ProviderResourceTable({
                         const stats = resolveTotalStats(resource, usageByProvider);
                         return (
                           <div className={styles.stats}>
-                            <span className={`${styles.statPill} ${styles.statSuccess}`}>
-                              {t('stats.success')}: {stats.success}
+                            <span className={styles.stat}>
+                              {t('stats.success')}{' '}
+                              <span className={styles.statValue}>{stats.success}</span>
                             </span>
-                            <span className={`${styles.statPill} ${styles.statFailure}`}>
-                              {t('stats.failure')}: {stats.failure}
+                            <span className={styles.stat}>
+                              {t('stats.failure')}{' '}
+                              <span
+                                className={
+                                  stats.failure > 0
+                                    ? `${styles.statValue} ${styles.statValueFailure}`
+                                    : styles.statValue
+                                }
+                              >
+                                {stats.failure}
+                              </span>
                             </span>
                           </div>
                         );

@@ -1,5 +1,6 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { IconChevronDown, IconChevronUp } from '@/components/ui/icons';
 import styles from './Blocks.module.scss';
 
 /** Minimum character count before the expand/collapse toggle appears. */
@@ -72,7 +73,7 @@ export function ExpandableInput({
             title={t('common.expand')}
             aria-label={t('common.expand')}
           >
-            ▼
+            <IconChevronDown size={14} />
           </button>
         )}
       </div>
@@ -99,7 +100,7 @@ export function ExpandableInput({
         title={t('common.collapse')}
         aria-label={t('common.collapse')}
       >
-        ▲
+        <IconChevronUp size={14} />
       </button>
     </div>
   );

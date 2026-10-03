@@ -1,15 +1,3 @@
-import type { ComponentType } from 'react';
-import {
-  IconCode,
-  IconKey,
-  IconNetwork,
-  IconSatellite,
-  IconScrollText,
-  IconShield,
-  IconSlidersHorizontal,
-  IconTimer,
-  type IconProps,
-} from '@/components/ui/icons';
 import type { VisualConfigFieldPath } from '@/types/visualConfig';
 import type { VisualSectionId } from './searchIndex';
 
@@ -30,28 +18,6 @@ export const CONFIG_SECTION_IDS = [
 ] as const satisfies readonly VisualSectionId[];
 
 export const CONFIG_TAB_IDS: readonly ConfigTabId[] = ['common', ...CONFIG_SECTION_IDS];
-
-/** 分区序号（01–07）。常用 tab 是别名视图，不占序号。 */
-export const SECTION_INDEX_LABELS: Record<VisualSectionId, string> = {
-  connectivity: '01',
-  network: '02',
-  logging: '03',
-  quota: '04',
-  streaming: '05',
-  advanced: '06',
-  payload: '07',
-};
-
-export const CONFIG_TAB_ICONS: Record<ConfigTabId, ComponentType<IconProps>> = {
-  common: IconSlidersHorizontal,
-  connectivity: IconKey,
-  network: IconNetwork,
-  logging: IconScrollText,
-  quota: IconTimer,
-  streaming: IconSatellite,
-  advanced: IconShield,
-  payload: IconCode,
-};
 
 /** 常用 tab 的 8 个字段（原简单模式），渲染源与正典分区共享（fields/sharedFields.tsx）。 */
 export const COMMON_FIELD_IDS = [

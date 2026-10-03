@@ -1,4 +1,4 @@
-import { IconAlertTriangle, IconCheckCircle2, IconLoader2 } from '@/components/ui/icons';
+import { IconLoader2 } from '@/components/ui/icons';
 import type { ConnectivityState } from './useConnectivityTest';
 import styles from './sharedForm.module.scss';
 
@@ -13,14 +13,14 @@ export function ConnectivityStatusIcon({ state }: { state: ConnectivityState }) 
   if (state === 'success') {
     return (
       <span className={`${styles.statusIcon} ${styles.statusIconSuccess}`}>
-        <IconCheckCircle2 size={14} />
+        <span className={styles.statusDot} />
       </span>
     );
   }
   if (state === 'error') {
     return (
       <span className={`${styles.statusIcon} ${styles.statusIconError}`}>
-        <IconAlertTriangle size={14} />
+        <span className={`${styles.statusDot} ${styles.statusDotError}`} />
       </span>
     );
   }

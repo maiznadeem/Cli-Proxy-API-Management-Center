@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useImperativeHandle, useState, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
 import { IconLoader2, IconPencil } from '@/components/ui/icons';
 import type { ProviderRecentUsageMap } from '@/components/providers/utils';
@@ -11,7 +12,8 @@ import type { UseProviderWorkbenchResult } from '../useProviderWorkbench';
 import { BaseProviderForm } from './forms/BaseProviderForm';
 import { ResourceDetailView } from './ResourceDetailView';
 import { SponsorProviderForm } from './forms/SponsorProviderForm';
-import styles from './forms/sharedForm.module.scss';
+import { SaveBar } from '../components/SaveBar';
+import styles from './ProviderSheet.module.scss';
 
 type SheetMode = 'detail' | 'create' | 'edit';
 
@@ -96,16 +98,7 @@ export function ProviderSheet({
     });
   }, [confirmDiscardIfDirty, onClose]);
 
-  const titleText =
-    state.mode === 'create'
-      ? `${t('providersPage.form.createEyebrow')} · ${t(
-          `providersPage.providerNames.${state.brand}`
-        )}`
-      : state.mode === 'edit'
-        ? `${t('providersPage.form.editEyebrow')} · ${t(
-            `providersPage.providerNames.${state.brand}`
-          )}`
-        : `${t('providersPage.detail.title')} · ${t(`providersPage.providerNames.${state.brand}`)}`;
+  const titleText = t(`providersPage.providerNames.${state.brand}`);
 
   const handleCreate = useCallback(
     async (input: ProviderEntryFormInput) => {
@@ -175,55 +168,48 @@ export function ProviderSheet({
     state.mode === 'detail' ? (
       state.resource ? (
         <>
-          <button
-            type="button"
-            className={`${styles.footerBtn} ${styles.footerBtnGhost}`}
-            onClick={onClose}
-          >
+          <Button variant="ghost" onClick={onClose}>
             {t('providersPage.actions.cancel')}
-          </button>
-          <button
-            type="button"
-            className={`${styles.footerBtn} ${styles.footerBtnPrimary}`}
+          </Button>
+          <Button
+            variant="primary"
             onClick={onSwitchToEdit}
             disabled={formMutating}
+            className={styles.buttonWithIcon}
           >
-            <IconPencil size={14} />
+            <IconPencil size={14} aria-hidden="true" />
             {t('providersPage.actions.edit')}
-          </button>
+          </Button>
         </>
       ) : (
-        <button
-          type="button"
-          className={`${styles.footerBtn} ${styles.footerBtnPrimary}`}
-          onClick={onClose}
-        >
+        <Button variant="primary" onClick={onClose}>
           {t('providersPage.actions.cancel')}
-        </button>
+        </Button>
       )
-    ) : (
-      <>
-        <button
-          type="button"
-          className={`${styles.footerBtn} ${styles.footerBtnGhost}`}
-          onClick={handleCancelClick}
-          disabled={submitting}
-        >
-          {t('providersPage.actions.cancel')}
-        </button>
-        <button
-          type="submit"
-          form={formId}
-          className={`${styles.footerBtn} ${styles.footerBtnPrimary}`}
-          disabled={submitDisabled}
-        >
-          {submitting ? <IconLoader2 size={14} /> : null}
-          {state.mode === 'create'
-            ? t('providersPage.actions.create')
-            : t('providersPage.actions.save')}
-        </button>
-      </>
-    );
+    ) : undefined;
+
+  // A new resource is unsaved by definition; an existing one only once it has edits.
+  const saveBar = isEditingForm ? (
+    <SaveBar visible={state.mode === 'create' || isDirty || submitting}>
+      <Button variant="ghost" onClick={handleCancelClick} disabled={submitting}>
+        {state.mode === 'create'
+          ? t('providersPage.actions.cancel')
+          : t('providersPage.unsavedChanges.discard')}
+      </Button>
+      <Button
+        type="submit"
+        form={formId}
+        variant="primary"
+        disabled={submitDisabled}
+        className={styles.buttonWithIcon}
+      >
+        {submitting ? <IconLoader2 size={14} className={styles.spin} aria-hidden="true" /> : null}
+        {state.mode === 'create'
+          ? t('providersPage.actions.create')
+          : t('providersPage.actions.saveChanges')}
+      </Button>
+    </SaveBar>
+  ) : null;
 
   return (
     <Sheet
@@ -257,6 +243,7 @@ export function ProviderSheet({
       confirmClose={confirmDiscardIfDirty}
     >
       {renderBody()}
+      {saveBar}
     </Sheet>
   );
 }

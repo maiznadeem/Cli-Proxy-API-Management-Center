@@ -13,7 +13,7 @@ export type SourceSearchBarProps = {
   disabled: boolean;
 };
 
-/** 源码模式的搜索条：占据工具栏行的搜索槽位（与可视化模式的字段搜索同位置）。 */
+/** Source-mode search: takes the field search slot in the header controls. */
 export function SourceSearchBar({ search, disabled }: SourceSearchBarProps) {
   const { t } = useTranslation();
   const {
@@ -52,8 +52,9 @@ export function SourceSearchBar({ search, disabled }: SourceSearchBarProps) {
                 onClick={() => executeSearch('next')}
                 disabled={!searchQuery || disabled}
                 title={t('config_management.search_button')}
+                aria-label={t('config_management.search_button')}
               >
-                <IconSearch size={16} />
+                <IconSearch size={14} />
               </button>
             </div>
           }
@@ -62,20 +63,20 @@ export function SourceSearchBar({ search, disabled }: SourceSearchBarProps) {
 
       <div className={styles.searchActions}>
         <Button
-          variant="secondary"
-          size="sm"
+          variant="ghost"
           onClick={handlePrevMatch}
           disabled={!searchQuery || lastSearchedQuery !== searchQuery || searchResults.total === 0}
           title={t('config_management.search_prev')}
+          aria-label={t('config_management.search_prev')}
         >
           <IconChevronUp size={16} />
         </Button>
         <Button
-          variant="secondary"
-          size="sm"
+          variant="ghost"
           onClick={handleNextMatch}
           disabled={!searchQuery || lastSearchedQuery !== searchQuery || searchResults.total === 0}
           title={t('config_management.search_next')}
+          aria-label={t('config_management.search_next')}
         >
           <IconChevronDown size={16} />
         </Button>

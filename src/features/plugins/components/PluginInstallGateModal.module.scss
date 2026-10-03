@@ -1,65 +1,78 @@
-// Multi-step install confirmation ("gauntlet") for third-party plugins.
+@use '../../../styles/mixins' as *;
+
+/* Multi-step install confirmation for third-party plugins. */
 
 .gateModal {
   text-align: left;
 }
 
-// ── Plugin identity card (shown on every step) ──
+/* ---------- Plugin identity (shown on every step) ---------- */
+
 .identity {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: $spacing-sm 0 $spacing-md;
+  gap: 6px;
+  padding: 8px 0 16px;
   text-align: center;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .logoBox {
   display: inline-flex;
-  width: 52px;
-  height: 52px;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
   overflow: hidden;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-  background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
-  color: var(--text-secondary);
+  border-radius: var(--radius-control);
+  background: var(--panel-raised);
+  color: var(--ink-muted);
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .name {
   margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: $text-title;
+  line-height: $lh-title;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
 
 .slug {
   margin: 0;
   font-family: $font-mono;
-  font-size: 13px;
-  color: var(--text-secondary);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
   overflow-wrap: anywhere;
 }
 
 .repoLink {
   display: inline-flex;
-  max-width: 100%;
   align-items: center;
   gap: 4px;
+  max-width: 100%;
   margin: 0;
+  border-radius: var(--radius-control);
   font-family: $font-mono;
-  font-size: 13px;
-  color: var(--text-secondary);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
   text-decoration: none;
+  transition: color var(--dur-hover) var(--ease-standard);
 
   span {
     min-width: 0;
@@ -68,136 +81,151 @@
 
   svg {
     flex-shrink: 0;
-    color: var(--text-tertiary);
+    color: var(--ink-faint);
   }
 
-  &:hover {
-    color: var(--accent-color);
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .repoLink:hover {
+    color: var(--accent);
     text-decoration: underline;
 
     svg {
       color: currentColor;
     }
   }
-
-  &:focus-visible {
-    outline: 2px solid var(--focus-ring-color, var(--accent-color));
-    outline-offset: 3px;
-    border-radius: $radius-sm;
-  }
 }
 
 .source {
   margin: 0;
-  font-size: 12px;
-  color: var(--text-tertiary);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
   overflow-wrap: anywhere;
 }
 
-// ── Step 2: caution banner + effects + untrusted alert ──
+/* ---------- Step 2: caution, effects, origin ---------- */
+
 .warningBanner {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
-  margin-top: $spacing-lg;
-  padding: 12px 14px;
-  border-radius: $radius-md;
-  border: 1px solid color-mix(in srgb, var(--quota-medium-color, #e0aa14) 45%, var(--border-color));
-  background: color-mix(in srgb, var(--quota-medium-color, #e0aa14) 16%, var(--bg-secondary));
-  color: var(--text-primary);
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 1.4;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--cap-watch) 32%, transparent);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--cap-watch) 10%, transparent);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
+  color: var(--ink);
 
   svg {
     flex-shrink: 0;
-    color: var(--quota-medium-color, #e0aa14);
+    color: var(--cap-watch);
   }
 }
 
 .effects {
-  margin: $spacing-md 0 0;
-  padding-left: $spacing-md;
-  border-left: 2px solid var(--border-color);
-  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
 
   li {
     position: relative;
-    padding-left: 18px;
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--text-secondary);
+    padding-left: 16px;
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    color: var(--ink-muted);
 
     &::before {
       content: '';
       position: absolute;
-      left: 0;
-      top: 7px;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--text-tertiary);
+      left: 2px;
+      top: 6px;
+      width: 6px;
+      height: 6px;
+      border-radius: var(--radius-pill);
+      background: var(--ink-ghost);
     }
   }
 }
 
 .untrustedAlert {
-  margin-top: $spacing-lg;
-  padding: 12px 14px;
-  border-radius: $radius-md;
-  border: 1px solid rgba($warning-color, 0.35);
-  background: rgba($warning-color, 0.1);
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--cap-depleted) 32%, transparent);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--cap-depleted) 10%, transparent);
 }
 
 .untrustedText {
   margin: 0;
-  font-size: 13.5px;
-  line-height: 1.5;
-  font-weight: 600;
-  color: var(--danger-color);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
+  color: var(--cap-depleted);
 }
 
 .originGrid {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 4px 12px;
-  margin: 10px 0 0;
+  margin: 8px 0 0;
 
   dt {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
+    font-size: $text-caption;
+    line-height: $lh-caption;
+    color: var(--ink-muted);
   }
 
   dd {
     margin: 0;
     font-family: $font-mono;
-    font-size: 12px;
-    color: var(--text-primary);
+    font-size: $text-caption;
+    line-height: $lh-caption;
+    color: var(--ink);
     overflow-wrap: anywhere;
   }
 }
 
-// ── Step 3: type-to-confirm ──
+/* ---------- Step 3: type to confirm ---------- */
+
 .confirmBlock {
-  margin-top: $spacing-lg;
+  margin-top: 16px;
+
+  :global(.form-group) {
+    margin-bottom: 0;
+  }
 }
 
 .confirmPrompt {
   display: block;
-  margin-bottom: $spacing-sm;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.5;
+  margin-bottom: 8px;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
 
 .confirmHint {
-  margin: $spacing-sm 0 0;
-  font-size: 12px;
-  color: var(--text-tertiary);
+  margin: 8px 0 0;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .repoLink {
+    transition: none;
+  }
 }

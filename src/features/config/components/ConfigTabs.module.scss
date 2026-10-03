@@ -1,15 +1,17 @@
 @use '../../../styles/mixins' as *;
 
-/* 分区 tabs：安静的下划线式（种子自提供商 tabs），加错误徽章与脏点两个状态通道 */
+/* Section tabs: text tabs over one hairline, 2px accent underline on the active tab,
+   plus two status channels (validation count, unsaved dot). Horizontally scrollable. */
 
 .tabs {
   display: flex;
   align-items: stretch;
-  gap: 2px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  min-width: 0;
+  gap: 4px;
   flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--hairline);
+  scrollbar-width: none;
 
   &::-webkit-scrollbar {
     display: none;
@@ -20,20 +22,24 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   flex-shrink: 0;
+  height: 40px;
+  padding: 0 10px;
   border: 0;
+  border-radius: var(--radius-control) var(--radius-control) 0 0;
   background: none;
   cursor: pointer;
-  padding: 8px 12px 11px;
-  border-radius: 8px 8px 0 0;
-  font-size: 13px;
-  font-weight: 550;
-  color: var(--text-secondary);
+  font: inherit;
+  font-size: $text-body;
+  line-height: $lh-body;
+  font-weight: 500;
+  color: var(--ink-muted);
   white-space: nowrap;
   transition:
-    color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+    color var(--dur-hover) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard),
+    transform var(--dur-press) var(--ease-standard);
 
   &::after {
     content: '';
@@ -42,80 +48,73 @@
     right: 10px;
     bottom: -1px;
     height: 2px;
-    border-radius: $radius-full;
     background: transparent;
-    transition: background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+    transition: background-color var(--dur-hover) var(--ease-standard);
   }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.55;
+    opacity: 0.5;
   }
 
   &:active:not(:disabled) {
-    transform: translateY(0.5px);
+    transform: scale(0.98);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: -2px;
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--accent);
   }
 }
 
 @media (hover: hover) and (pointer: fine) {
   .tab:hover:not(:disabled) {
-    color: var(--text-primary);
-    background: color-mix(in srgb, var(--bg-tertiary) 55%, transparent);
+    color: var(--ink);
+    background: var(--panel-hover);
   }
 }
 
 .tabActive {
-  color: var(--text-primary);
-  font-weight: 650;
+  color: var(--ink);
 
   &::after {
-    background: var(--text-primary);
+    background: var(--accent);
   }
 
-  /* 整体禁用（保存中）时激活 tab 仍保持完整对比度 */
+  /* While saving, the active tab keeps full contrast. */
   &:disabled {
     opacity: 1;
   }
 }
 
-.tabGlyph {
-  flex-shrink: 0;
-  color: var(--text-tertiary);
-
-  .tabActive & {
-    color: var(--text-primary);
-  }
-}
-
 .tabLabel {
-  line-height: 1.4;
+  line-height: $lh-body;
 }
 
-/* 校验错误徽章：mono 数字，失败色（数据墨水走 --viz-*） */
+/* Validation error count. */
 .tabBadge {
-  font-family: $font-mono;
-  font-size: 10.5px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.6;
-  color: var(--viz-failure);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
   padding: 0 6px;
-  border-radius: $radius-full;
-  background: color-mix(in srgb, var(--viz-failure) 12%, transparent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--cap-depleted) 12%, transparent);
+  color: var(--cap-depleted);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
-/* 待保存脏点：6px 琥珀 */
+/* Unsaved changes dot. */
 .tabDirtyDot {
   width: 6px;
   height: 6px;
-  border-radius: $radius-full;
-  background: var(--amber-color);
   flex-shrink: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
 }
 
 @media (prefers-reduced-motion: reduce) {
