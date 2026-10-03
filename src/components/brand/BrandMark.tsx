@@ -1,8 +1,7 @@
 /**
  * Agent Tracker product mark.
  *
- * A tracking reticle: an open ring, a fixed centre point, and the tracked point breaking
- * out through the ring's gap. One white glyph on a solid accent tile so it stays legible
+ * A tracking reticle: a ring, a centre point, and four tick marks at the compass points. One white glyph on a solid accent tile so it stays legible
  * at favicon size and in both themes. Decorative only; callers provide the accessible
  * name where one is needed.
  */
@@ -14,8 +13,8 @@ export interface BrandMarkProps {
   tile?: boolean;
 }
 
-// Ring of radius 11 around (20, 20) with a 70° gap centred on the top-right diagonal.
-const RING_ARC = 'M 27.4 12.6 A 11 11 0 1 0 29.3 15.7';
+// Four tick marks just outside a radius-10 ring, at the compass points.
+const TICKS = 'M20 5v4M20 31v4M5 20h4M31 20h4';
 
 export function BrandMark({ size = 24, className, tile = true }: BrandMarkProps) {
   const glyph = tile ? 'var(--accent-contrast)' : 'var(--accent)';
@@ -29,9 +28,9 @@ export function BrandMark({ size = 24, className, tile = true }: BrandMarkProps)
       focusable="false"
     >
       {tile && <rect width="40" height="40" rx="10" fill="var(--accent)" />}
-      <path d={RING_ARC} fill="none" stroke={glyph} strokeWidth="3.5" strokeLinecap="round" />
-      <circle cx="20" cy="20" r="3.25" fill={glyph} />
-      <circle cx="31" cy="9" r="3.25" fill={glyph} />
+      <circle cx="20" cy="20" r="10" fill="none" stroke={glyph} strokeWidth="3.5" />
+      <path d={TICKS} fill="none" stroke={glyph} strokeWidth="3.5" strokeLinecap="round" />
+      <circle cx="20" cy="20" r="3" fill={glyph} />
     </svg>
   );
 }
@@ -42,8 +41,8 @@ export const BRAND_MARK_DATA_URI =
   encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">' +
       '<rect width="40" height="40" rx="10" fill="#2f6fe4"/>' +
-      `<path d="${RING_ARC}" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>` +
-      '<circle cx="20" cy="20" r="3.25" fill="#fff"/>' +
-      '<circle cx="31" cy="9" r="3.25" fill="#fff"/>' +
+      '<circle cx="20" cy="20" r="10" fill="none" stroke="#fff" stroke-width="3.5"/>' +
+      `<path d="${TICKS}" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>` +
+      '<circle cx="20" cy="20" r="3" fill="#fff"/>' +
       '</svg>'
   );
