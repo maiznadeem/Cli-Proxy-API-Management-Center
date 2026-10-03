@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { SelectionCheckbox } from '@/components/ui/SelectionCheckbox';
@@ -17,25 +18,6 @@ import styles from './LoginPage.module.scss';
  * 将 API 错误转换为本地化的用户友好消息
  */
 type RedirectState = { from?: { pathname?: string } };
-
-/** Product mark: three stacked capacity bars on a raised tile. Decorative. */
-function ProductMark({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="40"
-      height="40"
-      viewBox="0 0 40 40"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <rect width="40" height="40" rx="10" fill="var(--panel-raised)" />
-      <rect x="4" y="11" width="20" height="4" rx="2" fill="var(--accent)" />
-      <rect x="4" y="18" width="14" height="4" rx="2" fill="var(--cap-plenty)" />
-      <rect x="4" y="25" width="8" height="4" rx="2" fill="var(--cap-watch)" />
-    </svg>
-  );
-}
 
 function GlobeIcon() {
   return (
@@ -123,6 +105,9 @@ function getLocalizedErrorMessage(error: unknown, t: (key: string) => string): s
 
 export function LoginPage() {
   const { t } = useTranslation();
+  useEffect(() => {
+    document.title = `${t('login.title')} – Manifold`;
+  }, [t]);
   const navigate = useNavigate();
   const location = useLocation();
   const { showNotification } = useNotificationStore();
@@ -304,7 +289,7 @@ export function LoginPage() {
 
       <main className={styles.column}>
         <div className={styles.brand}>
-          <ProductMark className={styles.mark} />
+          <BrandMark size={40} className={styles.mark} />
           <div className={styles.brandText}>
             <span className={styles.productName}>{t('splash.title')}</span>
             <span className={styles.productSubtitle}>{t('splash.subtitle')}</span>

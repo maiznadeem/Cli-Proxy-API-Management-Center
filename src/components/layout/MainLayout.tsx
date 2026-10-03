@@ -31,7 +31,7 @@ import {
   IconSidebarSystem,
   IconChevronDown,
 } from '@/components/ui/icons';
-import { INLINE_LOGO_JPEG } from '@/assets/logoInline';
+import { BrandMark } from '@/components/brand/BrandMark';
 import {
   useAuthStore,
   useConfigStore,
@@ -290,6 +290,11 @@ export function MainLayout() {
   const { t } = useTranslation();
   const { showNotification } = useNotificationStore();
   const location = useLocation();
+  useEffect(() => {
+    const active = document.querySelector<HTMLElement>('.sidebar a[aria-current="page"]');
+    const label = active?.textContent?.trim().replace(/\s*\d+$/, '') ?? '';
+    document.title = label ? `${label} – Manifold` : 'Manifold';
+  }, [location.pathname]);
 
   const logout = useAuthStore((state) => state.logout);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
@@ -333,7 +338,7 @@ export function MainLayout() {
   const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const sheetWasOpenRef = useRef(false);
 
-  const fullBrandName = 'CLI Proxy API Management Center';
+  const fullBrandName = t('title.login');
   const abbrBrandName = t('title.abbr');
   const versionLabel = serverVersion ? `v${serverVersion.trim().replace(/^[vV]+/, '')}` : '';
   const hostLabel = useMemo(() => formatHostLabel(apiBase ?? ''), [apiBase]);
@@ -1014,7 +1019,7 @@ export function MainLayout() {
       >
         <div className="sidebar-header">
           <div className="sidebar-brand" title={fullBrandName}>
-            <img src={INLINE_LOGO_JPEG} alt="CPAMC logo" className="sidebar-brand-logo" />
+            <BrandMark size={24} className="sidebar-brand-logo" />
             {showSidebarLabels && <span className="sidebar-brand-title">{abbrBrandName}</span>}
           </div>
           <button

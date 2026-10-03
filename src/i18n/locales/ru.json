@@ -57,12 +57,12 @@
     "unsaved_changes_message": "У вас есть несохранённые изменения. Если вы уйдёте, они будут потеряны. Выйти?"
   },
   "title": {
-    "login": "Центр управления CLI Proxy API",
-    "abbr": "CPAMC"
+    "login": "Manifold",
+    "abbr": "Manifold"
   },
   "splash": {
-    "title": "CLI Proxy API",
-    "subtitle": "Центр управления"
+    "title": "Manifold",
+    "subtitle": "Пульт управления прокси"
   },
   "login": {
     "title": "Вход",
@@ -1804,7 +1804,7 @@
     "updates_title": "Обновления",
     "models_col_model": "Модель",
     "models_col_provider": "Провайдер",
-    "about_title": "CLI Proxy API Management Center",
+    "about_title": "Manifold",
     "models_title": "Доступные модели",
     "models_desc": "Показывает ответ /models и автоматически использует сохранённые API-ключи для авторизации.",
     "models_loading": "Загрузка доступных моделей...",
@@ -1871,7 +1871,7 @@
     "toggle_collapse": "Свернуть боковую панель",
     "expand": "Развернуть",
     "collapse": "Свернуть",
-    "subtitle": "Консоль управления CLI Proxy API",
+    "subtitle": "Пульт управления прокси",
     "auth_files_count": "Файлов аутентификации: {{count}}",
     "navigation": "Основная навигация"
   },

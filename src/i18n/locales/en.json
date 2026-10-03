@@ -57,12 +57,12 @@
     "unsaved_changes_message": "You have unsaved changes. Leaving now will discard them. Do you want to leave?"
   },
   "title": {
-    "login": "CLI Proxy API Management Center",
-    "abbr": "CPAMC"
+    "login": "Manifold",
+    "abbr": "Manifold"
   },
   "splash": {
-    "title": "CLI Proxy API",
-    "subtitle": "Management Center"
+    "title": "Manifold",
+    "subtitle": "Proxy control room"
   },
   "login": {
     "title": "Sign in",
@@ -1814,7 +1814,7 @@
     "updates_title": "Updates",
     "models_col_model": "Model",
     "models_col_provider": "Provider",
-    "about_title": "CLI Proxy API Management Center",
+    "about_title": "Manifold",
     "models_title": "Available Models",
     "models_desc": "Shows the /models response and uses saved API keys for auth automatically.",
     "models_loading": "Loading available models...",
@@ -1881,7 +1881,7 @@
     "toggle_collapse": "Collapse sidebar",
     "expand": "Expand",
     "collapse": "Collapse",
-    "subtitle": "CLI Proxy API Console",
+    "subtitle": "Proxy control room",
     "auth_files_count": "Authentication files: {{count}}",
     "navigation": "Main navigation"
   },
