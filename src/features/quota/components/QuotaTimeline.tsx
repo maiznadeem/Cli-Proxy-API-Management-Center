@@ -139,7 +139,19 @@ export function QuotaTimeline({
             maxPeriodHours: mode === 'session' ? 5 : span.days * 24,
           })
         )
-        .filter((lane) => laneHasWindow(lane) && (mode !== 'session' || lane.periodHours === 5)),
+        .map((lane, index) => {
+          // Session mode shows only true 5-hour windows; a longer period becomes an
+          // explicitly empty lane rather than being reinterpreted as a 5-hour reset.
+          const invalidForMode = mode === 'session' && lane.periodHours !== 5;
+          const empty = invalidForMode
+            ? { ...lane, anchorMs: null, periodHours: null, remaining: null }
+            : lane;
+          return { lane: empty, loaded: laneInputs[index].quota?.status === 'success' };
+        })
+        // Loaded credentials stay visible even without a running window: a missing
+        // row reads as an oversight, an idle row reads as "nothing counting down".
+        .filter(({ lane, loaded }) => loaded || laneHasWindow(lane))
+        .map(({ lane }) => lane),
     [laneInputs, mode, span.days]
   );
 
@@ -403,7 +415,7 @@ function Lane({ lane, span, now, mode, cells }: LaneProps) {
 
         {windows.length === 0 ? (
           <span className={styles.laneIdle}>
-            {t('quota_management.windows_idle', {
+            {t(mode === 'session' ? 'quota_management.windows_idle_session' : 'quota_management.windows_idle', {
               defaultValue: 'no window counting down',
             })}
           </span>

@@ -1584,6 +1584,7 @@
     "windows_mode_weekly": "按週",
     "windows_mode_session": "5 小時",
     "windows_credential": "憑證",
+    "windows_idle_session": "沒有進行中的 5 小時視窗",
     "windows_idle": "沒有正在計時的視窗",
     "windows_empty_session": "目前頁面沒有憑證提供 5 小時配額視窗。",
     "windows_legend_current": "目前視窗",

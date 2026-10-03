@@ -1566,6 +1566,7 @@
     "windows_mode_weekly": "Неделя",
     "windows_mode_session": "5 часов",
     "windows_credential": "Учётные данные",
+    "windows_idle_session": "нет активного 5-часового окна",
     "windows_idle": "нет активного окна",
     "windows_empty_session": "Ни одни учётные данные на этой странице не предоставляют 5-часовое окно квоты.",
     "windows_legend_current": "текущее окно",
