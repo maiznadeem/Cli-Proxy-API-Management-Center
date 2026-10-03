@@ -1,53 +1,55 @@
 @use '../../../styles/mixins' as *;
 
 /* ============================================================
- * 额度卡片 — 继承凭证卡 statTile 配方（14px 圆角 / 1px 边框 / 82% 透感纸面）。
- * 提供商身份只由图标承载（混合网格下五色渐变卡底会互相打架，已退役）。
- * 遥测内容一律 mono + tabular-nums。
+ * Account ribbon: one full-width band per credential.
+ *   [ identity ] [ capacity columns ............ ] [ actions ]
+ * Depth comes from surface steps; the only colour is on the meters.
  * ============================================================ */
 
 .card {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-  padding: 15px 16px;
-  border-radius: 14px;
-  border: 1px solid var(--border-color);
-  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
-  transition:
-    transform var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    border-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    box-shadow var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px 24px;
+  padding: 16px 20px;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--hairline);
+  background: var(--panel);
+  transition: border-color var(--dur-hover) var(--ease-standard);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .card:hover {
-    transform: translateY(-2px);
-    border-color: var(--border-hover);
-    box-shadow: 0 12px 26px -14px rgb(0 0 0 / 0.16);
+    border-color: var(--hairline-strong);
   }
 }
 
-/* 首次数据到达时的一次性级联入场；切 tab / 翻页 / 刷新不重播 */
+/* First data arrival: a single short fade, no movement. */
 .cardEnter {
-  animation: quota-card-in 0.45s var(--ease-out-strong, ease-out) both;
+  animation: quota-card-in var(--dur-fast) var(--ease-standard) both;
   animation-delay: var(--card-delay, 0s);
 }
 
 @keyframes quota-card-in {
   from {
     opacity: 0;
-    transform: translate3d(0, 16px, 0);
   }
 }
 
-/* ---------- 头部：品牌图标 + 文件名 ---------- */
+/* ---------- Identity ---------- */
 
 .head {
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.identity {
+  display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -56,10 +58,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-control);
+  background: var(--panel-raised);
 }
 
 .icon {
@@ -70,54 +72,80 @@
 }
 
 .iconFallback {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-secondary);
+  font-size: $text-caption;
+  font-weight: 600;
+  color: var(--ink-muted);
 }
 
 .fileName {
   min-width: 0;
   font-family: $font-mono;
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--text-primary);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
+  color: var(--ink);
   @include text-ellipsis;
 }
 
-/* ---------- body 容器 ---------- */
+/* Small facts under the name (plan, resets remaining). */
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding-left: 38px;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
+}
+
+.factValue {
+  color: var(--ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Capacity columns ---------- */
 
 .body {
   display: flex;
-  flex-direction: column;
-  gap: 9px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 24px;
   min-width: 0;
+
+  /* Anything that is not a capacity column (plan chips, messages, errors) takes its own
+     full-width line above the columns, so the columns always sit on one baseline. */
+  > :not([class*='quotaRow']):not([class*='antigravityQuotaGroup']) {
+    flex: 1 1 100%;
+    order: -1;
+    min-width: 0;
+  }
 }
 
-/* ---------- idle：整块 body 即点击加载的落点 ---------- */
+/* ---------- Idle: the whole body is the load action ---------- */
 
 .idleBody {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  min-height: 76px;
-  padding: 12px 10px;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
   cursor: pointer;
-  border: 1px dashed var(--border-color);
-  border-radius: 10px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-control);
   background: none;
-  color: var(--text-tertiary);
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: $text-dense;
   transition:
-    transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out),
-    border-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+    transform var(--dur-press) var(--ease-standard),
+    border-color var(--dur-hover) var(--ease-standard),
+    color var(--dur-hover) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard);
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.55;
+    opacity: 0.5;
   }
 
   &:active:not(:disabled) {
@@ -125,58 +153,51 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
 @media (hover: hover) and (pointer: fine) {
   .idleBody:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--primary-color) 35%, var(--border-color));
     border-style: solid;
-    color: var(--text-secondary);
+    border-color: var(--accent);
+    color: var(--ink);
+    background: var(--accent-10);
   }
 }
 
 .idleGlyph {
   flex-shrink: 0;
-  opacity: 0.8;
 }
 
 .idleHint {
-  font-family: $font-mono;
-  font-size: 11.5px;
-  line-height: 1.5;
-  text-align: center;
+  font-size: $text-dense;
+  line-height: $lh-dense;
 }
 
-/* ---------- loading：双幽灵行骨架 ---------- */
+/* ---------- Loading ---------- */
 
 .skeleton {
   display: flex;
-  flex-direction: column;
-  gap: 11px;
-  padding: 4px 0 2px;
+  gap: 24px;
+  width: 100%;
 }
 
 .skeletonRow {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  flex: 1 1 150px;
+  max-width: 320px;
 }
 
-/* 骨架：底色 + 一道 1.2s 匀速扫光（linear —— 环境性匀速运动的唯一例外） */
 .skeletonLabel,
 .skeletonTrack {
   display: block;
-  border-radius: $radius-full;
-  background-color: color-mix(in srgb, var(--text-primary) 8%, transparent);
-  background-image: linear-gradient(
-    90deg,
-    transparent 20%,
-    color-mix(in srgb, var(--text-primary) 6%, transparent) 50%,
-    transparent 80%
-  );
+  border-radius: var(--radius-pill);
+  background-color: var(--panel-raised);
+  background-image: linear-gradient(90deg, transparent 20%, var(--panel-hover) 50%, transparent 80%);
   background-repeat: no-repeat;
   background-size: 220% 100%;
   animation: quota-skeleton-sweep 1.2s linear infinite;
@@ -193,12 +214,12 @@
 
 .skeletonLabel {
   width: 40%;
-  height: 10px;
+  height: 12px;
 }
 
 .skeletonTrack {
   width: 100%;
-  height: 6px;
+  height: 8px;
 }
 
 .srOnly {
@@ -213,48 +234,49 @@
   border: 0;
 }
 
-/* ---------- error ---------- */
+/* ---------- Error ---------- */
 
 .errorStrip {
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--viz-failure);
-  background: color-mix(in srgb, var(--viz-failure) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--viz-failure) 32%, transparent);
-  border-radius: 9px;
-  padding: 8px 10px;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--cap-depleted);
+  background: color-mix(in srgb, var(--cap-depleted) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cap-depleted) 32%, transparent);
+  border-radius: var(--radius-control);
+  padding: 8px 12px;
   overflow-wrap: anywhere;
 }
 
-/* ---------- footer 动作 ---------- */
+/* ---------- Actions ---------- */
 
 .actionRow {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 6px;
   flex-wrap: wrap;
 }
 
-/* 安静描边药丸（与凭证卡图标动作同族：hover 才显色块） */
 .actionPill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
   cursor: pointer;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-full;
-  background: none;
-  padding: 5px 11px;
-  font-size: 11.5px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--text-secondary);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--panel-raised);
+  font: inherit;
+  font-size: $text-dense;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--ink);
   white-space: nowrap;
   transition:
-    transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out),
-    border-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+    transform var(--dur-press) var(--ease-standard),
+    border-color var(--dur-hover) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard);
 
   &:disabled {
     cursor: not-allowed;
@@ -262,20 +284,19 @@
   }
 
   &:active:not(:disabled) {
-    transform: scale(0.97);
+    transform: scale(0.98);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
 @media (hover: hover) and (pointer: fine) {
   .actionPill:hover:not(:disabled) {
-    border-color: var(--border-hover);
-    background: color-mix(in srgb, var(--bg-tertiary) 55%, transparent);
-    color: var(--text-primary);
+    background: var(--panel-hover);
+    border-color: var(--hairline-strong);
   }
 }
 
@@ -286,6 +307,45 @@
 @keyframes quota-card-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1500px) {
+  .card {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .head {
+    grid-column: 1;
+  }
+
+  .actionRow {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .body {
+    grid-column: 1 / -1;
+  }
+}
+
+@include mobile {
+  .card {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .actionRow {
+    grid-column: 1;
+    grid-row: auto;
+    justify-content: flex-start;
+  }
+
+  .facts {
+    padding-left: 0;
   }
 }
 

@@ -11,7 +11,7 @@
 
 .disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .input {
@@ -28,35 +28,33 @@
 }
 
 .box {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
-  border-radius: 7px;
-  border: 1px solid var(--border-color);
-  background: color-mix(in srgb, var(--bg-secondary) 92%, transparent);
-  color: var(--primary-contrast, #fff);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--hairline-strong);
+  background: var(--panel-sunken);
+  color: var(--accent-contrast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   transition:
-    border-color $transition-fast,
-    background-color $transition-fast,
-    box-shadow $transition-fast,
-    transform $transition-fast;
+    border-color var(--dur-hover) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard),
+    box-shadow var(--dur-hover) var(--ease-standard),
+    transform var(--dur-press) var(--ease-standard);
 }
 
 .root:hover .box {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 16%, transparent);
+  border-color: var(--accent);
 }
 
 .root:active .box {
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 
 .disabled:hover .box {
-  border-color: var(--border-color);
-  box-shadow: none;
+  border-color: var(--hairline-strong);
 }
 
 .disabled:active .box {
@@ -64,24 +62,35 @@
 }
 
 .input:focus-visible + .box {
-  border-color: var(--primary-color);
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--primary-color) 16%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--primary-color) 50%, transparent);
+  box-shadow: var(--focus-ring);
 }
 
 .boxChecked {
-  border-color: var(--primary-color);
-  background: var(--primary-color);
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.root:hover .boxChecked {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
 }
 
 .boxChecked svg {
   display: block;
+  width: 12px;
+  height: 12px;
   stroke-width: 2.4;
 }
 
 .label {
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 500;
+  color: var(--ink);
+  font-size: $text-body;
+  line-height: $lh-body;
+  font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root:active .box {
+    transform: none;
+  }
 }

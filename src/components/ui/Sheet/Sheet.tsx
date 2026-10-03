@@ -34,7 +34,8 @@ interface SheetProps {
   confirmClose?: () => boolean | Promise<boolean>;
 }
 
-const CLOSE_ANIMATION_DURATION = 280;
+// Matches the exit animation (var(--dur-base)).
+const CLOSE_ANIMATION_DURATION = 220;
 const SIZE_CLASS: Record<SheetSize, string> = {
   md: styles.sizeMd,
   lg: styles.sizeLg,
@@ -231,7 +232,7 @@ export function Sheet({
           disabled={closeDisabled}
           aria-label={t('common.close')}
         >
-          <IconX size={18} />
+          <IconX size={16} />
         </button>
         {(eyebrow || title || description) && (
           <div className={styles.header}>

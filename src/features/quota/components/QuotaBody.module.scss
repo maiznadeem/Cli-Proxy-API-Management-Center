@@ -11,107 +11,109 @@
  *    已验收的徽章，验证方式是与 git 历史做 diff（应为空）。
  * ============================================================ */
 
-/* ---------- 额度行 ---------- */
+/* ---------- Capacity columns ----------
+ * Inside a ribbon each window is a column: label, headline percent, reset, meter.
+ * The host lays rows out horizontally (flex-wrap); each row claims at least 150px. */
 
 .quotaRow {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  min-width: 0;
+  gap: 6px;
+  flex: 1 1 140px;
+  min-width: 140px;
+  max-width: 280px;
 }
 
 .quotaRowHeader {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
   min-width: 0;
 }
 
 .quotaModel {
   min-width: 0;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-weight: 500;
+  color: var(--ink-muted);
   @include text-ellipsis;
 }
 
-/* 遥测：mono + 等宽数字，刷新时数字不跳位 */
 .quotaMeta {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-  flex-shrink: 0;
-  font-family: $font-mono;
-  font-size: 11.5px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  min-width: 0;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
 }
 
-/* 百分比穿墨色而非填充色 —— 文字不承担状态编码，颜色留给水位条 */
+/* The percent is the headline of the column. Text carries no state colour; the meter does. */
 .quotaPercent {
-  font-weight: 650;
-  color: var(--text-primary);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
 }
 
 .quotaReset {
-  color: var(--text-quaternary);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
 }
 
-/* Countdown beside the absolute reset time. The separator is a pseudo-element
-   so the two spans stay independently styleable (the relative half turns
-   warning-coloured when this is the row that recovers first). */
+/* Countdown after the absolute reset time, separated by space rather than punctuation. */
 .quotaResetRelative {
-  color: var(--text-tertiary);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
 
   &::before {
-    content: '·';
-    margin: 0 4px;
-    color: var(--text-quaternary);
+    content: '';
+    display: inline-block;
+    width: 6px;
   }
 }
 
 .quotaResetRelativeSoon {
-  color: var(--warning-text);
+  color: var(--cap-watch);
   font-weight: 600;
 }
 
 .quotaAmount {
-  font-family: $font-mono;
   font-variant-numeric: tabular-nums;
-  color: var(--text-secondary);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
 }
 
 .quotaMessage {
-  font-family: $font-mono;
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--text-tertiary);
-  text-align: center;
-  padding: 6px 4px;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
+  padding: 4px 0;
 }
 
-/* ---------- 水位条（QuotaMeter）----------
- * 轨道退居背景（8% 墨色），填充按剩余量三档着色；
- * percent === null 时宽度为 0 —— 未知不着色。 */
+/* ---------- Meter ----------
+ * The only coloured element. Fill colour is mixed along the capacity scale from the remaining
+ * percent in --meter-value; the three contract classes choose which two stops to mix between. */
 
 .quotaBar {
-  height: 6px;
-  border-radius: $radius-full;
-  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--cap-track);
   overflow: hidden;
 }
 
 .quotaBarFill {
   height: 100%;
-  border-radius: $radius-full;
-  /* 刷新时平滑重定向到新水位（可中断） */
-  transition: width 360ms var(--ease-out-strong, ease);
-  /* 数据到达是本页的高潮时刻：水位逐行铺开（每行 40ms 级差）。
-   * 走 scaleX 而非 width，避免与上面的 width 过渡互相抢夺同一属性。 */
+  border-radius: var(--radius-pill);
+  transition: width var(--dur-meter) var(--ease-standard);
   transform-origin: left center;
-  animation: quota-meter-fill 480ms var(--ease-out-strong, ease-out) both;
-  animation-delay: calc(var(--meter-index, 0) * 40ms);
+  animation: quota-meter-fill var(--dur-meter) var(--ease-standard) both;
 }
 
 @keyframes quota-meter-fill {
@@ -120,29 +122,40 @@
   }
 }
 
+/* ≥70 remaining: watch → plenty across 70..100 */
 .quotaBarFillHigh {
-  background: var(--viz-success);
+  background: color-mix(
+    in oklab,
+    var(--cap-plenty) calc((var(--meter-value, 100) - 70) / 30 * 100%),
+    var(--cap-watch)
+  );
 }
 
+/* 30..70 remaining: steady watch */
 .quotaBarFillMedium {
-  background: var(--quota-medium-color);
+  background: var(--cap-watch);
 }
 
+/* <30 remaining: depleted → watch across 0..30 */
 .quotaBarFillLow {
-  background: var(--viz-failure);
+  background: color-mix(
+    in oklab,
+    var(--cap-watch) calc(var(--meter-value, 0) / 30 * 100%),
+    var(--cap-depleted)
+  );
 }
 
-/* ---------- Antigravity 分组 ---------- */
+/* ---------- Antigravity groups ---------- */
 
 .antigravityQuotaGroup {
   display: flex;
-  flex-direction: column;
-  gap: 7px;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  flex: 1 1 100%;
 
   & + & {
-    margin-top: 3px;
-    padding-top: 9px;
-    border-top: 1px dashed color-mix(in srgb, var(--border-color) 80%, transparent);
+    padding-top: 12px;
+    border-top: 1px solid var(--hairline);
   }
 }
 
@@ -150,36 +163,33 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1 1 100%;
   min-width: 0;
 }
 
 .antigravityQuotaGroupTitle {
-  font-family: $font-mono;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 600;
+  color: var(--ink);
 }
 
 .antigravityQuotaGroupDescription {
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--text-quaternary);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
 }
 
 @include mobile {
-  .quotaRowHeader {
-    flex-direction: column;
-    align-items: flex-start;
+  .quotaRow {
+    flex-basis: calc(50% - 12px);
+    min-width: 130px;
+    max-width: none;
   }
 
-  .quotaModel {
-    width: 100%;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    overflow-wrap: anywhere;
+  .quotaPercent {
+    font-size: 20px;
+    line-height: 24px;
   }
 }
 

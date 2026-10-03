@@ -93,6 +93,10 @@
     "refresh_all": "刷新全部",
     "logout": "登出"
   },
+  "status_strip": {
+    "label": "服务器状态",
+    "connection_error": "连接错误"
+  },
   "connection": {
     "status": "连接状态:"
   },
@@ -1818,7 +1822,8 @@
     "expand": "展开",
     "collapse": "收起",
     "subtitle": "CLI Proxy API 管理控制台",
-    "auth_files_count": "认证文件：{{count}} 个"
+    "auth_files_count": "认证文件：{{count}} 个",
+    "navigation": "主导航"
   },
   "footer": {
     "api_version": "CLI Proxy API 版本",

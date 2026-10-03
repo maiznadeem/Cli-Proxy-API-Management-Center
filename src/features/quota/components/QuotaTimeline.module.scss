@@ -1,15 +1,26 @@
 @use '../../../styles/variables' as *;
 @use '../../../styles/mixins' as *;
 
-// Fixed-width lane column so every row's bars start at the same x — the whole
-// point of the chart is comparing when lanes end relative to each other.
-$lane-width: 210px;
+// Reset calendar. Every row shares one horizontal time axis, so the credential
+// column is a fixed width and bars in different lanes line up exactly. The
+// column width is a custom property because the mobile layout narrows it and
+// the "now" overlay has to start where the track starts.
 
 .timeline {
+  --lane-col: 220px;
+
   display: flex;
   flex-direction: column;
   gap: $spacing-md;
+  padding: $spacing-md;
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  font-family: $font-family;
+  color: var(--ink);
 }
+
+// ---------------------------------------------------------------- header
 
 .head {
   display: flex;
@@ -21,16 +32,40 @@ $lane-width: 210px;
 
 .title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 650;
-  color: var(--text-primary);
+  font-size: $text-title;
+  line-height: $lh-title;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
 }
 
 .range {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   margin: 2px 0 0;
-  font-size: 12px;
-  color: var(--text-quaternary);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
+}
+
+.rangeDates {
+  color: var(--ink);
+}
+
+// Parts are separated by a thin vertical hairline rather than a middle dot.
+.rangePart {
+  display: inline-flex;
+  align-items: center;
+
+  &::before {
+    content: '';
+    width: 1px;
+    height: 12px;
+    margin: 0 $spacing-sm;
+    background: var(--hairline-strong);
+  }
 }
 
 .controls {
@@ -40,49 +75,81 @@ $lane-width: 210px;
   flex-wrap: wrap;
 }
 
-.nav,
-.modes {
+// Segmented control shared by period navigation and the zoom toggle.
+.segmented {
   display: inline-flex;
-  align-items: center;
+  align-items: stretch;
   gap: 2px;
-  padding: 3px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
+  padding: 2px;
+  background: var(--panel-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
 
   button {
-    padding: 4px 12px;
-    font: inherit;
-    font-size: 12.5px;
-    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 26px;
+    padding: 0 $spacing-sm + 2px;
+    font-family: inherit;
+    font-size: $text-caption;
+    line-height: $lh-caption;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-muted);
     background: transparent;
     border: 1px solid transparent;
-    border-radius: 999px;
+    border-radius: var(--radius-control);
     cursor: pointer;
-    transition: all $transition-fast;
+    transition:
+      color var(--dur-fast) var(--ease-standard),
+      background-color var(--dur-fast) var(--ease-standard);
 
-    &:hover:not(:disabled) {
-      color: var(--text-primary);
+    &:hover:not(:disabled):not([aria-pressed='true']) {
+      color: var(--ink);
+      background: var(--panel-hover);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-ring);
+    }
+
+    // The period label is disabled while it already shows the current period;
+    // it reads as the selected segment rather than a greyed-out control.
+    &:disabled,
+    &[aria-pressed='true'] {
+      color: var(--ink);
+      background: var(--panel);
+      border-color: var(--hairline);
     }
 
     &:disabled {
-      opacity: 0.5;
       cursor: default;
     }
 
-    &[aria-pressed='true'] {
-      background: var(--floating-surface, var(--bg-primary));
-      border-color: var(--border-hover);
-      color: var(--text-primary);
+    svg {
+      display: block;
     }
   }
 }
 
+.chevronNext {
+  transform: scaleX(-1);
+}
+
+// ---------------------------------------------------------------- chart
+
 .chart {
-  border: 1px solid var(--border-color);
-  border-radius: $radius-lg;
-  background: var(--bg-primary);
-  overflow: hidden;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+
+// Positioning context for the shared "now" overlay. Kept separate from the
+// scroll container so the overlay spans the full scroll width on mobile.
+.grid {
+  position: relative;
 }
 
 .empty {
@@ -90,30 +157,30 @@ $lane-width: 210px;
   display: grid;
   place-items: center;
   padding: $spacing-lg;
-  color: var(--text-quaternary);
-  font-size: 12px;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
   text-align: center;
 }
 
 .axis,
 .lane {
   display: grid;
-  grid-template-columns: $lane-width 1fr;
+  grid-template-columns: var(--lane-col) minmax(0, 1fr);
 }
 
 .axis {
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .axisLabel {
-  padding: 8px 12px;
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-quaternary);
   display: flex;
   align-items: flex-end;
+  padding: $spacing-sm $spacing-sm $spacing-sm 0;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
+  background: var(--panel);
 }
 
 .axisCells {
@@ -121,111 +188,124 @@ $lane-width: 210px;
 }
 
 .axisCell {
+  position: relative;
   flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  padding: 6px 2px;
-  border-left: 1px solid var(--border-color);
+  padding: $spacing-sm 2px;
+  border-left: 1px solid var(--hairline);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 
-  &[data-weekend='1'] {
-    background: rgba(255, 255, 255, 0.014);
-  }
-
-  // The current day is the reference point for reading the whole chart.
+  // Today is the reference point for reading the whole calendar.
   &[data-today='1'] {
-    background: rgba(255, 255, 255, 0.03);
+    color: var(--ink);
+    font-weight: 600;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2px;
+      background: var(--accent);
+    }
   }
 }
 
 .axisWeekday {
-  font-size: 10px;
-  color: var(--text-quaternary);
-  min-height: 12px;
+  min-height: $lh-caption;
 }
 
 .axisDate {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
-.lane {
-  border-top: 1px solid var(--border-color);
+// ---------------------------------------------------------------- lanes
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.012);
-  }
+.lane {
+  border-top: 1px solid var(--hairline);
+}
+
+// The axis already draws the rule under the day header.
+.axis + .lane {
+  border-top: 0;
 }
 
 .laneHead {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 9px 12px;
+  justify-content: center;
+  gap: 2px;
   min-width: 0;
+  padding: $spacing-sm $spacing-sm $spacing-sm 0;
+  background: var(--panel);
+}
+
+// Shown only once the credential column collapses on mobile.
+.laneInitial {
+  display: none;
 }
 
 .laneTop {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: baseline;
+  gap: $spacing-sm;
   min-width: 0;
 }
 
-.laneDot {
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--provider-accent, var(--text-quaternary));
-}
-
+// Credential filenames are literal strings, so this is the one mono cell.
 .laneName {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @include text-ellipsis;
+  min-width: 0;
+  font-family: $font-mono;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
+  color: var(--ink);
 }
 
 .lanePeriod {
   flex: none;
-  padding: 0 6px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--count-badge-text, var(--text-secondary));
-  background: var(--count-badge-bg, var(--bg-tertiary));
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
 }
 
 .laneLimits {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  column-gap: $spacing-sm + 4px;
+  row-gap: 2px;
 }
 
 .laneLimit {
-  padding: 1px 6px;
-  border-radius: $radius-sm;
-  font-size: 10.5px;
-  color: var(--text-quaternary);
-  background: var(--bg-tertiary);
+  display: inline-flex;
+  align-items: baseline;
+  gap: $spacing-xs;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
 
   b {
-    color: var(--text-secondary);
+    font-weight: 500;
+    color: var(--ink);
     font-variant-numeric: tabular-nums;
   }
 }
 
 .track {
   position: relative;
-  min-height: 46px;
+  min-height: 44px;
   display: flex;
   align-items: center;
 }
@@ -237,160 +317,228 @@ $lane-width: 210px;
 
   > span {
     flex: 1 1 0;
-    border-left: 1px solid var(--border-color);
-
-    &[data-weekend='1'] {
-      background: rgba(255, 255, 255, 0.014);
-    }
+    border-left: 1px solid var(--hairline);
   }
 }
 
-// Vertical "now" marker, above the grid but below the bars so it never hides
-// a label.
+// ---------------------------------------------------------------- now
+
+.nowLayer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--lane-col);
+  right: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
 .nowLine {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 1px;
-  background: var(--text-tertiary, var(--text-quaternary));
-  opacity: 0.8;
-  z-index: 1;
+  transform: translateX(-50%);
+  background: var(--accent);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 7px;
+    height: 7px;
+    transform: translate(-50%, -50%);
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+  }
 }
 
+// ---------------------------------------------------------------- bars
+
 .window {
-  position: relative;
+  position: absolute;
   z-index: 2;
   height: 22px;
   display: flex;
   align-items: center;
-  padding: 0 8px;
-  border-radius: 999px;
+  padding: 0 $spacing-sm;
   overflow: hidden;
-  font-size: 10.5px;
+  border-radius: var(--radius-control);
+  font-size: $text-caption;
+  line-height: $lh-caption;
   white-space: nowrap;
-  position: absolute;
+  font-variant-numeric: tabular-nums;
+  transition:
+    left var(--dur-base) var(--ease-standard),
+    width var(--dur-base) var(--ease-standard);
 }
 
-// Current window: solid, in the provider's colour — the row's focal point.
+// Current window: tinted by remaining capacity, solid capacity edge on the left.
 .windowLive {
-  background: color-mix(in srgb, var(--provider-accent) 26%, transparent);
-  border: 1px solid color-mix(in srgb, var(--provider-accent) 45%, transparent);
-  color: var(--text-primary);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--cap-color) 28%, var(--panel-raised));
+  border-left: 2px solid var(--cap-color);
+  padding-left: $spacing-sm - 2px;
 }
 
-// Upcoming: dashed outline, nothing consumed yet.
+// Upcoming: outline only, nothing consumed yet.
 .windowNext {
+  color: var(--ink-muted);
   background: transparent;
-  border: 1px dashed color-mix(in srgb, var(--provider-accent) 32%, transparent);
-  color: var(--text-quaternary);
+  border: 1px dashed var(--hairline-strong);
 }
 
-// Elapsed: recedes.
+// Elapsed: recedes into the surface.
 .windowPast {
-  background: color-mix(in srgb, var(--provider-accent) 8%, transparent);
-  border: 1px solid transparent;
-  color: var(--text-quaternary);
-}
-
-// Consumed portion of the current window, drawn behind its label.
-.windowFill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  background: color-mix(in srgb, var(--provider-accent) 34%, transparent);
-  pointer-events: none;
+  color: var(--ink-ghost);
+  background: var(--panel-sunken);
 }
 
 .windowLabel {
-  position: relative;
+  display: inline-flex;
+  gap: $spacing-sm;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-variant-numeric: tabular-nums;
 }
 
-// A reset credit is use-it-or-lose-it, so its expiry sits above the window bar
-// as a narrow amber tick without competing with the bar's own label.
+.windowRemaining {
+  font-weight: 600;
+}
+
+// A reset credit is use-it-or-lose-it; its expiry is a narrow tick that sits
+// over the bar without competing with the bar's own label.
 .resetCreditTick {
   position: absolute;
   z-index: 3;
-  top: 6px;
-  bottom: 6px;
+  top: 8px;
+  bottom: 8px;
   width: 2px;
   transform: translateX(-50%);
-  border-radius: 999px;
-  background: var(--amber-color);
-  box-shadow: 0 0 0 1px var(--bg-primary);
+  background: var(--cap-watch);
   cursor: help;
-
-  &:hover {
-    width: 4px;
-  }
 }
 
 .laneIdle {
   position: relative;
   z-index: 2;
-  padding-left: 10px;
-  font-size: 11px;
-  color: var(--text-quaternary);
+  padding-left: $spacing-sm;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
 }
+
+// ---------------------------------------------------------------- legend
 
 .legend {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: $spacing-md;
-  font-size: 11px;
-  color: var(--text-quaternary);
+  column-gap: $spacing-md;
+  row-gap: $spacing-xs;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
 }
 
 .legendItem {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-sm - 2px;
 }
 
 .swatch {
-  width: 22px;
+  flex: none;
+  width: 10px;
   height: 10px;
-  border-radius: 999px;
+  border-radius: 2px;
 }
 
 .swatchLive {
-  background: color-mix(in srgb, var(--text-tertiary, #888) 34%, transparent);
-  border: 1px solid color-mix(in srgb, var(--text-tertiary, #888) 50%, transparent);
+  background: color-mix(in srgb, var(--cap-plenty) 28%, var(--panel-raised));
+  border-left: 2px solid var(--cap-plenty);
 }
 
 .swatchNext {
-  border: 1px dashed color-mix(in srgb, var(--text-tertiary, #888) 45%, transparent);
+  border: 1px dashed var(--hairline-strong);
 }
 
 .swatchPast {
-  background: color-mix(in srgb, var(--text-tertiary, #888) 12%, transparent);
+  background: var(--panel-sunken);
 }
 
 .swatchCredit {
   width: 2px;
-  height: 14px;
-  border-radius: 999px;
-  background: var(--amber-color);
+  border-radius: 0;
+  background: var(--cap-watch);
 }
 
 .legendNote {
   flex: 1 1 320px;
   min-width: 0;
+  color: var(--ink-faint);
 }
 
+// ---------------------------------------------------------------- motion
+
+@media (prefers-reduced-motion: reduce) {
+  .window,
+  .segmented button {
+    transition: none;
+  }
+}
+
+// ---------------------------------------------------------------- mobile
+
 @include mobile {
-  // The lane column can't shrink much before names become unreadable, so the
-  // chart scrolls horizontally rather than compressing to illegibility.
+  .timeline {
+    --lane-col: 40px;
+  }
+
+  // The time axis can't compress far before dates collide, so the calendar
+  // scrolls horizontally with the credential column pinned on the left.
   .chart {
     overflow-x: auto;
   }
 
-  .axis,
-  .lane {
+  .grid {
     min-width: 720px;
+  }
+
+  .axisLabel,
+  .laneHead {
+    position: sticky;
+    left: 0;
+    z-index: 4;
+    padding: 0;
+    border-right: 1px solid var(--hairline);
+  }
+
+  // The header label has no room at 40px; the initials below speak for it.
+  .axisLabel {
+    font-size: 0;
+  }
+
+  .laneHead {
+    align-items: center;
+  }
+
+  .laneInitial {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-control);
+    background: var(--panel-raised);
+    font-size: $text-caption;
+    line-height: $lh-caption;
+    font-weight: 600;
+    color: var(--ink-muted);
+  }
+
+  .laneTop,
+  .laneLimits {
+    display: none;
   }
 }

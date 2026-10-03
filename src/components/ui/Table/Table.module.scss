@@ -2,34 +2,44 @@
 @use '../../../styles/variables' as *;
 
 .wrap {
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
   overflow: hidden;
-  background: var(--bg-primary);
+  background: var(--panel);
 }
 
+// The scroll box is the sticky-header container. Set `--table-max-height` on any
+// ancestor to bound the table and keep the header pinned while rows scroll.
 .scroll {
-  overflow-x: auto;
+  overflow: auto;
+  max-height: var(--table-max-height, none);
+  overscroll-behavior-x: contain;
 }
 
 .table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 13px;
-  color: var(--text-primary);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
 }
 
 .head {
-  background: var(--muted-bg);
-
   th {
-    color: var(--muted-foreground);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--panel-raised);
+    color: var(--ink-muted);
     font-weight: 500;
-    font-size: 12px;
+    font-size: $text-caption;
+    line-height: $lh-caption;
     text-align: left;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--hairline);
     vertical-align: middle;
   }
 
@@ -39,25 +49,27 @@
 }
 
 .body {
-  background: var(--bg-primary);
+  background: var(--panel);
 }
 
 .row {
-  transition: background-color $transition-fast;
+  transition: background-color var(--dur-hover) var(--ease-standard);
 
   td {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border-color);
-    vertical-align: top;
-    line-height: 1.5;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--hairline);
+    vertical-align: middle;
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    transition: background-color var(--dur-hover) var(--ease-standard);
   }
 
   &:hover td {
-    background: color-mix(in srgb, var(--accent-bg) 50%, transparent);
+    background: var(--panel-hover);
   }
 
   &.selected td {
-    background: var(--primary-8);
+    background: var(--accent-10);
   }
 }
 
@@ -67,4 +79,5 @@
 
 .alignRight {
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }

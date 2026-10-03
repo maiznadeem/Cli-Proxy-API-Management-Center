@@ -93,6 +93,10 @@
     "refresh_all": "Обновить всё",
     "logout": "Выйти"
   },
+  "status_strip": {
+    "label": "Состояние сервера",
+    "connection_error": "Ошибка подключения"
+  },
   "connection": {
     "status": "Статус подключения:"
   },
@@ -1814,7 +1818,8 @@
     "expand": "Развернуть",
     "collapse": "Свернуть",
     "subtitle": "Консоль управления CLI Proxy API",
-    "auth_files_count": "Файлов аутентификации: {{count}}"
+    "auth_files_count": "Файлов аутентификации: {{count}}",
+    "navigation": "Основная навигация"
   },
   "footer": {
     "api_version": "Версия CLI Proxy API",

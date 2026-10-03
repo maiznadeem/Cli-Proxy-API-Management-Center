@@ -92,41 +92,41 @@ export function QuotaCard(props: QuotaCardProps) {
       style={entranceStyle}
     >
       <header className={styles.head}>
-        <span
-          className={styles.iconWrap}
-          title={typeLabel}
-          style={
-            isThemeSurfaceIconProvider(entry.type)
-              ? { background: getThemeSurfaceIconBackground(resolvedTheme) }
-              : undefined
-          }
-        >
-          {iconSrc ? (
-            <img src={iconSrc} alt="" className={styles.icon} />
-          ) : (
-            <span className={styles.iconFallback}>{typeLabel.slice(0, 1).toUpperCase()}</span>
-          )}
-        </span>
-        <span className={styles.fileName} title={displayName}>
-          {displayName}
-        </span>
+        <div className={styles.identity}>
+          <span
+            className={styles.iconWrap}
+            title={typeLabel}
+            style={
+              isThemeSurfaceIconProvider(entry.type)
+                ? { background: getThemeSurfaceIconBackground(resolvedTheme) }
+                : undefined
+            }
+          >
+            {iconSrc ? (
+              <img src={iconSrc} alt="" className={styles.icon} />
+            ) : (
+              <span className={styles.iconFallback}>{typeLabel.slice(0, 1).toUpperCase()}</span>
+            )}
+          </span>
+          <span className={styles.fileName} title={displayName}>
+            {displayName}
+          </span>
+        </div>
+        {entry.type === 'claude' && status === 'success' && (
+          <div className={styles.facts}>
+            <span>
+              {t('claude_reset.remaining')}{' '}
+              <span className={styles.factValue}>{claudeReset.count ?? '--'}</span>
+            </span>
+          </div>
+        )}
       </header>
 
       <div className={styles.body}>
-        {entry.type === 'claude' && status === 'success' && (
-          <>
-            <div className={quotaClasses.codexPlan}>
-              <span className={quotaClasses.codexPlanItem}>
-                <span className={quotaClasses.codexPlanLabel}>{t('claude_reset.remaining')}</span>
-                <span className={quotaClasses.codexPlanValue}>{claudeReset.count ?? '--'}</span>
-              </span>
-            </div>
-            {claudeReset.message && (
-              <div role="status" className={quotaClasses.codexResetCreditsError}>
-                {t(`claude_reset.${claudeReset.message}`)}
-              </div>
-            )}
-          </>
+        {entry.type === 'claude' && status === 'success' && claudeReset.message && (
+          <div role="status" className={quotaClasses.codexResetCreditsError}>
+            {t(`claude_reset.${claudeReset.message}`)}
+          </div>
         )}
         {status === 'idle' ? (
           <button
