@@ -5,7 +5,6 @@ import styles from './ModelMappingDiagram.module.scss';
 interface ProviderColumnProps {
   providerNodes: ProviderNode[];
   collapsedProviders: Set<string>;
-  getProviderColor: (provider: string) => string;
   providerGroupHeights?: Record<string, number>;
   providerRefs: RefObject<Map<string, HTMLDivElement>>;
   onToggleCollapse: (provider: string) => void;
@@ -18,7 +17,6 @@ interface ProviderColumnProps {
 export function ProviderColumn({
   providerNodes,
   collapsedProviders,
-  getProviderColor,
   providerGroupHeights = {},
   providerRefs,
   onToggleCollapse,
@@ -52,7 +50,6 @@ export function ProviderColumn({
                 else providerRefs.current?.delete(provider);
               }}
               className={`${styles.item} ${styles.providerItem}`}
-              style={{ borderLeftColor: getProviderColor(provider) }}
               onContextMenu={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -68,7 +65,7 @@ export function ProviderColumn({
               >
                 <span className={collapsed ? styles.chevronRight : styles.chevronDown} />
               </button>
-              <span className={styles.providerLabel} style={{ color: getProviderColor(provider) }}>
+              <span className={styles.providerLabel}>
                 {provider}
               </span>
               <span className={styles.itemCount}>{sources.length}</span>
@@ -84,7 +81,6 @@ interface SourceColumnProps {
   providerNodes: ProviderNode[];
   collapsedProviders: Set<string>;
   sourceRefs: RefObject<Map<string, HTMLDivElement>>;
-  getProviderColor: (provider: string) => string;
   selectedSourceId?: string | null;
   onSelectSource?: (source: SourceNode) => void;
   draggedSource: SourceNode | null;
@@ -103,7 +99,6 @@ export function SourceColumn({
   providerNodes,
   collapsedProviders,
   sourceRefs,
-  getProviderColor,
   selectedSourceId,
   onSelectSource,
   draggedSource,
@@ -159,10 +154,7 @@ export function SourceColumn({
             </span>
             <div
               className={styles.dot}
-              style={{
-                background: getProviderColor(source.provider),
-                opacity: source.aliases.length > 0 ? 1 : 0.3,
-              }}
+              style={{ opacity: source.aliases.length > 0 ? 1 : 0.3 }}
             />
           </div>
         ));

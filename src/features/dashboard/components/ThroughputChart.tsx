@@ -1,6 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Collapsible } from '@/components/ui/Collapsible';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/Table';
 import { formatPercent } from '@/utils/format';
 import { TRAFFIC_BUCKET_MINUTES, type TrafficWindow } from '../types';
 import { axisMax } from '../utils';
@@ -67,15 +75,14 @@ export function ThroughputChart({ traffic }: ThroughputChartProps) {
   if (buckets.length === 0) {
     return (
       <div className={styles.placeholder}>
-        <p className={styles.placeholderTitle}>{t('dashboard.traffic_unavailable')}</p>
-        <p className={styles.placeholderHint}>{t('dashboard.traffic_unavailable_hint')}</p>
+        <p className={styles.placeholderText}>{t('dashboard.traffic_unavailable')}</p>
       </div>
     );
   }
 
   return (
     <figure className={styles.chart}>
-      {/* 两条序列 → 图例常驻，并直接带上数值（浅色主题下绿色对比度偏低，数值即为补偿） */}
+      {/* 两条序列 → 图例常驻，并直接带上数值 */}
       <figcaption className={styles.legend}>
         <span className={styles.legendItem}>
           <span className={`${styles.legendSwatch} ${styles.swatchSuccess}`} aria-hidden="true" />
@@ -124,9 +131,6 @@ export function ThroughputChart({ traffic }: ThroughputChartProps) {
               const successHeight = (bucket.success / scaleMax) * 100;
               const failureHeight = (bucket.failed / scaleMax) * 100;
               const hasBoth = bucket.success > 0 && bucket.failed > 0;
-              /* 级差按桶数归一化：不管窗口多长，整波入场都收在 360ms 内 */
-              const barDelayMs =
-                buckets.length > 1 ? Math.round((index / (buckets.length - 1)) * 360) : 0;
 
               return (
                 <div
@@ -144,10 +148,7 @@ export function ThroughputChart({ traffic }: ThroughputChartProps) {
                       {peakTotal.toLocaleString()}
                     </span>
                   )}
-                  <div
-                    className={styles.stack}
-                    style={{ '--bar-delay': `${barDelayMs}ms` } as React.CSSProperties}
-                  >
+                  <div className={styles.stack}>
                     {bucket.failed > 0 && (
                       <span
                         className={`${styles.segment} ${styles.segmentFailure} ${
@@ -229,31 +230,39 @@ export function ThroughputChart({ traffic }: ThroughputChartProps) {
       </div>
 
       <Collapsible className={styles.tableToggle} label={t('dashboard.traffic_table')}>
-        <table className={styles.table}>
-          <thead>
+        <Table className={styles.table}>
+          <TableHeader>
             <tr>
-              <th scope="col">{t('dashboard.traffic_table_window')}</th>
-              <th scope="col">{t('stats.success')}</th>
-              <th scope="col">{t('stats.failure')}</th>
-              <th scope="col">{t('dashboard.success_rate')}</th>
+              <TableHead scope="col">{t('dashboard.traffic_table_window')}</TableHead>
+              <TableHead scope="col" alignRight>
+                {t('stats.success')}
+              </TableHead>
+              <TableHead scope="col" alignRight>
+                {t('stats.failure')}
+              </TableHead>
+              <TableHead scope="col" alignRight>
+                {t('dashboard.success_rate')}
+              </TableHead>
             </tr>
-          </thead>
-          <tbody>
+          </TableHeader>
+          <TableBody>
             {buckets.map((bucket, index) => {
               const bucketTotal = bucket.success + bucket.failed;
               return (
-                <tr key={bucket.time ?? index}>
-                  <th scope="row">{bucketRangeLabel(bucket.time, index, buckets.length)}</th>
-                  <td>{bucket.success.toLocaleString()}</td>
-                  <td>{bucket.failed.toLocaleString()}</td>
-                  <td>
+                <TableRow key={bucket.time ?? index}>
+                  <TableHead scope="row" className={styles.rowHead}>
+                    {bucketRangeLabel(bucket.time, index, buckets.length)}
+                  </TableHead>
+                  <TableCell alignRight>{bucket.success.toLocaleString()}</TableCell>
+                  <TableCell alignRight>{bucket.failed.toLocaleString()}</TableCell>
+                  <TableCell alignRight>
                     {bucketTotal > 0 ? formatPercent((bucket.success / bucketTotal) * 100) : '—'}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </Collapsible>
     </figure>
   );

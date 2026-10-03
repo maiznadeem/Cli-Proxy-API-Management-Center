@@ -156,7 +156,7 @@ export function SettingsAliasModal({
                     <div key={source.id} className={styles.settingsRow}>
                       <div className={styles.settingsNames}>
                         <span className={styles.settingsSource}>{source.name}</span>
-                        <span className={styles.settingsArrow}>→</span>
+                        <span className={styles.settingsArrow} aria-hidden="true" />
                         <span className={styles.settingsAlias}>{alias}</span>
                       </div>
                       <div className={styles.settingsActions}>
@@ -237,7 +237,7 @@ export function SettingsSourceModal({
               <div key={`${source.id}-${entry.alias}`} className={styles.settingsRow}>
                 <div className={styles.settingsNames}>
                   <span className={styles.settingsSource}>{source.name}</span>
-                  <span className={styles.settingsArrow}>→</span>
+                  <span className={styles.settingsArrow} aria-hidden="true" />
                   <span className={styles.settingsAlias}>{entry.alias}</span>
                 </div>
                 <div className={styles.settingsActions}>

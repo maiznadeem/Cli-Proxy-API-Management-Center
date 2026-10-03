@@ -9,27 +9,33 @@
   flex-wrap: wrap;
   gap: 8px;
   padding: 12px 0;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--hairline);
+  font-size: $text-dense;
+  line-height: $lh-dense;
 }
 
 .identity {
   flex: 1;
   min-width: 0;
+  font-family: $font-mono;
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
 
 .success {
-  color: var(--success-color);
+  color: var(--ink-muted);
 }
 
 .failure {
-  color: var(--error-color);
+  color: var(--cap-depleted);
 }
 
 .error {
   width: 100%;
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--ink-muted);
+  font-size: $text-caption;
+  line-height: $lh-caption;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }

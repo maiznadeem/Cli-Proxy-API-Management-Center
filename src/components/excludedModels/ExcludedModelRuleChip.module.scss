@@ -11,12 +11,12 @@
   gap: 4px;
   min-width: 0;
   max-width: 100%;
-  padding: 4px 5px 4px 9px;
+  padding: 3px 5px 3px 9px;
   border-radius: $radius-full;
-  color: var(--text-primary);
+  color: var(--ink);
   font-family: $font-mono;
-  font-size: 11px;
-  line-height: 1.5;
+  font-size: $text-caption;
+  line-height: $lh-caption;
 }
 
 .label {
@@ -27,28 +27,28 @@
 
 .detail {
   flex-shrink: 0;
-  color: var(--text-tertiary);
-  font-size: 10px;
+  color: var(--ink-faint);
+  font-size: $text-caption;
 }
 
 /* 显式勾选：实线 + primary 染色，读起来是「我选的」。 */
 .exact {
-  border: 1px solid color-mix(in srgb, var(--primary-color) 45%, var(--border-color));
-  background: color-mix(in srgb, var(--primary-color) 8%, var(--bg-primary));
+  border: 1px solid var(--accent);
+  background: var(--accent-10);
 }
 
 /* 规则派生：虚线 = 「不是逐个挑的，是某条规则算出来的」。 */
 .wildcard {
-  border: 1px dashed color-mix(in srgb, var(--primary-color) 38%, var(--border-color));
+  border: 1px dashed var(--hairline-strong);
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--ink-muted);
 }
 
 /* 目录外的精确规则：同样虚线，但更弱——它指向一个我们无法确认存在的模型。 */
 .unknown {
-  border: 1px dashed var(--border-color);
+  border: 1px dashed var(--hairline);
   background: transparent;
-  color: var(--text-tertiary);
+  color: var(--ink-faint);
 }
 
 .remove {
@@ -60,22 +60,22 @@
   height: 20px;
   padding: 0;
   border: 0;
-  border-radius: 50%;
+  border-radius: $radius-full;
   background: transparent;
-  color: var(--text-tertiary);
+  color: var(--ink-faint);
   cursor: pointer;
   transition:
-    background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
+    background-color var(--dur-hover) var(--ease-standard),
+    color var(--dur-hover) var(--ease-standard),
+    transform var(--dur-press) var(--ease-standard);
 
   &:active:not(:disabled) {
-    transform: scale(0.9);
+    transform: scale(0.98);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 1px;
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 
   &:disabled {
@@ -85,8 +85,8 @@
 
   @media (hover: hover) and (pointer: fine) {
     &:hover:not(:disabled) {
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
+      background: var(--panel-hover);
+      color: var(--ink);
     }
   }
 }

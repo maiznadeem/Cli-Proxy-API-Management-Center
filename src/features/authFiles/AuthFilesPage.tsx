@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useInterval } from '@/hooks/useInterval';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
-import { useRevealOnScroll } from '@/hooks/motion';
 import { usePageTransitionLayer } from '@/components/common/PageTransitionLayer';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -60,7 +59,7 @@ import styles from './AuthFilesPage.module.scss';
 const DEFAULT_REGULAR_PAGE_SIZE = 9;
 const DEFAULT_COMPACT_PAGE_SIZE = 12;
 const SKELETON_CARD_COUNT = 6;
-/** 首屏卡片级联入场总预算，与 useRevealGroup 同一 360ms 语汇。 */
+/** Total budget for the one-off first-load row fade cascade. */
 const CARD_ENTRANCE_BUDGET_MS = 360;
 
 const resolveStatusFilterMode = (
@@ -571,16 +570,10 @@ export function AuthFilesPage() {
       : `${t('common.delete')} ${getTypeLabel(t, normalizedFilter)}`;
   })();
 
-  const oauthSectionRef = useRevealOnScroll<HTMLDivElement>();
-
   const isFirstRunEmpty = !loading && files.length === 0 && !error;
   const isNoResults = !loading && files.length > 0 && pageItems.length === 0;
 
-  const gridClasses = [
-    styles.grid,
-    compactMode ? styles.gridCompact : '',
-    activeQuotaFilter ? styles.gridQuota : '',
-  ]
+  const gridClasses = [styles.grid, compactMode ? styles.gridCompact : '']
     .filter(Boolean)
     .join(' ');
 
@@ -596,6 +589,7 @@ export function AuthFilesPage() {
         disableControls={disableControls}
         onUpload={handleUploadClick}
         onRefresh={() => void handleHeaderRefresh()}
+        onOpenOAuth={() => navigate('/oauth')}
         refreshingCredentials={refreshingAllCredentials}
         credentialRefreshDisabled={Object.keys(manualRefreshing).length > 0}
         onRefreshCredentials={handleRefreshAllCredentials}
@@ -667,26 +661,16 @@ export function AuthFilesPage() {
         {loading ? (
           <div className={gridClasses} aria-hidden="true">
             {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
-              <Skeleton key={index} height={206} rounded={14} />
+              <Skeleton key={index} height={compactMode ? 52 : 76} rounded={10} />
             ))}
           </div>
         ) : isFirstRunEmpty ? (
           <EmptyState
             title={t('auth_files.empty_title')}
-            description={t('auth_files.empty_desc')}
             action={
-              <div className={styles.emptyActions}>
-                <Button
-                  size="sm"
-                  onClick={handleUploadClick}
-                  disabled={disableControls || uploading}
-                >
-                  {t('auth_files.upload_button')}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/oauth')}>
-                  {t('auth_files.empty_oauth_link')}
-                </Button>
-              </div>
+              <Button onClick={handleUploadClick} disabled={disableControls || uploading}>
+                {t('auth_files.upload_button')}
+              </Button>
             }
           />
         ) : isNoResults ? (
@@ -758,7 +742,7 @@ export function AuthFilesPage() {
         )}
       </section>
 
-      <div className={styles.configGrid} ref={oauthSectionRef}>
+      <div className={styles.configGrid}>
         <OAuthExcludedCard
           disableControls={disableControls}
           excludedError={excludedError}

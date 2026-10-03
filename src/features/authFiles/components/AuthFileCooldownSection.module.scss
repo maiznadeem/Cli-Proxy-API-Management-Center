@@ -1,27 +1,28 @@
 .section {
-  border-block: 1px solid var(--border-color);
-  color: var(--warning-text);
-  font-size: 12px;
-  line-height: 1.5;
+  border-top: 1px solid var(--hairline);
+  color: var(--cap-watch);
+  font-size: $text-caption;
+  line-height: $lh-caption;
 }
 
 .summary {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
-  padding-block: 8px;
+  min-height: 32px;
+  padding-block: 6px;
   cursor: pointer;
   list-style: none;
-  border-radius: 4px;
+  border-radius: var(--radius-control);
+  transition: background-color var(--dur-hover) var(--ease-standard);
 
   &::-webkit-details-marker {
     display: none;
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 3px;
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
@@ -45,13 +46,13 @@
 }
 
 .next {
-  color: var(--text-secondary);
-  font-size: 11px;
+  color: var(--ink-muted);
 }
 
 .chevron {
   flex-shrink: 0;
-  color: var(--text-tertiary);
+  color: var(--ink-faint);
+  transition: transform var(--dur-base) var(--ease-standard);
 }
 
 .section[open] .chevron {
@@ -69,8 +70,8 @@
 }
 
 .row {
-  padding-block: 9px;
-  border-top: 1px solid var(--border-color);
+  padding-block: 8px;
+  border-top: 1px solid var(--hairline);
 }
 
 .rowHead {
@@ -84,35 +85,36 @@
 .model {
   min-width: 0;
   overflow-wrap: anywhere;
-  font-weight: 550;
-  color: var(--text-primary);
+  font-family: $font-mono;
+  font-weight: 500;
+  color: var(--ink);
 }
 
 .remaining {
   white-space: nowrap;
-  color: var(--text-secondary);
+  color: var(--ink-muted);
 }
 
 .reason {
   display: flex;
   flex-wrap: wrap;
   gap: 2px 10px;
-  margin-top: 3px;
-  color: var(--text-secondary);
+  margin-top: 2px;
+  color: var(--ink-muted);
 }
 
 .deadline,
 .observed,
 .note,
 .unknown {
-  color: var(--text-tertiary);
-  font-size: 11px;
-  line-height: 1.5;
+  color: var(--ink-faint);
+  font-size: $text-caption;
+  line-height: $lh-caption;
   overflow-wrap: anywhere;
 }
 
 .deadline {
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
 .observed,
@@ -128,17 +130,24 @@
 .actionRow {
   display: flex;
   justify-content: flex-end;
-  margin-top: 9px;
-  padding-top: 9px;
-  border-top: 1px solid var(--border-color);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--hairline);
 }
 
 .elapsed {
-  color: var(--text-secondary);
+  color: var(--ink-muted);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .summary:hover {
-    background: var(--bg-secondary);
+    background: var(--panel-hover);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summary,
+  .chevron {
+    transition: none;
   }
 }

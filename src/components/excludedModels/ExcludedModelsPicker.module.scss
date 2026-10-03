@@ -16,30 +16,29 @@
   justify-content: space-between;
   gap: $spacing-sm;
   width: 100%;
-  min-height: 40px;
+  min-height: 32px;
   padding: 0 12px;
   overflow: hidden;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--hairline);
   border-radius: $radius-md;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 13px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: $text-dense;
+  line-height: $lh-dense;
   text-align: left;
   cursor: pointer;
   transition:
-    border-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
+    border-color var(--dur-hover) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard),
+    transform var(--dur-press) var(--ease-standard);
 
-  /* 整条 40px 宽元素上 0.97 太橡皮；0.99 足够被感知又不显廉价。 */
   &:active:not(:disabled) {
-    transform: scale(0.99);
+    transform: scale(0.98);
   }
 
   &:focus-visible {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba($primary-color, 0.18);
+    box-shadow: var(--focus-ring);
   }
 
   &:disabled {
@@ -49,7 +48,8 @@
 
   @media (hover: hover) and (pointer: fine) {
     &:hover:not(:disabled) {
-      border-color: color-mix(in srgb, var(--primary-color) 40%, var(--border-color));
+      border-color: var(--hairline-strong);
+      background: var(--panel-hover);
     }
   }
 }
@@ -66,14 +66,14 @@
 
 .triggerSpinner {
   flex-shrink: 0;
-  color: var(--text-tertiary);
+  color: var(--ink-faint);
   animation: excluded-spin 900ms linear infinite;
 }
 
 .chevron {
   flex-shrink: 0;
-  color: var(--text-tertiary);
-  transition: transform var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+  color: var(--ink-faint);
+  transition: transform var(--dur-hover) var(--ease-standard);
 }
 
 .triggerOpen .chevron {
@@ -87,14 +87,14 @@
   bottom: 0;
   left: 0;
   height: 2px;
-  background: var(--bg-tertiary);
+  background: var(--hairline);
 }
 
 .meterFill {
   display: block;
   height: 100%;
-  background: color-mix(in srgb, var(--primary-color) 70%, var(--text-primary));
-  transition: width 360ms var(--ease-out-strong, ease);
+  background: var(--ink-faint);
+  transition: width 360ms var(--ease-standard);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -105,13 +105,12 @@
 .disclosure {
   display: grid;
   grid-template-rows: 0fr;
-  /* 退场更快 + 加速。themes.scss 无 --ease-in* token，这里用关键字而非发明全局 token。 */
-  transition: grid-template-rows 120ms ease-in;
+  transition: grid-template-rows var(--dur-fast) var(--ease-standard);
 }
 
 .disclosureOpen {
   grid-template-rows: 1fr;
-  transition: grid-template-rows var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+  transition: grid-template-rows var(--dur-base) var(--ease-standard);
 }
 
 .disclosureInner {
@@ -125,20 +124,9 @@
   flex-direction: column;
   margin-top: 6px;
   overflow: hidden;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--hairline);
   border-radius: $radius-md;
-  background: var(--bg-secondary);
-  transform-origin: top;
-  animation: excluded-panel-in var(--dur-hover, 200ms) var(--ease-out-strong, ease-out) both;
-}
-
-/* 只写 from，让元素的静止样式定义终点（与 toolbar-popover-in 同一写法）。 */
-@keyframes excluded-panel-in {
-  from {
-    opacity: 0;
-    /* 0.98 而非 0.95——面板是宽内联块，600px 下 0.95 是 30px 的横向蠕动。 */
-    transform: scale(0.98);
-  }
+  background: var(--panel-raised);
 }
 
 @keyframes excluded-spin {
@@ -156,33 +144,33 @@
   display: flex;
   align-items: center;
   padding: 8px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .searchIcon {
   position: absolute;
   left: 18px;
-  color: var(--text-tertiary);
+  color: var(--ink-faint);
   pointer-events: none;
 }
 
 .search {
   width: 100%;
   padding: 6px 10px 6px 32px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--hairline);
   border-radius: $radius-sm;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 12px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: $text-dense;
+  line-height: $lh-dense;
 
   &::placeholder {
-    color: var(--text-tertiary);
+    color: var(--ink-faint);
   }
 
-  &:focus {
+  &:focus-visible {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba($primary-color, 0.18);
+    box-shadow: var(--focus-ring);
   }
 }
 
@@ -207,22 +195,28 @@
   padding: 7px 8px;
   border-radius: $radius-sm;
   cursor: pointer;
-  transition: background-color var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
+  transition: background-color var(--dur-press) var(--ease-standard);
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: var(--panel-hover);
+    }
+  }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: -2px;
+    outline: none;
+    box-shadow: inset var(--focus-ring);
   }
 }
 
 .rowHighlighted {
-  background: var(--bg-tertiary);
+  background: var(--panel-hover);
 }
 
 .rowExcluded .checkbox {
-  border-color: var(--primary-color);
-  background: var(--primary-color);
-  color: var(--bg-primary);
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--canvas);
 }
 
 /* 纯规则命中：压暗且不可切换，但仍可聚焦、仍会朗读原因。 */
@@ -238,12 +232,12 @@
   justify-content: center;
   width: 16px;
   height: 16px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--hairline);
   border-radius: $radius-sm;
-  background: var(--bg-primary);
+  background: var(--panel);
   transition:
-    background-color var(--dur-press, 160ms) var(--ease-out-strong, ease-out),
-    border-color var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
+    background-color var(--dur-press) var(--ease-standard),
+    border-color var(--dur-press) var(--ease-standard);
 }
 
 .rowText {
@@ -256,7 +250,7 @@
 
 .rowId {
   overflow: hidden;
-  color: var(--text-primary);
+  color: var(--ink);
   font-family: $font-mono;
   font-size: 12px;
   text-overflow: ellipsis;
@@ -266,8 +260,8 @@
 .rowDisplayName,
 .rowReason {
   overflow: hidden;
-  color: var(--text-tertiary);
-  font-size: 11px;
+  color: var(--ink-faint);
+  font-size: $text-caption;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -275,21 +269,21 @@
 .badge {
   flex-shrink: 0;
   padding: 2px 6px;
-  border: 1px dashed color-mix(in srgb, var(--primary-color) 38%, var(--border-color));
+  border: 1px dashed var(--hairline-strong);
   border-radius: $radius-full;
-  color: var(--text-secondary);
-  font-size: 10px;
+  color: var(--ink-muted);
+  font-size: $text-caption;
 }
 
 .badgeMuted {
   border-style: dotted;
-  color: var(--text-tertiary);
+  color: var(--ink-faint);
 }
 
 .noResults {
   margin: 0;
   padding: $spacing-lg $spacing-sm;
-  color: var(--text-tertiary);
+  color: var(--ink-faint);
   font-size: 12px;
   text-align: center;
 }
@@ -304,13 +298,13 @@
   justify-content: space-between;
   gap: $spacing-sm;
   padding: 8px 10px;
-  border-top: 1px solid var(--border-color);
-  background: var(--bg-primary);
+  border-top: 1px solid var(--hairline);
+  background: var(--panel);
 }
 
 .footerCount {
-  color: var(--text-secondary);
-  font-size: 11px;
+  color: var(--ink-muted);
+  font-size: $text-caption;
   font-variant-numeric: tabular-nums;
 }
 
@@ -325,21 +319,21 @@
   border: 0;
   border-radius: $radius-sm;
   background: transparent;
-  color: var(--text-secondary);
-  font-size: 11px;
+  color: var(--ink-muted);
+  font-size: $text-caption;
   cursor: pointer;
   transition:
-    background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
-    transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
+    background-color var(--dur-hover) var(--ease-standard),
+    color var(--dur-hover) var(--ease-standard),
+    transform var(--dur-press) var(--ease-standard);
 
   &:active:not(:disabled) {
-    transform: scale(0.96);
+    transform: scale(0.98);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 1px;
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 
   &:disabled {
@@ -349,8 +343,8 @@
 
   @media (hover: hover) and (pointer: fine) {
     &:hover:not(:disabled) {
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
+      background: var(--panel-hover);
+      color: var(--ink);
     }
   }
 }
@@ -366,33 +360,38 @@
   gap: $spacing-sm;
   margin-top: 6px;
   padding: 12px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--hairline);
   border-radius: $radius-md;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
+  background: var(--panel-raised);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 
 .retryButton {
   flex-shrink: 0;
   padding: 4px 10px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--hairline);
   border-radius: $radius-sm;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 11px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: $text-caption;
   cursor: pointer;
-  transition: transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
+  transition: transform var(--dur-press) var(--ease-standard);
 
   &:active {
-    transform: scale(0.96);
+    transform: scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
 .chipsMore {
   align-self: center;
-  color: var(--text-tertiary);
-  font-size: 11px;
+  color: var(--ink-faint);
+  font-size: $text-caption;
 }
 
 .ruleEditor {
@@ -402,7 +401,7 @@
 }
 
 .ruleLabel {
-  color: var(--text-secondary);
+  color: var(--ink-muted);
   font-size: 12px;
   font-weight: 500;
 }
@@ -419,19 +418,19 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    color: var(--text-tertiary);
-    font-size: 11px;
+    color: var(--ink-faint);
+    font-size: $text-caption;
   }
 
   code {
-    color: var(--text-secondary);
+    color: var(--ink-muted);
     font-family: $font-mono;
   }
 }
 
 /* 零命中是 warning 不是 error：规则可以合法地指向目录不认识的模型。 */
 .ruleMatchNone {
-  color: var(--warning-color, #{$warning-color});
+  color: var(--cap-watch);
 }
 
 .ruleWarning {
@@ -439,8 +438,8 @@
   align-items: center;
   gap: 6px;
   margin: 0;
-  color: var(--warning-color, #{$warning-color});
-  font-size: 11px;
+  color: var(--cap-watch);
+  font-size: $text-caption;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -449,10 +448,6 @@
   .disclosure,
   .disclosureOpen {
     transition: none;
-  }
-
-  .panel {
-    animation: none;
   }
 
   .trigger,

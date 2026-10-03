@@ -53,6 +53,14 @@ export function toneForSuccessRate(rate: number | null): MeterTone {
   return 'critical';
 }
 
+/** 严重度 → 容量色板 token。容量色只出现在计量条与状态点上。 */
+export const TONE_COLORS: Record<MeterTone, string> = {
+  good: 'var(--cap-plenty)',
+  warning: 'var(--cap-watch)',
+  critical: 'var(--cap-depleted)',
+  idle: 'var(--ink-ghost)',
+};
+
 /** 刻度阶梯。比 1/2/5 更细，避免峰值 112 被抬到 200 这种浪费半张图的情况。 */
 const STEP_LADDER = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10] as const;
 

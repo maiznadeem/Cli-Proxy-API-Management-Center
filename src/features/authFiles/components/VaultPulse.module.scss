@@ -1,14 +1,15 @@
+@use '../../../styles/mixins' as *;
+
 /* ============================================================
- * VaultPulse —— 凭证谱条（签名元素）。
- * 颜色 + 高度双通道编码；scaleY 自底部生长入场，
- * 总预算 360ms，在头部 reveal 之后（基准延迟 0.35s）起播。
+ * Health strip: one bar per credential on a hairline baseline.
+ * Colour and height both encode state. Static: no entrance animation.
  * ============================================================ */
 
 .pulse {
   display: flex;
   align-items: flex-end;
-  gap: 10px;
-  height: 34px;
+  gap: 12px;
+  height: 24px;
   pointer-events: none;
   user-select: none;
 }
@@ -16,80 +17,59 @@
 .bars {
   display: flex;
   align-items: flex-end;
-  gap: 3px;
+  gap: 2px;
   flex: 1;
   min-width: 0;
   height: 100%;
-  /* 基线 + 两端渐隐：与 LiveWire 的水平 mask 同语汇 */
-  padding-bottom: 3px;
-  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 85%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 2%, #000 98%, transparent);
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--hairline);
 }
 
 .bar {
   flex: 1 1 0;
   min-width: 2px;
-  max-width: 14px;
-  border-radius: 2px 2px 1px 1px;
-  transform-origin: bottom;
-  animation: pulse-bar-in 0.45s var(--ease-out-strong, ease-out) both;
-  animation-delay: calc(0.35s + var(--bar-delay, 0s));
+  max-width: 10px;
+  border-radius: 2px 2px 0 0;
 }
 
-@keyframes pulse-bar-in {
-  from {
-    transform: scaleY(0);
-  }
-}
-
-/* 高度编码状态（色盲冗余通道） */
+/* Height is the redundant, colour-blind-safe channel. */
 .barLive {
   height: 100%;
-  background: var(--viz-success);
+  background: var(--cap-plenty);
 }
 
 .barIdle {
-  height: 42%;
-  background: color-mix(in srgb, var(--text-quaternary) 55%, transparent);
+  height: 40%;
+  background: var(--cap-track);
 }
 
 .barWarning {
   height: 72%;
-  background: var(--amber-color);
+  background: var(--cap-watch);
 }
 
 .barProblem {
   height: 58%;
-  background: var(--viz-failure);
+  background: var(--cap-depleted);
 }
 
 .barDisabled {
-  opacity: 0.32;
-  height: 30%;
+  opacity: 0.4;
+  height: 28%;
 }
 
 .overflow {
   flex-shrink: 0;
-  font-family: $font-mono;
-  font-size: 11px;
-  font-weight: 650;
+  font-size: $text-caption;
+  line-height: $lh-caption;
   font-variant-numeric: tabular-nums;
-  color: var(--text-tertiary);
-  line-height: 1;
-  padding-bottom: 1px;
+  color: var(--ink-faint);
 }
 
-/* 零凭证：LiveWire 式虚线基线 */
+/* No credentials: a quiet baseline. */
 .idleLine {
   flex: 1;
   height: 0;
-  border-bottom: 2px dashed var(--text-quaternary);
-  opacity: 0.6;
-  margin-bottom: 6px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .bar {
-    animation: none;
-  }
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: 2px;
 }

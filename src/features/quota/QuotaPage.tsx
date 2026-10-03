@@ -23,6 +23,7 @@ import type { AuthFileItem, ResolvedTheme } from '@/types';
 import { getQuotaCacheKey } from '@/utils/quota/identity';
 import { ProviderTabs } from '@/features/authFiles/components/ProviderTabs';
 import { QuotaHeader } from './components/QuotaHeader';
+import { CapacitySummary } from './components/CapacitySummary';
 import { QuotaCard } from './components/QuotaCard';
 import { QuotaTimeline } from './components/QuotaTimeline';
 import {
@@ -155,7 +156,8 @@ export function QuotaPage() {
 
   // 只在「最快恢复优先」下订阅分钟时钟。默认序下不门控的话，pageItems 每分钟
   // 换一次身份，会反复空转下面那个「刷新全部」的 loading 下降沿 effect。
-  const tick = useNow(sortMode !== 'default');
+  // The summary strip always shows a countdown, so the minute clock is always on now.
+  const tick = useNow(true);
   const sortNow = sortMode === 'default' ? 0 : tick;
 
   const entries = useMemo(() => classifyQuotaFiles(files), [files]);
@@ -319,6 +321,17 @@ export function QuotaPage() {
         disableControls={disableControls}
         onRefreshAll={handleRefreshAll}
       />
+
+      {!loading && entries.length > 0 && (
+        <CapacitySummary
+          entries={entries}
+          quotaFor={getQuota}
+          resolvedTheme={resolvedTheme}
+          activeTab={tab}
+          onSelect={handleTabChange}
+          now={tick}
+        />
+      )}
 
       <section className={styles.workbench}>
         {/* 提供商导航与搜索工具栏分层，避免不同控件争夺视觉焦点。 */}

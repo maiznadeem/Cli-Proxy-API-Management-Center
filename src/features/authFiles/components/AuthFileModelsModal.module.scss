@@ -1,11 +1,11 @@
 @use '../../../styles/mixins' as *;
 
-/* 「支持的模型」弹窗：可点击复制的 mono 模型清单 */
+/* Supported models modal: a list of model ids, click a row to copy. */
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   max-height: min(52dvh, 480px);
   overflow-y: auto;
   padding-right: 2px;
@@ -17,23 +17,25 @@
   gap: 8px;
   flex-wrap: wrap;
   padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid transparent;
+  border-radius: var(--radius-control);
   cursor: pointer;
   transition:
-    background-color $transition-fast,
-    border-color $transition-fast,
-    transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
+    background-color var(--dur-hover) var(--ease-standard),
+    transform var(--dur-press) var(--ease-standard);
 
   &:active {
-    transform: scale(0.99);
+    transform: scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
 @media (hover: hover) and (pointer: fine) {
   .item:hover {
-    background: var(--bg-tertiary);
-    border-color: color-mix(in srgb, var(--border-color) 70%, transparent);
+    background: var(--panel-hover);
   }
 }
 
@@ -43,39 +45,35 @@
 
 .modelId {
   font-family: $font-mono;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
 
 .modelDisplayName {
-  font-size: 11.5px;
-  color: var(--text-tertiary);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
   @include text-ellipsis;
 }
 
 .modelType {
-  font-family: $font-mono;
-  font-size: 10px;
-  font-weight: 650;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  padding: 1px 6px;
-  border-radius: $radius-full;
-  border: 1px solid var(--border-color);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--hairline);
 }
 
 .excludedBadge {
   margin-left: auto;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--failure-badge-text);
-  background: var(--failure-badge-bg);
-  border: 1px solid var(--failure-badge-border);
-  border-radius: $radius-full;
-  padding: 1px 7px;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-weight: 500;
+  color: var(--cap-depleted);
   white-space: nowrap;
 }
 
