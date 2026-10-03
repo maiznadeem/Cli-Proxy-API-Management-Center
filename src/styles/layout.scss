@@ -7,7 +7,6 @@
 $rail-width: 232px;
 $rail-collapsed-width: 64px;
 $strip-height: 40px;
-$content-max-width: none;
 $desktop-min: $breakpoint-mobile + 1px;
 
 :root {
@@ -613,7 +612,7 @@ $desktop-min: $breakpoint-mobile + 1px;
   flex-direction: column;
   gap: $spacing-lg;
   width: 100%;
-  max-width: calc(#{$content-max-width} + 2 * #{$spacing-lg});
+  max-width: none;
   padding: $spacing-lg;
   overflow-x: hidden;
 
