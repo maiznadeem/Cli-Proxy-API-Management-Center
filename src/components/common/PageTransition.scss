@@ -1,5 +1,6 @@
 @use '@/styles/variables.scss' as *;
 
+// Page change is an opacity cross-fade only (see PageTransition.tsx and DESIGN.md).
 .page-transition {
   position: relative;
   flex: 1 1 auto;
@@ -14,17 +15,14 @@
     gap: $spacing-lg;
     min-height: 0;
     flex: 1;
-    background: var(--bg-secondary);
-    backface-visibility: hidden;
-    transform: translateZ(0);
+    background: var(--canvas);
 
-    // During animation, exit layer uses absolute positioning
+    // The outgoing layer sits on top of the incoming one while it fades out.
     &--exit {
       position: absolute;
       inset: 0;
       overflow: hidden;
       pointer-events: none;
-      will-change: transform, opacity;
     }
 
     &--stacked {
@@ -39,13 +37,12 @@
         overflow: hidden;
         pointer-events: none;
         opacity: 0;
-        will-change: transform, opacity;
       }
     }
   }
 
   &--animating &__layer {
-    will-change: transform, opacity;
+    will-change: opacity;
   }
 
   &--animating &__layer:not(.page-transition__layer--exit):not(.page-transition__layer--stacked) {

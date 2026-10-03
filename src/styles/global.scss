@@ -1,5 +1,5 @@
 /**
- * 全局样式
+ * Global styles
  */
 
 @use './variables.scss' as *;
@@ -10,11 +10,29 @@
 @use './layout.scss';
 
 body {
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: $font-family;
+  font-size: $text-body;
+  line-height: $lh-body;
   transition:
-    background-color $transition-normal,
-    color $transition-normal;
+    background-color var(--dur-base) var(--ease-standard),
+    color var(--dur-base) var(--ease-standard);
+}
+
+// Tabular numerals for anything numbers-heavy (DESIGN.md > Type).
+.tnum,
+table,
+time,
+progress,
+meter,
+output {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 32%, transparent);
+  color: var(--ink);
 }
 
 html.modal-open,
@@ -26,22 +44,33 @@ body.modal-open .content {
   overflow: hidden;
 }
 
-// 滚动条样式
+// Scrollbars: thin, token-colored, quiet until hovered.
+html {
+  scrollbar-color: var(--hairline-strong) transparent;
+  scrollbar-width: thin;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: transparent;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--hairline-strong);
+  border: 2px solid transparent;
   border-radius: $radius-full;
+  background-clip: padding-box;
 
   &:hover {
-    background: var(--border-hover);
+    background: var(--ink-ghost);
+    background-clip: padding-box;
   }
 }
-

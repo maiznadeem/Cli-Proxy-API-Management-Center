@@ -1,73 +1,105 @@
 @use '../../../styles/mixins' as *;
 
+/* Kept for the frozen plan-badge block below, which must stay byte-identical. */
 $quota-font-size: 11.5px;
 
 /* ============================================================
- * 认证文件卡片的配额区外衣。
+ * Quota host for the credential ribbon (quota mode).
  *
- * 契约：quotaConfigs.renderQuotaItems 通过 helpers.styles 按名查找
- * 以下类（antigravity/claude/codex/kimi/xai 五条渲染路径共 24 个），
- * 另加本组件宿主类与 QuotaProgressBar 的 5 个注入类。
- * 漏名会静默渲染 class="undefined" —— 增删前先对照 quotaConfigs.ts。
+ * Contract: every QuotaClassMap key (features/quota/types.ts, bindQuotaClasses) must be
+ * defined here, plus the host classes used by AuthFileQuotaSection. Same vocabulary as
+ * QuotaBody.module.scss, one step denser: windows sit side by side as small columns.
  * ============================================================ */
 
-/* ---------- 宿主 ---------- */
+/* ---------- Host ---------- */
 
 .quotaSection {
   display: flex;
-  flex-direction: column;
-  gap: 9px;
-  padding: 10px 11px;
-  font-size: $quota-font-size;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  background: color-mix(in srgb, var(--bg-secondary) 55%, transparent);
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px 20px;
+  min-width: 0;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+
+  /* Anything that is not a capacity column (plans, messages, errors, actions) takes a full
+     line, so the columns share one baseline. */
+  > :not([class*='quotaRow']):not([class*='antigravityQuotaGroup']) {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
 }
 
 .quotaMessage {
-  font-family: $font-mono;
-  font-size: $quota-font-size;
-  font-weight: 400;
-  line-height: 1.5;
-  color: var(--text-tertiary);
-  text-align: center;
-  padding: 5px 4px;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
+  padding: 4px 0;
 }
 
 button.quotaMessageAction {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
   cursor: pointer;
-  border: 0;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-control);
   background: none;
-  color: var(--text-secondary);
-  transition: color $transition-fast;
+  font: inherit;
+  font-size: $text-dense;
+  color: var(--ink-muted);
+  text-align: left;
+  transition:
+    transform var(--dur-press) var(--ease-standard),
+    border-color var(--dur-hover) var(--ease-standard),
+    color var(--dur-hover) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard);
 
-  &:hover:not(:disabled) {
-    color: var(--primary-hover);
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 
   &:disabled {
     cursor: not-allowed;
-    color: var(--text-quaternary);
+    opacity: 0.5;
+  }
+}
+
+/* The idle load action sizes to its label instead of taking the full line. */
+.quotaSection > button.quotaMessage.quotaMessageAction {
+  flex: 0 0 auto;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.quotaMessageAction:hover:not(:disabled) {
+    border-style: solid;
+    border-color: var(--accent);
+    color: var(--ink);
+    background: var(--accent-10);
   }
 }
 
 .quotaError {
-  font-size: $quota-font-size;
-  font-weight: 500;
-  line-height: 1.5;
-  color: var(--danger-color);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--cap-depleted);
   overflow-wrap: anywhere;
 }
 
 .quotaCardActions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
 .quotaResetCreditButton {
-  font-size: $quota-font-size;
-  font-weight: 600;
   white-space: nowrap;
 
   // Button wraps its icon and label in the final content span.
@@ -78,98 +110,111 @@ button.quotaMessageAction {
   }
 }
 
-/* ---------- 配额行（全 provider 通用） ---------- */
+/* ---------- Capacity columns ---------- */
 
 .quotaRow {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1 1 120px;
+  min-width: 110px;
+  max-width: 220px;
 }
 
 .quotaRowHeader {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  min-width: 0;
 }
 
 .quotaModel {
+  max-width: 100%;
   min-width: 0;
-  font-size: $quota-font-size;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-weight: 500;
+  color: var(--ink-muted);
   @include text-ellipsis;
 }
 
 .quotaMeta {
-  display: inline-flex;
+  display: flex;
   align-items: baseline;
-  gap: 6px;
-  flex-shrink: 0;
-  font-family: $font-mono;
-  font-size: $quota-font-size;
-  font-weight: 400;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  min-width: 0;
   font-variant-numeric: tabular-nums;
 }
 
+/* Headline percent; text carries no state colour, the meter does. */
 .quotaPercent {
-  font-weight: 650;
-  color: var(--text-primary);
+  font-size: $text-body;
+  line-height: $lh-body;
+  font-weight: 600;
+  color: var(--ink);
 }
 
 .quotaReset {
-  color: var(--text-quaternary);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
 }
 
-/* Compact host: same contract class as QuotaBody.module.scss, tighter gutter. */
+/* Countdown after the reset time, separated by space rather than punctuation. */
 .quotaResetRelative {
-  color: var(--text-tertiary);
-
-  &::before {
-    content: '·';
-    margin: 0 3px;
-    color: var(--text-quaternary);
-  }
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
 }
 
 .quotaResetRelativeSoon {
-  color: var(--warning-text);
+  color: var(--cap-watch);
   font-weight: 600;
 }
 
 .quotaAmount {
-  font-family: $font-mono;
-  font-size: $quota-font-size;
-  font-weight: 500;
+  font-size: $text-caption;
+  line-height: $lh-caption;
   font-variant-numeric: tabular-nums;
-  color: var(--text-secondary);
+  color: var(--ink-muted);
 }
 
-/* ---------- 进度条（QuotaProgressBar 注入，Meter 风 6px 轨道） ---------- */
+/* ---------- Meter (QuotaProgressBar contract classes) ---------- */
 
 .quotaBar {
   height: 6px;
-  border-radius: $radius-full;
-  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  border-radius: var(--radius-pill);
+  background: var(--cap-track);
   overflow: hidden;
 }
 
 .quotaBarFill {
   height: 100%;
-  border-radius: $radius-full;
-  transition: width 360ms var(--ease-out-strong, ease);
+  border-radius: var(--radius-pill);
+  transition: width var(--dur-meter) var(--ease-standard);
 }
 
+/* Same continuous capacity scale as the Capacity page, driven by --meter-value. */
 .quotaBarFillHigh {
-  background: var(--viz-success);
+  background: color-mix(
+    in oklab,
+    var(--cap-plenty) calc((var(--meter-value, 100) - 70) / 30 * 100%),
+    var(--cap-watch)
+  );
 }
 
 .quotaBarFillMedium {
-  background: var(--quota-medium-color);
+  background: var(--cap-watch);
 }
 
 .quotaBarFillLow {
-  background: var(--viz-failure);
+  background: color-mix(
+    in oklab,
+    var(--cap-watch) calc(var(--meter-value, 0) / 30 * 100%),
+    var(--cap-depleted)
+  );
 }
 
 /* ---------- 计划徽章（codexPlan*：antigravity/claude/xai 复用） ---------- */
@@ -231,60 +276,57 @@ button.quotaMessageAction {
   color: #c3d3e4;
 }
 
-/* ---------- Antigravity 分组 ---------- */
+/* ---------- Antigravity groups ---------- */
 
 .antigravityQuotaGroup {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  flex: 1 1 100%;
+  min-width: 0;
 
   & + & {
-    margin-top: 3px;
-    padding-top: 8px;
-    border-top: 1px dashed color-mix(in srgb, var(--border-color) 80%, transparent);
+    padding-top: 10px;
+    border-top: 1px solid var(--hairline);
   }
 }
 
 .antigravityQuotaGroupHeader {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  flex: 1 1 100%;
+  min-width: 0;
 }
 
 .antigravityQuotaGroupTitle {
-  font-family: $font-mono;
-  font-size: $quota-font-size;
+  font-size: $text-caption;
+  line-height: $lh-caption;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--ink);
 }
 
 .antigravityQuotaGroupDescription {
-  font-size: $quota-font-size;
-  font-weight: 400;
-  color: var(--text-quaternary);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
 }
 
-/* ---------- Codex 重置积分 ---------- */
+/* ---------- Codex reset credits ---------- */
 
 .codexResetCredits {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 8px 9px;
-  border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  min-width: 0;
 }
 
 .codexResetCreditsTitle {
-  font-family: $font-mono;
-  font-size: $quota-font-size;
+  font-size: $text-caption;
+  line-height: $lh-caption;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--ink);
 }
 
 .codexResetCreditRow {
@@ -292,59 +334,53 @@ button.quotaMessageAction {
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  font-size: $quota-font-size;
-  font-weight: 400;
+  max-width: 360px;
+  font-size: $text-caption;
+  line-height: $lh-caption;
 }
 
-/* The compact host's credit rows have no border of their own, so the emphasis
-   is carried by a left rule and a tint rather than a border-colour swap. */
+/* Rows have no border of their own, so emphasis is a left rule and a light tint. */
 .codexResetCreditRowSoon {
   padding: 2px 6px;
   margin: 0 -6px;
-  border-left: 2px solid var(--warning-border);
-  border-radius: $radius-sm;
-  background-color: var(--warning-bg);
+  border-left: 2px solid var(--cap-watch);
+  border-radius: var(--radius-control);
+  background-color: color-mix(in srgb, var(--cap-watch) 12%, transparent);
 }
 
 .codexResetCreditLabel {
   min-width: 0;
-  color: var(--text-secondary);
+  color: var(--ink-muted);
   @include text-ellipsis;
 }
 
 .codexResetCreditTime {
   flex-shrink: 0;
-  font-family: $font-mono;
   font-variant-numeric: tabular-nums;
-  color: var(--text-secondary);
+  color: var(--ink);
 }
 
 .codexResetCreditsError {
-  font-size: $quota-font-size;
-  font-weight: 500;
-  color: var(--danger-color);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--cap-depleted);
   overflow-wrap: anywhere;
 }
 
 @include mobile {
-  .quotaRowHeader {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .quotaModel {
-    width: 100%;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    overflow-wrap: anywhere;
+  .quotaRow {
+    flex-basis: calc(50% - 20px);
+    max-width: none;
   }
 }
 
-/* ---------- 降级 ---------- */
-
 @media (prefers-reduced-motion: reduce) {
+  button.quotaMessageAction,
   .quotaBarFill {
     transition: none;
+  }
+
+  button.quotaMessageAction:active:not(:disabled) {
+    transform: none;
   }
 }

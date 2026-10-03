@@ -20,8 +20,8 @@ export type ProviderTabsProps = {
 };
 
 /**
- * 提供商过滤 tabs：水平排布，支持鼠标滚轮与触屏横向滚动。
- * 品牌色只出现在图标上，激活态是文字 + 2px 墨色下划线。
+ * Provider filter tabs: one horizontal row that scrolls with the wheel or touch.
+ * Brand colour only appears on icons; the active tab is ink with a 2px accent underline.
  */
 export function ProviderTabs({
   types,
@@ -58,12 +58,12 @@ export function ProviderTabs({
             onClick={() => onChange(type)}
           >
             {type === 'all' ? (
-              <IconFilterAll className={styles.tabGlyph} size={15} />
+              <IconFilterAll className={styles.tabGlyph} size={16} />
             ) : (
               <span
                 className={styles.tabIconWrap}
                 style={
-                  // 与 AI 提供商界面一致：Kimi 图标底座随主题切换颜色
+                  // Kimi's icon needs a theme-aware surface behind it, as on the providers page
                   isThemeSurfaceIconProvider(type)
                     ? { background: getThemeSurfaceIconBackground(resolvedTheme) }
                     : undefined

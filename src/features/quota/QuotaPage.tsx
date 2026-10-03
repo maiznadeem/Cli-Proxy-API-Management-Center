@@ -18,12 +18,12 @@ import { Select } from '@/components/ui/Select';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { useNow } from '@/hooks/useNow';
-import { useRevealGroup } from '@/hooks/motion';
 import { useAuthStore, useQuotaStore, useThemeStore } from '@/stores';
 import type { AuthFileItem, ResolvedTheme } from '@/types';
 import { getQuotaCacheKey } from '@/utils/quota/identity';
 import { ProviderTabs } from '@/features/authFiles/components/ProviderTabs';
 import { QuotaHeader } from './components/QuotaHeader';
+import { CapacitySummary } from './components/CapacitySummary';
 import { QuotaCard } from './components/QuotaCard';
 import { QuotaTimeline } from './components/QuotaTimeline';
 import {
@@ -77,8 +77,6 @@ export function QuotaPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
-  // 页头 + tabs 的入场级联（标题 → meta → 动作 → tabs，级差 70ms）
-  const revealRef = useRevealGroup<HTMLDivElement>();
 
   const disableControls = connectionStatus !== 'connected';
 
@@ -158,7 +156,8 @@ export function QuotaPage() {
 
   // 只在「最快恢复优先」下订阅分钟时钟。默认序下不门控的话，pageItems 每分钟
   // 换一次身份，会反复空转下面那个「刷新全部」的 loading 下降沿 effect。
-  const tick = useNow(sortMode !== 'default');
+  // The summary strip always shows a countdown, so the minute clock is always on now.
+  const tick = useNow(true);
   const sortNow = sortMode === 'default' ? 0 : tick;
 
   const entries = useMemo(() => classifyQuotaFiles(files), [files]);
@@ -313,7 +312,7 @@ export function QuotaPage() {
   const isEmpty = !loading && filteredEntries.length === 0;
 
   return (
-    <div className={styles.page} ref={revealRef}>
+    <div className={styles.page}>
       <QuotaHeader
         totalCount={entries.length}
         loadedCount={loadedCount}
@@ -323,9 +322,20 @@ export function QuotaPage() {
         onRefreshAll={handleRefreshAll}
       />
 
+      {!loading && entries.length > 0 && (
+        <CapacitySummary
+          entries={entries}
+          quotaFor={getQuota}
+          resolvedTheme={resolvedTheme}
+          activeTab={tab}
+          onSelect={handleTabChange}
+          now={tick}
+        />
+      )}
+
       <section className={styles.workbench}>
         {/* 提供商导航与搜索工具栏分层，避免不同控件争夺视觉焦点。 */}
-        <div className={styles.tabsRow} data-reveal>
+        <div className={styles.tabsRow}>
           <ProviderTabs
             types={TAB_IDS}
             counts={tabCounts}
@@ -382,7 +392,7 @@ export function QuotaPage() {
         {loading ? (
           <div className={styles.grid} aria-hidden="true">
             {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
-              <Skeleton key={index} height={168} rounded={14} />
+              <Skeleton key={index} height={88} rounded={10} />
             ))}
           </div>
         ) : isEmpty ? (

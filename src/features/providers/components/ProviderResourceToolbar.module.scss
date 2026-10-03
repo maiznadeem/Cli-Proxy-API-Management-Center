@@ -1,10 +1,11 @@
 @use '../../../styles/mixins' as *;
-@use '../../../styles/variables' as *;
+
+/* Sort + model filter controls above the resource table. */
 
 .root {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 8px 12px;
   flex-wrap: wrap;
 }
 
@@ -15,30 +16,47 @@
 }
 
 .label {
-  font-size: 12px;
-  color: var(--muted-foreground);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
   white-space: nowrap;
 }
 
-.dirBtn {
+@mixin control {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-secondary);
+  height: 28px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--panel-raised);
+  color: var(--ink-muted);
+  font: inherit;
   cursor: pointer;
   transition:
-    background-color $transition-fast,
-    color $transition-fast;
+    background-color var(--dur-hover) var(--ease-standard),
+    border-color var(--dur-hover) var(--ease-standard),
+    color var(--dur-hover) var(--ease-standard),
+    transform var(--dur-press) var(--ease-standard);
 
-  &:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
+  &:active:not(:disabled) {
+    transform: scale(0.98);
   }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.dirBtn {
+  @include control;
+  width: 28px;
 }
 
 .filterGroup {
@@ -46,29 +64,33 @@
 }
 
 .filterTrigger {
-  display: inline-flex;
-  align-items: center;
+  @include control;
   gap: 6px;
-  height: 30px;
-  padding: 0 11px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 13px;
-  cursor: pointer;
-  transition:
-    background-color $transition-fast,
-    border-color $transition-fast;
+  padding: 0 10px;
+  color: var(--ink);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-variant-numeric: tabular-nums;
+}
 
-  &:hover:not(:disabled) {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
+.filterToolbarBtn {
+  @include control;
+  height: 24px;
+  padding: 0 8px;
+  font-size: $text-caption;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dirBtn:hover:not(:disabled),
+  .filterTrigger:hover:not(:disabled),
+  .filterToolbarBtn:hover:not(:disabled) {
+    background: var(--panel-hover);
+    border-color: var(--hairline-strong);
+    color: var(--ink);
   }
 
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+  .filterItem:hover {
+    background: var(--panel-hover);
   }
 }
 
@@ -76,17 +98,17 @@
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  min-width: 220px;
-  max-width: 320px;
   z-index: $z-dropdown;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-  padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 220px;
+  max-width: 320px;
+  padding: 8px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  background: var(--panel-raised);
+  box-shadow: var(--shadow-popover);
 }
 
 .filterToolbar {
@@ -96,31 +118,12 @@
   gap: 6px;
 }
 
-.filterToolbarBtn {
-  padding: 3px 9px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  font-size: 12px;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
 .filterEmpty {
   padding: 12px;
   text-align: center;
-  font-size: 13px;
-  color: var(--muted-foreground);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
 }
 
 .filterList {
@@ -136,15 +139,25 @@
 
 .filterItem {
   padding: 4px 6px;
-  border-radius: var(--radius-sm);
-
-  &:hover {
-    background: var(--bg-tertiary);
-  }
+  border-radius: var(--radius-control);
 }
 
 .filterItemLabel {
   font-family: $font-mono;
-  font-size: 13px;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink);
   word-break: break-all;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dirBtn,
+  .filterTrigger,
+  .filterToolbarBtn {
+    transition: none;
+
+    &:active:not(:disabled) {
+      transform: none;
+    }
+  }
 }

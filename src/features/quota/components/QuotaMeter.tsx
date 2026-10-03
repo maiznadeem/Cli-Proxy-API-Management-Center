@@ -1,9 +1,10 @@
 /**
- * 额度水位条（原 QuotaProgressBar 的类型化后继）。
+ * Capacity meter.
  *
- * dataviz 语法：细轨道退居背景，填充按剩余量三档着色（≥70 绿 / ≥30 琥珀 / <30 红），
- * percent === null 渲染空轨道 —— 未知不着色（Medium 类在 width 0 下不可见，行为与旧版一致）。
- * `index` 写入 `--meter-index`，供全页外衣做逐行入场级差；紧凑外衣不消费该变量。
+ * The fill is coloured along a continuous capacity scale (plenty → watch → depleted) driven by
+ * `--meter-value` (0–100, remaining percent). The three class names are kept because the quota
+ * class contract requires them; the stylesheet uses them to pick which two scale stops to mix.
+ * `percent === null` renders an empty track: unknown is not coloured.
  */
 
 import type { CSSProperties } from 'react';
@@ -18,6 +19,8 @@ export interface QuotaMeterProps {
   index?: number;
 }
 
+type MeterStyle = CSSProperties & { '--meter-index'?: number; '--meter-value'?: number };
+
 export function QuotaMeter({ percent, classes, index }: QuotaMeterProps) {
   const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
   const normalized = percent === null ? null : clamp(percent, 0, 100);
@@ -30,7 +33,7 @@ export function QuotaMeter({ percent, classes, index }: QuotaMeterProps) {
           ? classes.quotaBarFillMedium
           : classes.quotaBarFillLow;
   const widthPercent = Math.round((normalized ?? 0) * 100) / 100;
-  const style: CSSProperties & { '--meter-index'?: number } = { width: `${widthPercent}%` };
+  const style: MeterStyle = { width: `${widthPercent}%`, '--meter-value': widthPercent };
   if (index !== undefined) {
     style['--meter-index'] = index;
   }

@@ -15,10 +15,11 @@
 import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatRelativeInstant, TYPE_COLORS } from '@/utils/quota';
+import { formatRelativeInstant } from '@/utils/quota';
 import { getQuotaCacheKey, getQuotaDisplayName } from '@/utils/quota/identity';
 import { useNow } from '@/hooks/useNow';
-import type { ResolvedTheme, ThemeColors } from '@/types';
+import { IconChevronLeft } from '@/components/ui/icons';
+import type { ResolvedTheme } from '@/types';
 import {
   buildTimelineLane,
   laneHasWindow,
@@ -44,6 +45,18 @@ const formatTime = (ms: number) => {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
+/**
+ * Capacity scale token for a remaining percentage. Same thresholds as the
+ * meters above (plenty >= 70, watch 30-70, depleted < 30) so a bar and the
+ * ribbon it belongs to never disagree on colour.
+ */
+const capacityColor = (remaining: number | null) => {
+  if (remaining === null) return 'var(--ink-faint)';
+  if (remaining >= 70) return 'var(--cap-plenty)';
+  if (remaining >= 30) return 'var(--cap-watch)';
+  return 'var(--cap-depleted)';
+};
+
 export interface QuotaTimelineProps {
   entries: QuotaFileEntry[];
   /**
@@ -53,6 +66,10 @@ export interface QuotaTimelineProps {
    */
   quotaFor: (entry: QuotaFileEntry) => QuotaCardState | undefined;
   displayNameFor: (name: string) => string;
+  /**
+   * Accepted for call-site compatibility. Bars are coloured from theme tokens
+   * (the capacity scale), so the component no longer branches on the theme.
+   */
   resolvedTheme: ResolvedTheme;
   /** Injectable for tests/screenshots; defaults to the real clock. */
   now?: number;
@@ -66,7 +83,6 @@ export function QuotaTimeline({
   entries,
   quotaFor,
   displayNameFor,
-  resolvedTheme,
   now: nowProp,
   initialMode = 'weekly',
   initialOffset = 0,
@@ -167,24 +183,30 @@ export function QuotaTimeline({
             {t('quota_management.windows_title', { defaultValue: 'Quota windows' })}
           </h2>
           <p className={styles.range}>
-            {formatDay(span.startMs)} – {formatDay(span.endMs - DAY_MS)}
-            {' · '}
-            {mode === 'weekly'
-              ? t('quota_management.windows_span_weekly', { defaultValue: 'two weeks' })
-              : t('quota_management.windows_span_session', { defaultValue: 'three days' })}
-            {offset === 0 &&
-              ` · ${t('quota_management.windows_current', { defaultValue: 'current' })}`}
+            <span className={styles.rangeDates}>
+              {formatDay(span.startMs)} – {formatDay(span.endMs - DAY_MS)}
+            </span>
+            <span className={styles.rangePart}>
+              {mode === 'weekly'
+                ? t('quota_management.windows_span_weekly', { defaultValue: 'two weeks' })
+                : t('quota_management.windows_span_session', { defaultValue: 'three days' })}
+            </span>
+            {offset === 0 && (
+              <span className={styles.rangePart}>
+                {t('quota_management.windows_current', { defaultValue: 'current' })}
+              </span>
+            )}
           </p>
         </div>
 
         <div className={styles.controls}>
-          <div className={styles.nav}>
+          <div className={styles.segmented}>
             <button
               type="button"
               onClick={() => setOffset((value) => value - 1)}
               aria-label={t('quota_management.windows_prev', { defaultValue: 'Previous' })}
             >
-              ‹
+              <IconChevronLeft size={14} />
             </button>
             <button
               type="button"
@@ -200,11 +222,11 @@ export function QuotaTimeline({
               onClick={() => setOffset((value) => value + 1)}
               aria-label={t('quota_management.windows_next', { defaultValue: 'Next' })}
             >
-              ›
+              <IconChevronLeft size={14} className={styles.chevronNext} />
             </button>
           </div>
 
-          <div className={styles.modes} role="group">
+          <div className={styles.segmented} role="group">
             {(['weekly', 'session'] as const).map((value) => (
               <button
                 key={value}
@@ -232,7 +254,7 @@ export function QuotaTimeline({
             })}
           </div>
         ) : (
-          <>
+          <div className={styles.grid}>
             <div className={styles.axis}>
               <div className={styles.axisLabel}>
                 {t('quota_management.windows_credential', { defaultValue: 'Credential' })}
@@ -263,11 +285,17 @@ export function QuotaTimeline({
                 now={now}
                 mode={mode}
                 cells={cells}
-                nowPercent={nowPercent}
-                resolvedTheme={resolvedTheme}
               />
             ))}
-          </>
+
+            {/* One marker for the whole calendar rather than one per lane, so
+                the line runs unbroken from the day header through every row. */}
+            {nowPercent !== null && (
+              <div className={styles.nowLayer} aria-hidden="true">
+                <div className={styles.nowLine} style={{ left: `${nowPercent}%` }} />
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -286,7 +314,7 @@ export function QuotaTimeline({
             {t('quota_management.windows_legend_elapsed', { defaultValue: 'elapsed' })}
           </span>
           <span className={styles.legendItem}>
-            <span className={styles.swatchCredit} />
+            <span className={`${styles.swatch} ${styles.swatchCredit}`} />
             {t('quota_management.windows_legend_reset_credit', {
               defaultValue: 'manual reset expiry',
             })}
@@ -314,11 +342,9 @@ interface LaneProps {
   now: number;
   mode: TimelineMode;
   cells: { at: number; isWeekend: boolean; isDayStart: boolean }[];
-  nowPercent: number | null;
-  resolvedTheme: ResolvedTheme;
 }
 
-function Lane({ lane, span, now, mode, cells, nowPercent, resolvedTheme }: LaneProps) {
+function Lane({ lane, span, now, mode, cells }: LaneProps) {
   const { t, i18n } = useTranslation();
 
   const windows = useMemo(
@@ -329,10 +355,6 @@ function Lane({ lane, span, now, mode, cells, nowPercent, resolvedTheme }: LaneP
     () => projectResetCredits(lane, span.startMs, span.endMs, now),
     [lane, span, now]
   );
-
-  const colorSet = TYPE_COLORS[lane.provider] || TYPE_COLORS.unknown;
-  const color: ThemeColors =
-    resolvedTheme === 'dark' && colorSet.dark ? colorSet.dark : colorSet.light;
 
   // Sub-day windows are labelled in hours — rounding 5h to days gives "0d".
   const periodLabel =
@@ -345,11 +367,15 @@ function Lane({ lane, span, now, mode, cells, nowPercent, resolvedTheme }: LaneP
           : `${Math.round(lane.periodHours / 24)}d`;
 
   return (
-    <div className={styles.lane} style={{ '--provider-accent': color.text } as CSSProperties}>
-      <div className={styles.laneHead}>
+    <div className={styles.lane}>
+      <div className={styles.laneHead} title={lane.displayName}>
+        {/* Mobile collapses the credential column to this initial; the full
+            filename stays available as the cell's title. */}
+        <span className={styles.laneInitial} aria-hidden="true">
+          {lane.displayName.trim().charAt(0).toUpperCase() || '?'}
+        </span>
         <div className={styles.laneTop}>
-          <span className={styles.laneDot} />
-          <span className={styles.laneName} title={lane.displayName}>
+          <span className={styles.laneName}>
             {lane.displayName}
           </span>
           {periodLabel && <span className={styles.lanePeriod}>{periodLabel}</span>}
@@ -357,7 +383,7 @@ function Lane({ lane, span, now, mode, cells, nowPercent, resolvedTheme }: LaneP
         <div className={styles.laneLimits}>
           {lane.limits.map((limit) => (
             <span key={limit.label} className={styles.laneLimit}>
-              {lane.provider === 'meta' ? t(limit.label) : limit.label}{' '}
+              {lane.provider === 'meta' ? t(limit.label) : limit.label}
               <b>{limit.remaining}%</b>
             </span>
           ))}
@@ -374,10 +400,6 @@ function Lane({ lane, span, now, mode, cells, nowPercent, resolvedTheme }: LaneP
             />
           ))}
         </div>
-
-        {nowPercent !== null && (
-          <div className={styles.nowLine} style={{ left: `${nowPercent}%` }} />
-        )}
 
         {windows.length === 0 ? (
           <span className={styles.laneIdle}>
@@ -399,25 +421,27 @@ function Lane({ lane, span, now, mode, cells, nowPercent, resolvedTheme }: LaneP
               <div
                 key={window.startMs}
                 className={`${styles.window} ${styles[`window${capitalize(window.state)}`]}`}
-                style={{ left: `${window.leftPercent}%`, width: `${window.widthPercent}%` }}
+                style={
+                  {
+                    left: `${window.leftPercent}%`,
+                    width: `${window.widthPercent}%`,
+                    '--cap-color': capacityColor(window.remaining),
+                  } as CSSProperties
+                }
                 title={`${lane.displayName}\n${formatDay(window.startMs)} ${formatTime(
                   window.startMs
                 )} → ${formatDay(window.endMs)} ${formatTime(window.endMs)}${
                   window.remaining !== null ? `\n${window.remaining}% remaining` : ''
                 }`}
               >
-                {/* Only the API-reported current window has meaningful usage;
-                    projected windows intentionally have no fill. */}
-                {window.remaining !== null && (
-                  <span
-                    className={styles.windowFill}
-                    style={{ width: `${100 - window.remaining}%` }}
-                  />
-                )}
+                {/* Only the API-reported current window has a meaningful
+                    remaining figure; projected windows show their reset only. */}
                 {showLabel && (
                   <span className={styles.windowLabel}>
-                    {window.remaining !== null ? `${window.remaining}% · ` : ''}
-                    {endText}
+                    {window.remaining !== null && (
+                      <span className={styles.windowRemaining}>{window.remaining}%</span>
+                    )}
+                    <span>{endText}</span>
                   </span>
                 )}
               </div>

@@ -1,16 +1,14 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { SelectionCheckbox } from '@/components/ui/SelectionCheckbox';
 import { IconEye, IconEyeOff } from '@/components/ui/icons';
 import { useAuthStore, useLanguageStore, useNotificationStore } from '@/stores';
 import { detectApiBaseFromLocation, normalizeApiBase } from '@/utils/connection';
 import { LANGUAGE_LABEL_KEYS, LANGUAGE_ORDER } from '@/utils/constants';
 import { isSupportedLanguage } from '@/utils/language';
-import { INLINE_LOGO_JPEG } from '@/assets/logoInline';
 import type { ApiError } from '@/types';
 import { LegacyBackendError } from '@/services/api/legacyBackendProbe';
 import styles from './LoginPage.module.scss';
@@ -19,6 +17,46 @@ import styles from './LoginPage.module.scss';
  * 将 API 错误转换为本地化的用户友好消息
  */
 type RedirectState = { from?: { pathname?: string } };
+
+/** Product mark: three stacked capacity bars on a raised tile. Decorative. */
+function ProductMark({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="40"
+      height="40"
+      viewBox="0 0 40 40"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect width="40" height="40" rx="10" fill="var(--panel-raised)" />
+      <rect x="4" y="11" width="20" height="4" rx="2" fill="var(--accent)" />
+      <rect x="4" y="18" width="14" height="4" rx="2" fill="var(--cap-plenty)" />
+      <rect x="4" y="25" width="8" height="4" rx="2" fill="var(--cap-watch)" />
+    </svg>
+  );
+}
+
+function GlobeIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M2 12h20" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  );
+}
 
 function getLocalizedErrorMessage(error: unknown, t: (key: string) => string): string {
   if (error instanceof LegacyBackendError) return t('login.error_legacy_backend');
@@ -108,16 +146,15 @@ export function LoginPage() {
   const [error, setError] = useState('');
 
   const detectedBase = useMemo(() => detectApiBaseFromLocation(), []);
-  const languageOptions = useMemo(
-    () =>
-      LANGUAGE_ORDER.map((lang) => ({
-        value: lang,
-        label: t(LANGUAGE_LABEL_KEYS[lang]),
-      })),
-    [t]
-  );
+  const titleId = useId();
+  const customBaseId = useId();
+  const errorId = useId();
+  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const languageMenuRef = useRef<HTMLDivElement | null>(null);
+
   const handleLanguageChange = useCallback(
     (selectedLanguage: string) => {
+      setLanguageMenuOpen(false);
       if (!isSupportedLanguage(selectedLanguage)) {
         return;
       }
@@ -125,6 +162,29 @@ export function LoginPage() {
     },
     [setLanguage]
   );
+
+  // Close the language menu on outside click or Escape.
+  useEffect(() => {
+    if (!languageMenuOpen) {
+      return;
+    }
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!languageMenuRef.current?.contains(event.target as Node)) {
+        setLanguageMenuOpen(false);
+      }
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setLanguageMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [languageMenuOpen]);
 
   useEffect(() => {
     const init = async () => {
@@ -205,128 +265,162 @@ export function LoginPage() {
   // 显示启动动画（自动登录中或自动登录成功）
   const showSplash = autoLoading || autoLoginSuccess;
 
+  const keyToggleLabel = showKey ? t('login.hide_key') : t('login.show_key');
+
   return (
     <div className={styles.container}>
-      {/* 左侧品牌展示区 */}
-      <div className={styles.brandPanel}>
-        <div className={styles.brandContent}>
-          <span className={styles.brandWord}>CLI</span>
-          <span className={styles.brandWord}>PROXY</span>
-          <span className={styles.brandWord}>API</span>
+      {!showSplash && (
+        <div className={styles.languageAnchor} ref={languageMenuRef}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLanguageMenuOpen((prev) => !prev)}
+            aria-label={t('language.switch')}
+            title={t('language.switch')}
+            aria-haspopup="menu"
+            aria-expanded={languageMenuOpen}
+          >
+            <GlobeIcon />
+            {t(LANGUAGE_LABEL_KEYS[language])}
+          </Button>
+          {languageMenuOpen && (
+            <div className={styles.languageMenu} role="menu" aria-label={t('language.switch')}>
+              {LANGUAGE_ORDER.map((lang) => (
+                <button
+                  key={lang}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={language === lang}
+                  className={styles.languageOption}
+                  onClick={() => handleLanguageChange(lang)}
+                >
+                  {t(LANGUAGE_LABEL_KEYS[lang])}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
-      {/* 右侧功能交互区 */}
-      <div className={styles.formPanel}>
+      <main className={styles.column}>
+        <div className={styles.brand}>
+          <ProductMark className={styles.mark} />
+          <div className={styles.brandText}>
+            <span className={styles.productName}>{t('splash.title')}</span>
+            <span className={styles.productSubtitle}>{t('splash.subtitle')}</span>
+          </div>
+        </div>
+
         {showSplash ? (
-          /* 启动动画 */
-          <div className={styles.splashContent}>
-            <img src={INLINE_LOGO_JPEG} alt="CPAMC" className={styles.splashLogo} />
-            <h1 className={styles.splashTitle}>{t('splash.title')}</h1>
-            <p className={styles.splashSubtitle}>{t('splash.subtitle')}</p>
-            <div className={styles.splashLoader}>
-              <div className={styles.splashLoaderBar} />
+          <div className={styles.splash} role="status" aria-live="polite">
+            <p className={styles.splashText}>{t('login.restoring_session')}</p>
+            <div className={styles.splashTrack} aria-hidden="true">
+              <div className={styles.splashBar} />
             </div>
           </div>
         ) : (
-          /* 登录表单 */
-          <div className={styles.formContent}>
-            {/* Logo */}
-            <img src={INLINE_LOGO_JPEG} alt="Logo" className={styles.logo} />
+          <>
+            <header className={styles.heading}>
+              <h1 id={titleId} className={styles.title}>
+                {t('login.title')}
+              </h1>
+              <p className={styles.subtitle}>{t('login.subtitle')}</p>
+            </header>
 
-            {/* 登录表单卡片 */}
-            <div className={styles.loginCard}>
-              <div className={styles.loginHeader}>
-                <div className={styles.titleRow}>
-                  <div className={styles.title}>{t('title.login')}</div>
-                  <Select
-                    className={styles.languageSelect}
-                    value={language}
-                    options={languageOptions}
-                    onChange={handleLanguageChange}
-                    fullWidth={false}
-                    ariaLabel={t('language.switch')}
-                  />
+            <section className={styles.panel} aria-labelledby={titleId}>
+              <div className={styles.connection}>
+                <div className={styles.connectionRow}>
+                  <div className={styles.connectionText}>
+                    <span className={styles.connectionLabel}>{t('login.connection_current')}</span>
+                    <span className={styles.connectionValue}>{apiBase || detectedBase}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCustomBase((prev) => !prev)}
+                    aria-expanded={showCustomBase}
+                    aria-controls={customBaseId}
+                    aria-label={t('login.change_connection_aria')}
+                  >
+                    {t('login.change_connection')}
+                  </Button>
                 </div>
-                <div className={styles.subtitle}>{t('login.subtitle')}</div>
+
+                <div
+                  id={customBaseId}
+                  className={styles.collapse}
+                  data-open={showCustomBase ? 'true' : 'false'}
+                  inert={!showCustomBase}
+                >
+                  <div className={styles.collapseInner}>
+                    <div className={styles.field}>
+                      <Input
+                        label={t('login.custom_connection_label')}
+                        placeholder={t('login.custom_connection_placeholder')}
+                        value={apiBase}
+                        onChange={(e) => setApiBase(e.target.value)}
+                        hint={t('login.custom_connection_hint')}
+                        spellCheck={false}
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className={styles.connectionBox}>
-                <div className={styles.label}>{t('login.connection_current')}</div>
-                <div className={styles.value}>{apiBase || detectedBase}</div>
-                <div className={styles.hint}>{t('login.connection_auto_hint')}</div>
-              </div>
-
-              <div className={styles.toggleAdvanced}>
-                <SelectionCheckbox
-                  checked={showCustomBase}
-                  onChange={setShowCustomBase}
-                  ariaLabel={t('login.custom_connection_label')}
-                  label={t('login.custom_connection_label')}
-                  labelClassName={styles.toggleLabel}
-                />
-              </div>
-
-              {showCustomBase && (
+              <div className={styles.field}>
                 <Input
-                  label={t('login.custom_connection_label')}
-                  placeholder={t('login.custom_connection_placeholder')}
-                  value={apiBase}
-                  onChange={(e) => setApiBase(e.target.value)}
-                  hint={t('login.custom_connection_hint')}
+                  autoFocus
+                  label={t('login.management_key_label')}
+                  placeholder={t('login.management_key_placeholder')}
+                  type={showKey ? 'text' : 'password'}
+                  name="cpa-management-key"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className={styles.keyInput}
+                  value={managementKey}
+                  onChange={(e) => setManagementKey(e.target.value)}
+                  onKeyDown={handleSubmitKeyDown}
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={error ? errorId : undefined}
+                  rightElement={
+                    <button
+                      type="button"
+                      className={styles.iconButton}
+                      onClick={() => setShowKey((prev) => !prev)}
+                      aria-label={keyToggleLabel}
+                      title={keyToggleLabel}
+                    >
+                      {showKey ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+                    </button>
+                  }
                 />
+              </div>
+
+              {error && (
+                <div id={errorId} className={styles.errorBox} role="alert">
+                  {error}
+                </div>
               )}
 
-              <Input
-                autoFocus
-                label={t('login.management_key_label')}
-                placeholder={t('login.management_key_placeholder')}
-                type={showKey ? 'text' : 'password'}
-                name="cpa-management-key"
-                autoComplete="current-password"
-                value={managementKey}
-                onChange={(e) => setManagementKey(e.target.value)}
-                onKeyDown={handleSubmitKeyDown}
-                rightElement={
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setShowKey((prev) => !prev)}
-                    aria-label={
-                      showKey
-                        ? t('login.hide_key', { defaultValue: '隐藏密钥' })
-                        : t('login.show_key', { defaultValue: '显示密钥' })
-                    }
-                    title={
-                      showKey
-                        ? t('login.hide_key', { defaultValue: '隐藏密钥' })
-                        : t('login.show_key', { defaultValue: '显示密钥' })
-                    }
-                  >
-                    {showKey ? <IconEyeOff size={16} /> : <IconEye size={16} />}
-                  </button>
-                }
+              <SelectionCheckbox
+                checked={rememberPassword}
+                onChange={setRememberPassword}
+                ariaLabel={t('login.remember_password_label')}
+                label={t('login.remember_password_label')}
+                labelClassName={styles.checkboxLabel}
               />
 
-              <div className={styles.toggleAdvanced}>
-                <SelectionCheckbox
-                  checked={rememberPassword}
-                  onChange={setRememberPassword}
-                  ariaLabel={t('login.remember_password_label')}
-                  label={t('login.remember_password_label')}
-                  labelClassName={styles.toggleLabel}
-                />
-              </div>
-
-              <Button fullWidth onClick={handleSubmit} loading={loading}>
+              <Button fullWidth size="lg" onClick={handleSubmit} loading={loading}>
                 {loading ? t('login.submitting') : t('login.submit_button')}
               </Button>
+            </section>
 
-              {error && <div className={styles.errorBox}>{error}</div>}
-            </div>
-          </div>
+            <p className={styles.footnote}>{t('login.version_requirement')}</p>
+          </>
         )}
-      </div>
+      </main>
     </div>
   );
 }

@@ -569,7 +569,7 @@ export function BaseProviderForm({
               {descriptor.baseUrlRequired ? (
                 <span className={styles.labelHint}>
                   {' '}
-                  · {t('providersPage.form.baseUrlRequiredHint')}
+                  {t('providersPage.form.baseUrlRequiredHint')}
                 </span>
               ) : null}
             </label>
@@ -671,7 +671,7 @@ export function BaseProviderForm({
               brand === 'interactions' ? (
                 <span className={styles.labelHint}>
                   {' '}
-                  · {t('providersPage.form.testModelClaudeHint')}
+                  {t('providersPage.form.testModelClaudeHint')}
                 </span>
               ) : null}
             </label>

@@ -1,194 +1,137 @@
 @use '../../../styles/mixins' as *;
-@use '../../../styles/variables' as *;
+
+/* Quick Start: the APIKEY.FUN resource editor as one panel with a floating save bar. */
 
 .panel {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  padding: 20px;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  background: var(--panel);
+}
+
+.panelBare {
+  padding: 0;
+  border: 0;
+  background: none;
 }
 
 .header {
   display: flex;
-  flex-direction: row;
   align-items: flex-start;
   min-width: 0;
-}
-
-.topLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  max-width: 100%;
-  height: 30px;
-  padding: 0 8px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--muted-foreground);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1;
-  text-decoration: none;
-  overflow-wrap: anywhere;
-  transition:
-    background-color $transition-fast,
-    color $transition-fast;
-
-  &:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-  }
-
-  svg {
-    flex-shrink: 0;
-  }
 }
 
 .titleRow {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px 12px;
   min-width: 0;
 }
 
-.logo {
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-md);
-  object-fit: contain;
+.tile {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-control);
+  background: var(--panel-raised);
+}
+
+.logo {
+  display: block;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 
 .titleText {
   display: flex;
-  min-width: 0;
   flex-direction: column;
-  gap: 4px;
+  min-width: 0;
 }
 
 .title {
   margin: 0;
-  color: var(--text-primary);
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.22;
-  letter-spacing: 0;
+  font-size: $text-lead;
+  line-height: $lh-lead;
+  font-weight: 600;
+  color: var(--ink);
 }
 
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  padding-top: 4px;
-}
-
-.empty {
-  border: 1px dashed var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 32px;
-  text-align: center;
-  color: var(--muted-foreground);
-  font-size: 14px;
-}
-
-.emptyActions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.emptyActionButton {
+@mixin text-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 13px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: 14px;
+  min-width: 0;
+  max-width: 100%;
+  border-radius: var(--radius-control);
+  color: var(--accent);
+  font-size: $text-dense;
+  line-height: $lh-dense;
   font-weight: 500;
-  line-height: 1.4;
   text-decoration: none;
-  transition:
-    background 0.16s ease,
-    border-color 0.16s ease,
-    color 0.16s ease,
-    box-shadow 0.16s ease;
+  overflow-wrap: anywhere;
+  transition: color var(--dur-hover) var(--ease-standard);
 
-  &:hover {
-    border-color: var(--border-hover);
-    background: var(--bg-hover);
+  svg {
+    flex-shrink: 0;
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
-.emptyActionButtonPrimary {
-  border-color: var(--primary-color);
-  background: var(--primary-color);
-  color: var(--primary-contrast);
-  font-weight: 600;
+.topLink {
+  @include text-link;
+}
 
-  &:hover:not(:disabled) {
-    border-color: var(--primary-hover);
-    background: var(--primary-hover);
-  }
+.textLink {
+  @include text-link;
+}
 
-  &:focus-visible {
-    outline-color: var(--primary-color);
+@media (hover: hover) and (pointer: fine) {
+  .topLink:hover,
+  .textLink:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 }
 
-.emptyActionButtonEmphasis {
-  color: var(--amber-text);
-  border-color: color-mix(in srgb, var(--amber-color) 48%, var(--border-color));
-  background: color-mix(in srgb, var(--amber-color) 14%, var(--bg-primary));
-  font-weight: 600;
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--amber-color) 18%, transparent);
+/* ---------- Empty state: one sentence, one primary action ---------- */
 
-  &:hover {
-    border-color: color-mix(in srgb, var(--amber-color) 72%, var(--border-color));
-    background: color-mix(in srgb, var(--amber-color) 20%, var(--bg-primary));
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--amber-color) 18%, transparent);
-  }
-
-  &:focus-visible {
-    outline-color: var(--amber-color);
-  }
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-panel);
+  text-align: center;
 }
 
-.primaryAction {
-  height: 38px;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1;
+.emptyText {
+  margin: 0;
+  max-width: 48ch;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
+}
+
+.buttonWithIcon > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .spin {
@@ -196,35 +139,28 @@
 }
 
 @keyframes sponsor-quick-start-spin {
-  from {
-    transform: rotate(0deg);
-  }
   to {
     transform: rotate(360deg);
   }
 }
 
-@media (max-width: 768px) {
-  .panel {
+@include mobile {
+  .panel:not(.panelBare) {
     padding: 16px;
-    gap: 18px;
   }
 
-  .title {
-    font-size: 22px;
-    line-height: 1.25;
+  .panel {
+    gap: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topLink,
+  .textLink {
+    transition: none;
   }
 
-  .titleRow {
-    gap: 10px;
-  }
-
-  .footer {
-    justify-content: stretch;
-
-    button {
-      width: 100%;
-      justify-content: center;
-    }
+  .spin {
+    animation: none;
   }
 }

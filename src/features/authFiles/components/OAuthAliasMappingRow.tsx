@@ -47,9 +47,7 @@ export function OAuthAliasMappingRow({
           disabled={disabled}
           options={options}
         />
-        <span className={styles.mappingSeparator} aria-hidden="true">
-          →
-        </span>
+        <span className={styles.mappingSeparator} aria-hidden="true" />
         <div className={styles.modelField}>
           <label htmlFor={`${id}-alias`}>{t('oauth_model_alias.alias_placeholder')}</label>
           <input

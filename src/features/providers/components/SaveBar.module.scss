@@ -1,0 +1,71 @@
+@use '../../../styles/mixins' as *;
+
+/* Room at the end of the editor so the last field is never covered by the bar. */
+.spacer {
+  height: 56px;
+}
+
+/* Zero-height sticky line at the bottom of the scroll area; the bar floats above it. */
+.dock {
+  position: sticky;
+  bottom: 16px;
+  z-index: 5;
+  height: 0;
+}
+
+.bar {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  background: var(--panel-raised);
+  box-shadow: var(--shadow-popover);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition:
+    transform var(--dur-base) var(--ease-standard),
+    opacity var(--dur-base) var(--ease-standard),
+    visibility 0s linear var(--dur-base);
+
+  &[data-visible='true'] {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition:
+      transform var(--dur-base) var(--ease-standard),
+      opacity var(--dur-base) var(--ease-standard),
+      visibility 0s linear 0s;
+  }
+
+  :global(.btn) > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+@include mobile {
+  .bar {
+    justify-content: stretch;
+
+    > * {
+      flex: 1 1 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar,
+  .bar[data-visible='true'] {
+    transition: none;
+  }
+}

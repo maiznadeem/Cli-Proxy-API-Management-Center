@@ -56,7 +56,7 @@ describe('log workspace layout contract', () => {
     expect(page).toContain("aria-label={t('logs.copy_line')}");
     expect(page).toContain('tabIndex={0}');
     expect(page).toContain("aria-label={t('logs.log_content')}");
-    expect(page).toContain('aria-pressed={autoRefresh}');
+    expect(page).toContain('checked={autoRefresh}');
   });
 
   test('background refresh retains loaded content and compact status stays outside viewer', () => {
@@ -81,10 +81,11 @@ describe('log workspace layout contract', () => {
     expect(styles).toMatch(
       /\.searchInput:global\(\.input\),\s*\.levelSelect > button,\s*\.filterPanelToggle:global\(\.btn\),\s*\.actionButton:global\(\.btn\) \{[^}]*height: var\(--log-control-height\)/
     );
-    expect(styles).toContain('--log-control-height: 40px');
+    expect(styles).toContain('--log-control-height: 32px');
     expect(styles).toContain('--log-control-height: 36px');
     expect(styles).toContain('width: var(--log-control-height)');
-    expect(styles).not.toContain('height: 32px');
+    // Literal control heights are not allowed; sizes come from --log-control-height.
+    expect(styles).not.toMatch(/\n\s*(?:min-)?height: 32px/);
   });
 
   test('all supported locales describe both filtering and display settings', () => {

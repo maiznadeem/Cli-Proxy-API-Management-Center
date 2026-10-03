@@ -1,84 +1,220 @@
-@use '../../styles/variables' as *;
 @use '../../styles/mixins' as *;
 
-// ─── Page Container ─────────────────────────────────────
+/* ============================================================
+ * Plugin store: header, trust note, filter tabs, a grid of plugin panels,
+ * and the install options modal. Colour only on status dots.
+ * ============================================================ */
 
 .page {
   display: flex;
   flex-direction: column;
-  gap: $spacing-lg;
+  gap: 24px;
   width: 100%;
+  min-width: 0;
 }
 
-// ─── Header ─────────────────────────────────────────────
+/* ---------- Header ---------- */
 
-.pageHeader {
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+}
+
+.headerCopy {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 320px;
 }
 
 .title {
   margin: 0;
-  color: var(--text-primary);
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-size: $text-page;
+  line-height: $lh-page;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
 }
 
-.description {
+.meta {
   margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  min-width: 0;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
 }
 
-// ─── Alert Boxes ────────────────────────────────────────
-
-.errorBox,
-.warningBox {
-  padding: $spacing-md;
-  border-radius: $radius-md;
-  font-size: 14px;
-  line-height: 1.5;
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
-.errorBox {
+.metaValue {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.metaPath {
+  max-width: 280px;
+  font-family: $font-mono;
+  font-size: $text-caption;
+  color: var(--ink);
+  @include text-ellipsis;
+}
+
+.metaSep {
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  background: var(--hairline-strong);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.search {
+  width: 280px;
+  min-width: 0;
+
+  :global(.form-group) {
+    margin: 0;
+  }
+
+  :global(.input) {
+    height: 32px;
+    padding-right: 32px;
+    font-size: $text-dense;
+  }
+
+  svg {
+    display: block;
+    color: var(--ink-faint);
+  }
+}
+
+/* ---------- Status dots ---------- */
+
+.dot {
+  flex-shrink: 0;
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--ink-ghost);
+}
+
+.dotPlenty {
+  background: var(--cap-plenty);
+}
+
+.dotWatch {
+  background: var(--cap-watch);
+}
+
+.dotDepleted {
+  background: var(--cap-depleted);
+}
+
+.dotGhost {
+  background: var(--ink-ghost);
+}
+
+/* ---------- Banners ---------- */
+
+.securityBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  background: var(--panel);
+  color: var(--ink-muted);
+
+  > svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+}
+
+.securityBannerText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  strong {
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  p {
+    margin: 0;
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    color: var(--ink-muted);
+  }
+}
+
+.errorBanner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-md;
-  border: 1px solid var(--danger-color);
-  background: rgba($error-color, 0.1);
-  color: var(--danger-color);
-
-  span {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-
-  :global(.btn) {
-    flex-shrink: 0;
-  }
-
-  @include mobile {
-    flex-direction: column;
-    align-items: stretch;
-  }
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--cap-depleted);
+  background: color-mix(in srgb, var(--cap-depleted) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cap-depleted) 32%, transparent);
+  border-radius: var(--radius-control);
+  padding: 8px 12px;
+  overflow-wrap: anywhere;
 }
 
-.warningBox {
-  border: 1px solid color-mix(in srgb, var(--warning-color, #c65746) 42%, var(--border-color));
-  background: color-mix(in srgb, var(--warning-color, #c65746) 9%, var(--bg-secondary));
-  color: var(--text-primary);
+.noticeBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--panel);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
+  overflow-wrap: anywhere;
+}
+
+.noticeTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .sourceErrorList {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin: 8px 0 0;
-  padding: 0;
+  margin: 0;
+  padding: 0 0 0 14px;
   list-style: none;
 
   li {
@@ -86,281 +222,141 @@
     flex-direction: column;
     gap: 2px;
     min-width: 0;
-  }
 
-  span {
-    font-weight: 700;
-    overflow-wrap: anywhere;
-  }
+    span {
+      color: var(--ink);
+    }
 
-  small {
-    color: var(--text-secondary);
-    font-size: 12px;
-    overflow-wrap: anywhere;
-  }
-}
-
-// ─── Security Banner (third-party plugin risk) ──────────
-
-.securityBanner {
-  display: flex;
-  align-items: flex-start;
-  gap: $spacing-sm;
-  padding: 12px 14px;
-  border-radius: $radius-md;
-  border: 1px solid color-mix(in srgb, var(--quota-medium-color, #e0aa14) 45%, var(--border-color));
-  background: color-mix(in srgb, var(--quota-medium-color, #e0aa14) 14%, var(--bg-secondary));
-  color: var(--text-primary);
-
-  > svg {
-    flex-shrink: 0;
-    margin-top: 1px;
-    color: var(--quota-medium-color, #e0aa14);
-  }
-}
-
-.securityBannerText {
-  min-width: 0;
-
-  strong {
-    display: block;
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1.4;
-  }
-
-  p {
-    margin: 2px 0 0;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--text-secondary);
-  }
-}
-
-// ─── Status Bar ─────────────────────────────────────────
-
-.statusBar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
-  background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
-  flex-wrap: wrap;
-}
-
-.statusPill {
-  display: inline-flex;
-  min-width: 0;
-  max-width: 100%;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: $radius-full;
-  border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-  background: color-mix(in srgb, var(--bg-primary) 56%, transparent);
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.statusDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.statusDotOn {
-  background: $success-color;
-  box-shadow: 0 0 6px rgba($success-color, 0.5);
-}
-
-.statusDotOff {
-  background: var(--text-tertiary);
-}
-
-.statusLabel {
-  color: var(--text-secondary);
-}
-
-.statusValue {
-  color: var(--text-primary);
-  font-weight: 700;
-}
-
-.statusPathValue {
-  display: block;
-  min-width: 0;
-  max-width: min(360px, 58vw);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.statusDivider {
-  width: 1px;
-  height: 20px;
-  background: color-mix(in srgb, var(--border-color) 60%, transparent);
-  flex-shrink: 0;
-
-  @include mobile {
-    display: none;
-  }
-}
-
-// ─── Toolbar ────────────────────────────────────────────
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-
-  :global(.form-group) {
-    flex: 1;
-    max-width: 480px;
-    margin: 0;
-  }
-
-  :global(.input) {
-    padding-right: 36px;
-  }
-
-  :global(.btn > span) {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  @include mobile {
-    flex-direction: column;
-    align-items: stretch;
-
-    :global(.form-group) {
-      max-width: none;
+    small {
+      font-family: $font-mono;
+      font-size: $text-caption;
+      line-height: $lh-caption;
+      color: var(--ink-faint);
+      overflow-wrap: anywhere;
     }
   }
 }
 
-// ─── Status Filter Chips ────────────────────────────────
+/* ---------- Filter tabs ---------- */
 
-.filterChips {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
+.filterTabs {
+  display: inline-flex;
+  align-self: flex-start;
   flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--panel-sunken);
 }
 
-.filterChip {
+.filterTab {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  border-radius: $radius-full;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.4;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: calc(var(--radius-control) - 2px);
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: $text-dense;
+  font-weight: 500;
   cursor: pointer;
   transition:
-    border-color $transition-fast,
-    background-color $transition-fast,
-    color $transition-fast;
+    transform var(--dur-press) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard),
+    color var(--dur-hover) var(--ease-standard);
 
-  &:hover {
-    border-color: var(--primary-color);
-    color: var(--text-primary);
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
-.filterChipActive {
-  border-color: var(--primary-color);
-  background: color-mix(in srgb, var(--primary-color) 12%, var(--bg-primary));
-  color: var(--text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .filterTab:hover:not(.filterTabActive) {
+    background: var(--panel-hover);
+    color: var(--ink);
+  }
 }
 
-.filterChipCount {
-  display: inline-flex;
-  min-width: 18px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-  border-radius: $radius-full;
-  background: color-mix(in srgb, var(--border-color) 45%, transparent);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 700;
+.filterTabActive {
+  background: var(--panel-raised);
+  color: var(--ink);
 }
 
-// ─── Card Grid ──────────────────────────────────────────
+.filterTabCount {
+  font-size: $text-caption;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+}
+
+/* ---------- Card grid ---------- */
 
 .cardGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: $spacing-md;
-
-  @include mobile {
-    grid-template-columns: 1fr;
-  }
+  gap: 12px;
 }
-
-// ─── Plugin Card ────────────────────────────────────────
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
-  padding: $spacing-md;
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  border-radius: $radius-lg;
-  background: var(--bg-primary);
-  transition:
-    border-color $transition-fast,
-    background-color $transition-fast;
+  gap: 10px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  background: var(--panel);
+  transition: border-color var(--dur-hover) var(--ease-standard);
+}
 
-  &:hover {
-    border-color: color-mix(in srgb, var(--primary-color) 45%, var(--border-color));
-    background: var(--bg-hover);
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    border-color: var(--hairline-strong);
   }
 }
 
 .cardHeader {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
+  display: flex;
   align-items: flex-start;
-  column-gap: $spacing-sm;
-  row-gap: 6px;
+  gap: 10px;
+  min-width: 0;
 }
 
 .logoBox {
-  display: inline-flex;
-  grid-column: 1;
-  grid-row: 1;
-  width: 40px;
-  height: 40px;
+  flex-shrink: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
   overflow: hidden;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-  background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
-  color: var(--text-secondary);
-  flex-shrink: 0;
+  border-radius: var(--radius-control);
+  background: var(--panel-raised);
+  color: var(--ink-muted);
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
   }
 }
 
 .cardTitleBlock {
   display: flex;
-  grid-column: 2;
-  grid-row: 1;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
@@ -368,254 +364,210 @@
 
 .cardTitle {
   margin: 0;
-  color: var(--text-primary);
-  font-size: 15px;
-  font-weight: 650;
-  line-height: 1.3;
+  font-size: $text-body;
+  line-height: $lh-body;
+  font-weight: 500;
+  color: var(--ink);
   overflow-wrap: anywhere;
-  @include text-ellipsis-multiline(2);
 }
 
-.cardId {
-  color: var(--text-tertiary);
-  font-family: $font-mono;
-  font-size: 12px;
-  @include text-ellipsis;
-}
-
-.cardBadges {
+.cardByline {
   display: flex;
-  grid-column: 2;
-  grid-row: 2;
   flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 5px;
+  gap: 2px 10px;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
+}
+
+.cardAuthor {
   min-width: 0;
-
-  &:empty {
-    display: none;
-  }
+  overflow-wrap: anywhere;
 }
 
-.badge,
-.badgeSuccess,
-.badgeWarning,
-.badgeUntrusted {
-  display: inline-flex;
-  min-height: 22px;
-  align-items: center;
-  border-radius: 6px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.25;
-}
-
-.badge {
-  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-  color: var(--text-secondary);
-}
-
-.badgeSuccess {
-  background: rgba($success-color, 0.1);
-  border: 1px solid rgba($success-color, 0.2);
-  color: var(--success-color);
-}
-
-.badgeWarning {
-  background: rgba($warning-color, 0.1);
-  border: 1px solid rgba($warning-color, 0.2);
-  color: var(--warning-color);
-}
-
-.badgeUntrusted {
-  gap: 4px;
-  background: rgba($warning-color, 0.12);
-  border: 1px solid rgba($warning-color, 0.4);
-  color: var(--danger-color);
-
-  svg {
-    flex-shrink: 0;
-  }
-}
-
-.cardDesc {
-  display: -webkit-box;
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 13px;
-  line-height: 1.5;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+.cardVersion {
+  font-family: $font-mono;
+  color: var(--ink-faint);
 }
 
 .cardDescBlock {
   display: flex;
-  min-width: 0;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+}
+
+/* Two-line clamp; PluginStorePage measures overflow against the line height. */
+.cardDesc {
+  display: -webkit-box;
+  margin: 0;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .cardDescExpanded {
   display: block;
   overflow: visible;
   -webkit-line-clamp: initial;
+  line-clamp: none;
 }
 
 .cardDescToggle {
   align-self: flex-start;
   padding: 0;
   border: 0;
+  border-radius: var(--radius-control);
   background: transparent;
-  color: var(--primary-color);
-  cursor: pointer;
+  color: var(--accent);
   font: inherit;
-  font-size: 12px;
-  font-weight: 650;
-  line-height: 1.4;
-
-  &:hover {
-    color: var(--primary-hover);
-    text-decoration: underline;
-  }
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-weight: 500;
+  cursor: pointer;
 
   &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--primary-color) 45%, transparent);
-    outline-offset: 3px;
-    border-radius: 4px;
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
-.cardMeta {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  flex-wrap: wrap;
-}
-
-.metaItem {
-  display: inline-flex;
-  min-width: 0;
-  max-width: 100%;
-  align-items: center;
-  gap: $spacing-sm;
-  color: var(--text-tertiary);
-  font-size: 12px;
-  white-space: nowrap;
-
-  strong {
-    color: var(--text-secondary);
-    font-weight: 600;
+@media (hover: hover) and (pointer: fine) {
+  .cardDescToggle:hover {
+    text-decoration: underline;
   }
 }
 
-.metaDot {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--text-tertiary) 50%, transparent);
-  flex-shrink: 0;
-}
-
+/* Tags as plain text separated by spacing. */
 .tagRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 2px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .tag {
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
+}
+
+.statusLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
+}
+
+.statusItem {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: $radius-full;
-  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
-  color: var(--text-tertiary);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.4;
+  gap: 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.detailLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.cardId {
+  font-family: $font-mono;
 }
 
 .cardFooter {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-sm;
+  gap: 8px;
   margin-top: auto;
-  padding-top: $spacing-sm;
+  padding-top: 6px;
 }
 
 .cardActions {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: $spacing-sm;
-
-  :global(.btn > span) {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
+  gap: 8px;
 }
 
 .cardLinks {
   display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  flex-shrink: 0;
+  gap: 2px;
 }
 
 .iconLink {
   display: inline-flex;
-  width: 30px;
-  min-height: 30px;
-  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-md;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-control);
+  color: var(--ink-muted);
   text-decoration: none;
   transition:
-    border-color $transition-fast,
-    background-color $transition-fast,
-    color $transition-fast;
+    transform var(--dur-press) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard),
+    color var(--dur-hover) var(--ease-standard);
 
-  &:hover {
-    border-color: var(--primary-color);
-    background: var(--bg-hover);
-    color: var(--primary-color);
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
-// ─── Install Options Dialog ───────────────────────────────
+@media (hover: hover) and (pointer: fine) {
+  .iconLink:hover {
+    background: var(--panel-hover);
+    color: var(--ink);
+  }
+}
+
+/* ---------- Install options modal ---------- */
 
 .installOptions {
   display: flex;
   flex-direction: column;
-  gap: $spacing-md;
+  gap: 16px;
 }
 
 .installMessage {
   margin: 0;
-  color: var(--text-primary);
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: $text-body;
+  line-height: $lh-body;
+  color: var(--ink);
+  overflow-wrap: anywhere;
 }
 
 .installVersionField {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .installVersionLabel {
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
+  color: var(--ink);
 }
 
 .installVersionModes {
@@ -633,52 +585,66 @@
   min-width: 0;
   gap: 8px;
   padding: 10px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  border-radius: $radius-md;
-  background: var(--bg-primary);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--panel-sunken);
   cursor: pointer;
   transition:
-    border-color $transition-fast,
-    background-color $transition-fast;
+    border-color var(--dur-hover) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard);
 
-  &:hover {
-    border-color: color-mix(in srgb, var(--primary-color) 45%, var(--border-color));
-    background: var(--bg-hover);
+  &:focus-within {
+    box-shadow: var(--focus-ring);
   }
 
   input {
-    margin-top: 2px;
     flex: 0 0 auto;
+    margin-top: 2px;
+    accent-color: var(--accent);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .installVersionMode:hover:not(.installVersionModeDisabled) {
+    border-color: var(--hairline-strong);
+    background: var(--panel-hover);
   }
 }
 
 .installVersionModeActive {
-  border-color: var(--primary-color);
-  background: color-mix(in srgb, var(--primary-color) 10%, var(--bg-primary));
+  border-color: var(--accent);
+  background: var(--accent-10);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .installVersionModeActive:hover:not(.installVersionModeDisabled) {
+    border-color: var(--accent);
+    background: var(--accent-10);
+  }
 }
 
 .installVersionModeDisabled {
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 .installVersionModeText {
   display: flex;
-  min-width: 0;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 
   strong {
-    color: var(--text-primary);
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.3;
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    font-weight: 500;
+    color: var(--ink);
   }
 
   small {
-    color: var(--text-secondary);
-    font-size: 11px;
-    line-height: 1.4;
+    font-size: $text-caption;
+    line-height: $lh-caption;
+    color: var(--ink-muted);
     overflow-wrap: anywhere;
   }
 }
@@ -687,10 +653,10 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px;
-  border-radius: $radius-md;
-  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
-  background: color-mix(in srgb, var(--bg-secondary) 65%, transparent);
+  padding: 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--panel-sunken);
 
   :global(.form-group) {
     margin: 0;
@@ -699,159 +665,111 @@
 
 .installVersionHint {
   margin: 0;
-  color: var(--text-secondary);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
 }
 
 .installVersionWarning {
   margin: 0;
-  color: var(--warning-color);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--cap-watch);
   overflow-wrap: anywhere;
 }
 
 .installVersionCheckbox {
   display: inline-flex;
+  align-items: center;
+  gap: 8px;
   width: fit-content;
   max-width: 100%;
-  align-items: center;
-  gap: 7px;
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.4;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
   cursor: pointer;
 
   input {
     flex: 0 0 auto;
+    accent-color: var(--accent);
   }
 }
 
 .installReleaseLink {
   display: inline-flex;
+  align-items: center;
+  gap: 4px;
   width: fit-content;
   max-width: 100%;
-  align-items: center;
-  gap: 5px;
-  color: var(--primary-color);
-  font-size: 12px;
-  font-weight: 650;
-  line-height: 1.4;
+  border-radius: var(--radius-control);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-weight: 500;
+  color: var(--accent);
   text-decoration: none;
-
-  &:hover {
-    color: var(--primary-hover);
-    text-decoration: underline;
-  }
 
   svg {
     flex: 0 0 auto;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .installReleaseLink:hover {
+    text-decoration: underline;
   }
 }
 
 .installDialogActions {
   display: flex;
   justify-content: flex-end;
-  gap: $spacing-sm;
-  margin-top: $spacing-sm;
+  gap: 8px;
 
   @include mobile {
     flex-direction: column-reverse;
   }
 }
 
-// ─── Skeleton ───────────────────────────────────────────
-
-.skeletonCard {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-md;
-  padding: $spacing-md;
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  border-radius: $radius-lg;
-  background: var(--bg-primary);
-}
-
-.skeletonHeader {
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-}
-
-.skeletonAvatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--bg-secondary) 86%, transparent) 25%,
-    color-mix(in srgb, var(--bg-hover) 70%, transparent) 37%,
-    color-mix(in srgb, var(--bg-secondary) 86%, transparent) 63%
-  );
-  background-size: 400% 100%;
-  animation: skeletonPulse 1.35s ease-in-out infinite;
-  flex-shrink: 0;
-}
-
-.skeletonText {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-}
-
-.skeletonLine {
-  height: 14px;
-  border-radius: 4px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--bg-secondary) 86%, transparent) 25%,
-    color-mix(in srgb, var(--bg-hover) 70%, transparent) 37%,
-    color-mix(in srgb, var(--bg-secondary) 86%, transparent) 63%
-  );
-  background-size: 400% 100%;
-  animation: skeletonPulse 1.35s ease-in-out infinite;
-
-  &:first-child {
-    width: 45%;
-  }
-
-  &:last-child {
-    width: 70%;
-    height: 10px;
-  }
-}
-
-.skeletonBody {
-  height: 56px;
-  border-radius: $radius-md;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--bg-secondary) 86%, transparent) 25%,
-    color-mix(in srgb, var(--bg-hover) 70%, transparent) 37%,
-    color-mix(in srgb, var(--bg-secondary) 86%, transparent) 63%
-  );
-  background-size: 400% 100%;
-  animation: skeletonPulse 1.35s ease-in-out infinite;
-}
-
-// ─── Animation ──────────────────────────────────────────
-
-@keyframes skeletonPulse {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
-}
-
-// ─── Mobile Overrides ───────────────────────────────────
+/* ---------- Responsive ---------- */
 
 @include mobile {
   .page {
-    gap: $spacing-md;
+    gap: 16px;
+  }
+
+  .header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .headerActions {
+    flex-wrap: wrap;
+  }
+
+  .search {
+    flex: 1 1 200px;
+    width: auto;
+  }
+
+  .cardGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .filterTab,
+  .iconLink,
+  .installVersionMode {
+    transition: none;
+  }
+
+  .filterTab:active,
+  .iconLink:active {
+    transform: none;
   }
 }

@@ -6,8 +6,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
+import { Skeleton } from '@/components/ui/Skeleton';
 import {
-  IconAlertTriangle,
   IconDownload,
   IconExternalLink,
   IconGithub,
@@ -210,7 +210,7 @@ function PluginInstallOptionsModal({
         ].filter(Boolean);
         return {
           value: release.tagName,
-          label: labelParts.join(' · '),
+          label: labelParts.join(', '),
         };
       }),
     [i18n.language, t, visibleReleaseVersions]
@@ -805,7 +805,6 @@ export function PluginStorePage() {
       ? t('plugin_store.cli_proxy_api_source')
       : entry.sourceName;
     const sourceText = sourceName ? t('plugin_store.source_name', { source: sourceName }) : '';
-    const metaItems = [versionText, sourceText, entry.author, entry.license].filter(Boolean);
     const isInstalling = installingKey === entryKey;
     const hasPendingInstall = Boolean(installingKey);
     const missingAuth = entry.authRequired && !entry.authConfigured;
@@ -826,6 +825,11 @@ export function PluginStorePage() {
         ? t('plugin_store.auth_configured')
         : t('plugin_store.auth_required')
       : '';
+    const detailItems = [
+      installTypeText ? t('plugin_store.install_type', { type: installTypeText }) : '',
+      platformText,
+      entry.license,
+    ].filter(Boolean);
     const actionDisabled = !connected || missingAuth || (hasPendingInstall && !isInstalling);
     const actionTitle = missingAuth ? t('plugin_store.auth_required_hint') : undefined;
 
@@ -837,28 +841,10 @@ export function PluginStorePage() {
           </div>
           <div className={styles.cardTitleBlock}>
             <h2 className={styles.cardTitle}>{getStoreEntryTitle(entry)}</h2>
-            <span className={styles.cardId}>{entry.id}</span>
-          </div>
-          <div className={styles.cardBadges}>
-            {!isOfficial ? (
-              <span className={styles.badgeUntrusted}>
-                <IconAlertTriangle size={11} />
-                {t('plugin_store.badge_untrusted')}
-              </span>
-            ) : null}
-            {isUpdate ? (
-              <span className={styles.badgeWarning}>{t('plugin_store.badge_update')}</span>
-            ) : entry.installed ? (
-              <span className={styles.badgeSuccess}>{t('plugin_store.badge_installed')}</span>
-            ) : null}
-            {entry.installed && entry.effectiveEnabled ? (
-              <span className={styles.badge}>{t('plugin_store.badge_effective')}</span>
-            ) : null}
-            {entry.authRequired ? (
-              <span className={entry.authConfigured ? styles.badge : styles.badgeWarning}>
-                {authText}
-              </span>
-            ) : null}
+            <div className={styles.cardByline}>
+              {entry.author ? <span className={styles.cardAuthor}>{entry.author}</span> : null}
+              {versionText ? <span className={styles.cardVersion}>{versionText}</span> : null}
+            </div>
           </div>
         </div>
 
@@ -891,38 +877,65 @@ export function PluginStorePage() {
           </div>
         ) : null}
 
-        {metaItems.length > 0 || installTypeText || platformText ? (
-          <div className={styles.cardMeta}>
-            {installTypeText ? (
-              <span className={styles.metaItem}>
-                {t('plugin_store.install_type', { type: installTypeText })}
-              </span>
-            ) : null}
-            {platformText ? <span className={styles.metaItem}>{platformText}</span> : null}
-            {metaItems.map((item, index) => (
-              <span key={`${entryKey}-meta-${index}`} className={styles.metaItem}>
-                {index > 0 ? <span className={styles.metaDot} aria-hidden="true" /> : null}
-                {index === 0 && versionText ? <strong>{item}</strong> : item}
-              </span>
+        {entry.tags.length > 0 ? (
+          <ul className={styles.tagRow}>
+            {entry.tags.map((tag) => (
+              <li key={`${entryKey}-tag-${tag}`} className={styles.tag}>
+                {tag}
+              </li>
             ))}
-          </div>
+          </ul>
         ) : null}
 
-        {entry.tags.length > 0 ? (
-          <div className={styles.tagRow}>
-            {entry.tags.map((tag) => (
-              <span key={`${entryKey}-tag-${tag}`} className={styles.tag}>
-                {tag}
-              </span>
-            ))}
-          </div>
-        ) : null}
+        <div className={styles.statusLine}>
+          <span className={styles.statusItem}>
+            <span
+              className={`${styles.dot} ${isOfficial ? styles.dotPlenty : styles.dotWatch}`}
+              aria-hidden="true"
+            />
+            {isOfficial ? sourceText || entry.id : t('plugin_store.badge_untrusted')}
+          </span>
+          {!isOfficial && sourceText ? (
+            <span className={styles.statusItem}>{sourceText}</span>
+          ) : null}
+          {isUpdate ? (
+            <span className={styles.statusItem}>
+              <span className={`${styles.dot} ${styles.dotWatch}`} aria-hidden="true" />
+              {t('plugin_store.badge_update')}
+            </span>
+          ) : entry.installed ? (
+            <span className={styles.statusItem}>
+              <span className={`${styles.dot} ${styles.dotPlenty}`} aria-hidden="true" />
+              {t('plugin_store.badge_installed')}
+            </span>
+          ) : null}
+          {entry.installed && entry.effectiveEnabled ? (
+            <span className={styles.statusItem}>{t('plugin_store.badge_effective')}</span>
+          ) : null}
+          {entry.authRequired ? (
+            <span className={styles.statusItem}>
+              <span
+                className={`${styles.dot} ${
+                  entry.authConfigured ? styles.dotPlenty : styles.dotDepleted
+                }`}
+                aria-hidden="true"
+              />
+              {authText}
+            </span>
+          ) : null}
+        </div>
+
+        <div className={styles.detailLine}>
+          <span className={styles.cardId}>{entry.id}</span>
+          {detailItems.map((item, index) => (
+            <span key={`${entryKey}-detail-${index}`}>{item}</span>
+          ))}
+        </div>
 
         <div className={styles.cardFooter}>
           <div className={styles.cardActions}>
             {!entry.installed ? (
               <Button
-                size="sm"
                 onClick={() => handleInstall(entry)}
                 disabled={actionDisabled}
                 loading={isInstalling}
@@ -935,7 +948,7 @@ export function PluginStorePage() {
               <>
                 {entry.updateAvailable ? (
                   <Button
-                    size="sm"
+                    variant="secondary"
                     onClick={() => handleInstall(entry)}
                     disabled={actionDisabled}
                     loading={isInstalling}
@@ -945,7 +958,10 @@ export function PluginStorePage() {
                     {t('plugin_store.update')}
                   </Button>
                 ) : null}
-                <Button variant="secondary" size="sm" onClick={() => navigate('/plugins')}>
+                <Button
+                  variant={entry.updateAvailable ? 'ghost' : 'secondary'}
+                  onClick={() => navigate('/plugins')}
+                >
                   <IconSettings size={14} />
                   {t('plugin_store.manage')}
                 </Button>
@@ -962,7 +978,7 @@ export function PluginStorePage() {
                 title={t('plugin_store.open_repository')}
                 aria-label={t('plugin_store.open_repository')}
               >
-                <IconGithub size={14} />
+                <IconGithub size={16} />
               </a>
             ) : null}
             {homepageURL ? (
@@ -974,7 +990,7 @@ export function PluginStorePage() {
                 title={t('plugin_store.open_homepage')}
                 aria-label={t('plugin_store.open_homepage')}
               >
-                <IconExternalLink size={14} />
+                <IconExternalLink size={16} />
               </a>
             ) : null}
           </div>
@@ -985,24 +1001,76 @@ export function PluginStorePage() {
 
   return (
     <div className={styles.page}>
-      {/* ── Page Header ── */}
-      <div className={styles.pageHeader}>
-        <h1 className={styles.title}>{t('plugin_store.title')}</h1>
-        <p className={styles.description}>{t('plugin_store.description')}</p>
-      </div>
+      <header className={styles.header}>
+        <div className={styles.headerCopy}>
+          <h1 className={styles.title}>{t('plugin_store.title')}</h1>
+          {data ? (
+            <p className={styles.meta}>
+              <span className={styles.metaItem}>
+                <span
+                  className={`${styles.dot} ${
+                    data.pluginsEnabled ? styles.dotPlenty : styles.dotGhost
+                  }`}
+                  aria-hidden="true"
+                />
+                {t('plugin_store.global_status')}
+                <span className={styles.metaValue}>
+                  {data.pluginsEnabled
+                    ? t('plugin_store.global_enabled')
+                    : t('plugin_store.global_disabled')}
+                </span>
+              </span>
+              <span className={styles.metaSep} aria-hidden="true" />
+              <span className={styles.metaItem}>
+                {t('plugin_store.stat_available')}
+                <span className={styles.metaValue}>{stats.total}</span>
+              </span>
+              <span className={styles.metaSep} aria-hidden="true" />
+              <span className={styles.metaItem}>
+                {t('plugin_store.plugins_dir')}
+                <span className={styles.metaPath} title={data.pluginsDir || 'plugins'}>
+                  {data.pluginsDir || 'plugins'}
+                </span>
+              </span>
+            </p>
+          ) : (
+            <p className={styles.meta}>{t('plugin_store.description')}</p>
+          )}
+        </div>
 
-      {/* ── Security Banner ── */}
+        <div className={styles.headerActions}>
+          <div className={styles.search}>
+            <Input
+              type="search"
+              value={filter}
+              onChange={(event) => setFilter(event.target.value)}
+              placeholder={t('plugin_store.search_placeholder')}
+              aria-label={t('plugin_store.search_label')}
+              rightElement={<IconSearch size={14} />}
+            />
+          </div>
+          <Button
+            variant="secondary"
+            onClick={loadStore}
+            disabled={!connected || loading}
+            loading={loading}
+          >
+            {loading ? null : <IconRefreshCw size={16} />}
+            {t('plugin_store.refresh')}
+          </Button>
+        </div>
+      </header>
+
       <div className={styles.securityBanner} role="note">
-        <IconShield size={20} />
+        <IconShield size={16} />
         <div className={styles.securityBannerText}>
           <strong>{t('plugin_store.security_banner_title')}</strong>
           <p>{t('plugin_store.security_banner_text')}</p>
         </div>
       </div>
 
-      {/* ── Alerts ── */}
       {error ? (
-        <div className={styles.errorBox}>
+        <div className={styles.errorBanner}>
           <span>{error.message}</span>
           {error.kind !== 'unsupported' ? (
             <Button variant="secondary" size="sm" onClick={loadStore} disabled={loading}>
@@ -1013,8 +1081,11 @@ export function PluginStorePage() {
       ) : null}
 
       {data?.sourceErrors.length ? (
-        <div className={styles.warningBox}>
-          <strong>{t('plugin_store.source_errors_title')}</strong>
+        <div className={styles.noticeBanner}>
+          <span className={styles.noticeTitle}>
+            <span className={`${styles.dot} ${styles.dotWatch}`} aria-hidden="true" />
+            {t('plugin_store.source_errors_title')}
+          </span>
           <ul className={styles.sourceErrorList}>
             {data.sourceErrors.map((sourceError, index) => {
               const sourceLabel =
@@ -1031,117 +1102,53 @@ export function PluginStorePage() {
       ) : null}
 
       {data && !data.pluginsEnabled ? (
-        <div className={styles.warningBox}>{t('plugin_store.global_disabled_hint')}</div>
+        <div className={styles.noticeBanner}>
+          <span className={styles.noticeTitle}>
+            <span className={`${styles.dot} ${styles.dotWatch}`} aria-hidden="true" />
+            {t('plugin_store.global_disabled_hint')}
+          </span>
+        </div>
       ) : null}
 
       {restartNames.length > 0 ? (
-        <div className={styles.warningBox}>
-          {t('plugin_store.restart_required_banner', { plugins: restartNames.join(', ') })}
+        <div className={styles.noticeBanner}>
+          <span className={styles.noticeTitle}>
+            <span className={`${styles.dot} ${styles.dotWatch}`} aria-hidden="true" />
+            {t('plugin_store.restart_required_banner', { plugins: restartNames.join(', ') })}
+          </span>
         </div>
       ) : null}
 
-      {/* ── Status Bar ── */}
-      {data ? (
-        <div className={styles.statusBar}>
-          <div className={styles.statusPill}>
-            <span
-              className={`${styles.statusDot} ${
-                data.pluginsEnabled ? styles.statusDotOn : styles.statusDotOff
-              }`}
-            />
-            <span className={styles.statusLabel}>{t('plugin_store.global_status')}</span>
-            <span className={styles.statusValue}>
-              {data.pluginsEnabled
-                ? t('plugin_store.global_enabled')
-                : t('plugin_store.global_disabled')}
-            </span>
-          </div>
-
-          <span className={styles.statusDivider} />
-
-          <div className={styles.statusPill}>
-            <span className={styles.statusLabel}>{t('plugin_store.plugins_dir')}</span>
-            <span
-              className={`${styles.statusValue} ${styles.statusPathValue}`}
-              title={data.pluginsDir || 'plugins'}
-            >
-              {data.pluginsDir || 'plugins'}
-            </span>
-          </div>
-
-          <span className={styles.statusDivider} />
-
-          <div className={styles.statusPill}>
-            <span className={styles.statusLabel}>{t('plugin_store.stat_available')}</span>
-            <span className={styles.statusValue}>{stats.total}</span>
-          </div>
-        </div>
-      ) : null}
-
-      {/* ── Toolbar ── */}
-      <div className={styles.toolbar}>
-        <Input
-          type="search"
-          value={filter}
-          onChange={(event) => setFilter(event.target.value)}
-          placeholder={t('plugin_store.search_placeholder')}
-          aria-label={t('plugin_store.search_label')}
-          rightElement={<IconSearch size={16} />}
-        />
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={loadStore}
-          disabled={!connected || loading}
-          loading={loading}
-        >
-          <IconRefreshCw size={16} />
-          {t('plugin_store.refresh')}
-        </Button>
-      </div>
-
-      {/* ── Status Filter Chips ── */}
-      <div className={styles.filterChips} role="group" aria-label={t('plugin_store.filter_label')}>
+      <div className={styles.filterTabs} role="group" aria-label={t('plugin_store.filter_label')}>
         {statusFilters.map((item) => (
           <button
             key={item.key}
             type="button"
-            className={`${styles.filterChip} ${
-              statusFilter === item.key ? styles.filterChipActive : ''
+            className={`${styles.filterTab} ${
+              statusFilter === item.key ? styles.filterTabActive : ''
             }`}
             onClick={() => setStatusFilter(item.key)}
             aria-pressed={statusFilter === item.key}
           >
             {item.label}
-            <span className={styles.filterChipCount}>{item.count}</span>
+            <span className={styles.filterTabCount}>{item.count}</span>
           </button>
         ))}
       </div>
 
-      {/* ── Plugin Cards ── */}
       {loading ? (
-        <div className={styles.cardGrid}>
+        <div className={styles.cardGrid} aria-busy="true">
           {Array.from({ length: 6 }, (_, index) => (
-            <div key={index} className={styles.skeletonCard}>
-              <div className={styles.skeletonHeader}>
-                <div className={styles.skeletonAvatar} />
-                <div className={styles.skeletonText}>
-                  <div className={styles.skeletonLine} />
-                  <div className={styles.skeletonLine} />
-                </div>
-              </div>
-              <div className={styles.skeletonBody} />
-            </div>
+            <Skeleton key={index} height={176} rounded={10} />
           ))}
         </div>
       ) : visiblePlugins.length === 0 ? (
         !error ? (
           stats.total === 0 ? (
             <EmptyState
-              title={t('plugin_store.no_plugins')}
-              description={t('plugin_store.no_plugins_desc')}
+              title={t('plugin_store.no_plugins_desc')}
               action={
-                <Button variant="secondary" size="sm" onClick={loadStore} disabled={!connected}>
+                <Button variant="secondary" onClick={loadStore} disabled={!connected}>
                   <IconRefreshCw size={16} />
                   {t('plugin_store.refresh')}
                 </Button>
@@ -1149,13 +1156,11 @@ export function PluginStorePage() {
             />
           ) : (
             <EmptyState
-              title={t('plugin_store.no_matches')}
-              description={t('plugin_store.no_matches_desc')}
+              title={t('plugin_store.no_matches_desc')}
               action={
                 hasActiveFilters ? (
                   <Button
                     variant="secondary"
-                    size="sm"
                     onClick={() => {
                       setFilter('');
                       setStatusFilter('all');

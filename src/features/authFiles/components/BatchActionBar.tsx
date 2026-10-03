@@ -10,7 +10,7 @@ import styles from './BatchActionBar.module.scss';
 const easePower3Out = (progress: number) => 1 - (1 - progress) ** 4;
 const easePower2In = (progress: number) => progress ** 3;
 const BASE_TRANSFORM = 'translateX(-50%)';
-const HIDDEN_TRANSFORM = 'translateX(-50%) translateY(56px)';
+const HIDDEN_TRANSFORM = 'translateX(-50%) translateY(12px)';
 
 export type BatchActionBarProps = {
   selectionCount: number;
@@ -29,10 +29,10 @@ export type BatchActionBarProps = {
 };
 
 /**
- * 悬浮批量操作条：portal 到 body 的玻璃工具栏。
- * - 选中数 >0 时上浮入场（0.28s 强减速），清零后加速退场（0.22s）再卸载；
- * - reduced-motion 下只做透明度淡入淡出（保留 translateX(-50%) 基础变换，防止错位半宽）；
- * - 实时高度写入 --auth-files-action-bar-height 供页面底部留白。
+ * Floating batch bar, portalled to body.
+ * - Slides up 12px when the selection becomes non-empty (180ms) and back out when cleared;
+ * - reduced motion swaps opacity instantly (keeping the translateX(-50%) base transform);
+ * - its live height is written to --auth-files-action-bar-height for page bottom padding.
  */
 export function BatchActionBar(props: BatchActionBarProps) {
   const {
@@ -86,7 +86,7 @@ export function BatchActionBar(props: BatchActionBarProps) {
           el,
           { opacity: [0, 1] },
           {
-            duration: 0.15,
+            duration: 0,
             ease: 'linear',
             onComplete: () => {
               el.style.opacity = '1';
@@ -98,7 +98,7 @@ export function BatchActionBar(props: BatchActionBarProps) {
           el,
           { transform: [HIDDEN_TRANSFORM, BASE_TRANSFORM], opacity: [0, 1] },
           {
-            duration: 0.28,
+            duration: 0.18,
             ease: easePower3Out,
             onComplete: () => {
               el.style.transform = BASE_TRANSFORM;
@@ -118,13 +118,13 @@ export function BatchActionBar(props: BatchActionBarProps) {
         animationRef.current = animate(
           el,
           { opacity: [1, 0] },
-          { duration: 0.12, ease: 'linear', onComplete: finishExit }
+          { duration: 0, ease: 'linear', onComplete: finishExit }
         );
       } else {
         animationRef.current = animate(
           el,
           { transform: [BASE_TRANSFORM, HIDDEN_TRANSFORM], opacity: [1, 0] },
-          { duration: 0.22, ease: easePower2In, onComplete: finishExit }
+          { duration: 0.12, ease: easePower2In, onComplete: finishExit }
         );
       }
     }

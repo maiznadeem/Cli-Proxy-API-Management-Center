@@ -1,59 +1,64 @@
 @use '../../../styles/mixins' as *;
 
+/* Throughput: stacked success/failure columns per 10-minute bucket. */
+
 .chart {
-  --chart-height: 208px;
-  --bar-max-width: 24px;
+  --chart-height: 220px;
+  --bar-max-width: 20px;
+  --bar-success: color-mix(in srgb, var(--accent) 72%, transparent);
+  --bar-failure: var(--cap-depleted);
 
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: $spacing-md;
+  gap: 12px;
 }
 
-/* ---------- 图例 ---------- */
+/* ---------- Legend ---------- */
 
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-lg;
-  font-size: 13px;
-  color: var(--text-secondary);
+  gap: 4px 16px;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
 }
 
 .legendItem {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-xs;
+  gap: 6px;
 }
 
 .legendValue {
-  font-weight: 650;
-  color: var(--text-primary);
+  font-weight: 500;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
 .legendSwatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
   flex: none;
 }
 
 .swatchSuccess {
-  background: var(--viz-success);
+  background: var(--bar-success);
 }
 
 .swatchFailure {
-  background: var(--viz-failure);
+  background: var(--bar-failure);
 }
 
-/* ---------- 绘图区 ---------- */
+/* ---------- Plot ---------- */
 
 .plot {
   display: flex;
-  gap: $spacing-sm;
-  /* 给峰值直标留出空间：柱子顶到 100% 时标签仍落在这段留白里 */
-  padding-top: 22px;
+  gap: 8px;
+  /* Room for the peak label when a column reaches 100%. */
+  padding-top: 16px;
 }
 
 .yAxis {
@@ -63,7 +68,7 @@
   flex: none;
 
   @include mobile {
-    width: 30px;
+    width: 32px;
   }
 }
 
@@ -71,8 +76,9 @@
   position: absolute;
   right: 0;
   transform: translateY(-50%);
-  font-size: 11px;
-  color: var(--text-tertiary);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -94,24 +100,20 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: var(--border-color);
+  background: var(--hairline);
 
   &:last-child {
-    background: var(--border-primary);
+    background: var(--hairline-strong);
   }
 }
 
-/* ---------- 柱体 ---------- */
+/* ---------- Columns ---------- */
 
 .columns {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: flex-end;
-  /*
-   * 相邻柱体之间同样保持 2px 表面色间隙。窄屏时槽位宽度小于 24px，
-   * 柱体会填满槽位，没有这个 gap 就会连成一片、读起来像面积图。
-   */
   gap: 2px;
 }
 
@@ -122,8 +124,17 @@
   height: 100%;
   display: flex;
   align-items: flex-end;
-  /* 命中区域比柱体本身更大：整列高度都可悬停 */
+  border-radius: 2px;
   cursor: default;
+  transition: background-color var(--dur-fast) var(--ease-standard);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.columnActive {
+  background: var(--panel-hover);
 }
 
 .stack {
@@ -135,43 +146,34 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  animation: barGrow 0.42s cubic-bezier(0.4, 0, 0.2, 1) both;
-  /* 级差由 TSX 按桶数归一化写入，整波 ≤360ms */
-  animation-delay: var(--bar-delay, 0ms);
   transform-origin: bottom center;
-  transition: filter 120ms ease-out;
+  /* Grow once when data arrives; no stagger, no replay on scroll. */
+  animation: barGrow var(--dur-meter) var(--ease-standard) both;
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
-    transition: none;
   }
-}
-
-.columnActive .stack {
-  filter: brightness(1.06);
 }
 
 .segment {
   display: block;
   width: 100%;
-  /* 数据末端 4px 圆角，基线端保持直角 */
-  border-radius: $radius-sm $radius-sm 0 0;
+  border-radius: 2px 2px 0 0;
 }
 
 .segmentSuccess {
-  background: var(--viz-success);
+  background: var(--bar-success);
 }
 
 .segmentFailure {
-  background: var(--viz-failure);
+  background: var(--bar-failure);
 }
 
-/* 堆叠段之间留 2px 表面色间隙 —— 用留白而不是描边来分隔 */
+/* Separate stacked segments with a sliver of panel, not a stroke. */
 .segmentGap {
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
-/* 上方还有失败段时，成功段顶部不再圆角 */
 .segmentSquareTop {
   border-radius: 0;
 }
@@ -179,28 +181,22 @@
 .idleTick {
   display: block;
   width: 100%;
-  height: 2px;
-  border-radius: $radius-full;
-  background: var(--border-primary);
+  height: 1px;
+  background: var(--hairline-strong);
 }
 
-/* bottom 由 TSX 按柱高写入；柱子全部落定后再淡入 */
+/* `bottom` is written inline from the bar height. */
 .peakLabel {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  margin-bottom: 6px;
-  font-size: 11px;
-  font-weight: 650;
-  color: var(--text-secondary);
+  margin-bottom: 4px;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   pointer-events: none;
-  animation: peakFade 240ms ease-out 620ms backwards;
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
 }
 
 .noRequests {
@@ -209,75 +205,65 @@
   margin: 0;
   display: grid;
   place-items: center;
-  font-size: 13px;
-  color: var(--text-tertiary);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
   pointer-events: none;
 }
 
-/* ---------- 悬浮提示 ---------- */
+/* ---------- Tooltip ---------- */
 
 .tooltip {
-  --glass-blur: 10px;
-
   position: absolute;
   top: 4px;
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: $spacing-sm $spacing-md;
-  min-width: 132px;
-  border-radius: $radius-md;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-backdrop-filter);
-  -webkit-backdrop-filter: var(--glass-backdrop-filter);
-  box-shadow: var(--shadow-lg);
-  font-size: 12px;
-  color: var(--text-secondary);
+  gap: 4px;
+  padding: 8px 12px;
+  min-width: 140px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--hairline-strong);
+  background: var(--panel-raised);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
   pointer-events: none;
-  /* 悬停换柱时滑到新位置（可中断，CSS transition 自然 retarget），入场只淡入 */
   transition:
-    left 200ms var(--ease-out-strong, ease-out),
-    transform 200ms var(--ease-out-strong, ease-out),
-    opacity 150ms ease-out;
-
-  @starting-style {
-    opacity: 0;
-  }
+    left var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
 
   @media (prefers-reduced-motion: reduce) {
-    transition: opacity 150ms ease-out;
+    transition: none;
   }
 }
 
 .tooltipTime {
-  font-weight: 650;
-  color: var(--text-primary);
+  font-weight: 500;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
 .tooltipRow {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
+  gap: 6px;
 
   b {
     margin-left: auto;
-    color: var(--text-primary);
+    font-weight: 500;
+    color: var(--ink);
     font-variant-numeric: tabular-nums;
   }
 }
 
 .tooltipRate {
-  margin-top: 2px;
   padding-top: 4px;
-  border-top: 1px solid var(--border-color);
-  color: var(--text-tertiary);
+  border-top: 1px solid var(--hairline);
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- 横轴 ---------- */
+/* ---------- X axis ---------- */
 
 .xAxis {
   position: relative;
@@ -285,94 +271,61 @@
   margin-left: 48px;
 
   @include mobile {
-    margin-left: 38px;
+    margin-left: 40px;
   }
 }
 
 .xTick {
   position: absolute;
   transform: translateX(-50%);
-  font-size: 11px;
-  color: var(--text-tertiary);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-/* ---------- 数据表 ---------- */
+/* ---------- Data table ---------- */
 
 .tableToggle {
-  font-size: 13px;
+  --table-max-height: 320px;
 }
 
 .table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-
-  th,
-  td {
-    padding: 5px $spacing-sm;
-    text-align: right;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-secondary);
-  }
-
-  thead th {
-    color: var(--text-tertiary);
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  tbody th[scope='row'] {
-    text-align: left;
-    font-weight: 500;
-    color: var(--text-primary);
-  }
+  min-width: 360px;
 }
 
-/* ---------- 无数据占位 ---------- */
+.rowHead {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--hairline);
+  text-align: left;
+  font-weight: 400;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- No data ---------- */
 
 .placeholder {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-xs;
-  padding: $spacing-xl;
-  border-radius: $radius-lg;
-  border: 1px dashed var(--border-primary);
-  background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
+  display: grid;
+  place-items: center;
+  min-height: 120px;
+  padding: 24px;
+  border-radius: var(--radius-control);
+  background: var(--panel-sunken);
+}
+
+.placeholderText {
+  margin: 0;
+  font-size: $text-body;
+  line-height: $lh-body;
+  color: var(--ink-muted);
   text-align: center;
-}
-
-.placeholderTitle {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.placeholderHint {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-secondary);
 }
 
 @keyframes barGrow {
   from {
-    transform: scaleY(0.02);
-    opacity: 0;
-  }
-  to {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-}
-
-@keyframes peakFade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
+    transform: scaleY(0);
   }
 }

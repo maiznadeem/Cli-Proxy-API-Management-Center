@@ -13,7 +13,6 @@ import {
 } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/Button';
 import { PageTransition } from '@/components/common/PageTransition';
 import { MainRoutes } from '@/router/MainRoutes';
 import { authFilesApi, pluginsApi } from '@/services/api';
@@ -51,7 +50,7 @@ import { triggerHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { LANGUAGE_LABEL_KEYS, LANGUAGE_ORDER } from '@/utils/constants';
 import { isSupportedLanguage } from '@/utils/language';
 import { getSidebarShortcutLabel, isSidebarToggleShortcut } from '@/utils/sidebarShortcut';
-import type { Theme } from '@/types';
+import type { ConnectionStatus, Theme } from '@/types';
 
 const sidebarIcons: Record<string, ReactNode> = {
   dashboard: <IconSidebarDashboard size={18} />,
@@ -91,6 +90,7 @@ interface SidebarNavDrawerItem {
 type SidebarNavItem = SidebarNavLinkItem | SidebarNavDrawerItem;
 
 const NAV_TOOLTIP_ID = 'sidebar-nav-tooltip';
+const SIDEBAR_ID = 'app-sidebar';
 const NAV_TOOLTIP_VIEWPORT_MARGIN = 8;
 
 interface SidebarNavGroup {
@@ -246,6 +246,11 @@ const headerIcons = {
       <path d="M19.07 4.93l-1.41 1.41" />
     </svg>
   ),
+  check: (
+    <svg {...headerIconProps}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  ),
   logout: (
     <svg {...headerIconProps}>
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -255,56 +260,29 @@ const headerIcons = {
   ),
 };
 
-const THEME_CARDS: Array<{
-  key: Theme;
-  labelKey: string;
-  colors: { bg: string; card: string; border: string; text: string; textMuted: string };
-}> = [
-  {
-    key: 'auto',
-    labelKey: 'theme.auto',
-    colors: {
-      bg: 'linear-gradient(135deg, #ffffff 0 50%, #111111 50% 100%)',
-      card: 'linear-gradient(135deg, #ffffff 0 50%, #1a1a1a 50% 100%)',
-      border: '#bdbdbd',
-      text: '#2d2a26',
-      textMuted: 'linear-gradient(135deg, #c9c9c9 0 50%, #5a5a5a 50% 100%)',
-    },
-  },
-  {
-    key: 'white',
-    labelKey: 'theme.white',
-    colors: {
-      bg: '#ffffff',
-      card: '#ffffff',
-      border: '#e5e5e5',
-      text: '#2d2a26',
-      textMuted: '#a29c95',
-    },
-  },
-  {
-    key: 'light',
-    labelKey: 'theme.light',
-    colors: {
-      bg: '#faf9f5',
-      card: '#f0eee8',
-      border: '#e3e1db',
-      text: '#2d2a26',
-      textMuted: '#a29c95',
-    },
-  },
-  {
-    key: 'dark',
-    labelKey: 'theme.dark',
-    colors: {
-      bg: '#151412',
-      card: '#1d1b18',
-      border: '#3a3530',
-      text: '#f6f4f1',
-      textMuted: '#9c958d',
-    },
-  },
+const THEME_OPTIONS: Array<{ key: Theme; labelKey: string }> = [
+  { key: 'auto', labelKey: 'theme.auto' },
+  { key: 'white', labelKey: 'theme.white' },
+  { key: 'light', labelKey: 'theme.light' },
+  { key: 'dark', labelKey: 'theme.dark' },
 ];
+
+const CONNECTION_LABEL_KEYS: Record<ConnectionStatus, string> = {
+  connected: 'common.connected_status',
+  connecting: 'common.connecting_status',
+  disconnected: 'common.disconnected_status',
+  error: 'status_strip.connection_error',
+};
+
+const formatHostLabel = (apiBase: string) => {
+  const trimmed = apiBase.trim();
+  if (!trimmed) return '';
+  try {
+    return new URL(trimmed).host || trimmed;
+  } catch {
+    return trimmed.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '').replace(/\/.*$/, '');
+  }
+};
 
 export function MainLayout() {
   const { t } = useTranslation();
@@ -314,6 +292,7 @@ export function MainLayout() {
   const logout = useAuthStore((state) => state.logout);
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const apiBase = useAuthStore((state) => state.apiBase);
+  const serverVersion = useAuthStore((state) => state.serverVersion);
   const supportsPlugin = useAuthStore((state) => state.supportsPlugin);
 
   const fetchConfig = useConfigStore((state) => state.fetchConfig);
@@ -348,14 +327,20 @@ export function MainLayout() {
   const languageMenuRef = useRef<HTMLDivElement | null>(null);
   const themeMenuRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLElement | null>(null);
+  const sidebarRef = useRef<HTMLElement | null>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const sheetWasOpenRef = useRef(false);
 
   const fullBrandName = 'CLI Proxy API Management Center';
   const abbrBrandName = t('title.abbr');
+  const versionLabel = serverVersion ? `v${serverVersion.trim().replace(/^[vV]+/, '')}` : '';
+  const hostLabel = useMemo(() => formatHostLabel(apiBase ?? ''), [apiBase]);
+  const connectionLabel = t(CONNECTION_LABEL_KEYS[connectionStatus] ?? CONNECTION_LABEL_KEYS.error);
   const isLogsPage = location.pathname.startsWith('/logs');
   const isPluginResourcePage = location.pathname.startsWith('/plugin-pages');
   const showSidebarLabels = !sidebarCollapsed || sidebarOpen;
 
-  // Keep floating header height available to sticky mobile elements and overlays.
+  // Keep the status strip height available to sticky elements and scroll margins.
   useLayoutEffect(() => {
     const updateHeaderHeight = () => {
       const height = headerRef.current?.offsetHeight;
@@ -443,6 +428,26 @@ export function MainLayout() {
       document.documentElement.style.removeProperty('--content-center-x');
     };
   }, []);
+
+  useEffect(() => {
+    if (sidebarOpen) {
+      sheetWasOpenRef.current = true;
+      sidebarRef.current?.querySelector<HTMLElement>('.sidebar-sheet-close')?.focus();
+
+      const handleEscape = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') setSidebarOpen(false);
+      };
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+
+    if (sheetWasOpenRef.current) {
+      sheetWasOpenRef.current = false;
+      const menuButton = mobileMenuButtonRef.current;
+      if (menuButton && menuButton.offsetParent !== null) menuButton.focus();
+    }
+    return undefined;
+  }, [sidebarOpen]);
 
   const closeLanguageMenu = useCallback(() => setLanguageMenuOpen(false), []);
   const closeThemeMenu = useCallback(() => setThemeMenuOpen(false), []);
@@ -969,6 +974,14 @@ export function MainLayout() {
     : t('sidebar.toggle_expand', { defaultValue: 'Open navigation' });
 
   const sidebarToggleLabel = sidebarCollapsed ? t('sidebar.expand') : t('sidebar.collapse');
+  const themeIcon =
+    theme === 'auto'
+      ? headerIcons.autoTheme
+      : theme === 'dark'
+        ? headerIcons.moon
+        : theme === 'white'
+          ? headerIcons.whiteTheme
+          : headerIcons.sun;
 
   return (
     <div
@@ -976,240 +989,252 @@ export function MainLayout() {
         isPluginResourcePage ? 'plugin-resource-shell' : ''
       }`}
     >
-      <div className="top-gradient-blur" aria-hidden="true" />
+      <button
+        type="button"
+        className={`sidebar-backdrop ${sidebarOpen ? 'visible' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+        aria-label={t('common.close')}
+        aria-hidden={!sidebarOpen}
+        tabIndex={-1}
+      />
 
-      <header className="main-header" ref={headerRef}>
-        <button
-          type="button"
-          className="sidebar-toggle-floating"
-          onClick={() => {
-            hideRailTooltip();
-            setSidebarCollapsed((prev) => !prev);
-          }}
-          onMouseEnter={(event) =>
-            handleRailTooltipMouseEnter(event, 'sidebar-toggle', sidebarToggleLabel, shortcutText)
-          }
-          onMouseLeave={handleRailTooltipMouseLeave}
-          onFocus={(event) =>
-            handleRailTooltipFocus(event, 'sidebar-toggle', sidebarToggleLabel, shortcutText)
-          }
-          onBlur={(event) =>
-            handleRailTooltipBlur(event, 'sidebar-toggle', sidebarToggleLabel, shortcutText)
-          }
-          aria-label={`${sidebarToggleLabel} (${shortcutText})`}
-          aria-describedby={railTooltip?.targetID === 'sidebar-toggle' ? NAV_TOOLTIP_ID : undefined}
+      <aside
+        id={SIDEBAR_ID}
+        ref={sidebarRef}
+        className={`sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}
+        aria-label={t('sidebar.navigation')}
+      >
+        <div className="sidebar-header">
+          <div className="sidebar-brand" title={fullBrandName}>
+            <img src={INLINE_LOGO_JPEG} alt="CPAMC logo" className="sidebar-brand-logo" />
+            {showSidebarLabels && <span className="sidebar-brand-title">{abbrBrandName}</span>}
+          </div>
+          <button
+            type="button"
+            className="sidebar-sheet-close"
+            onClick={() => setSidebarOpen(false)}
+            aria-label={t('common.close')}
+            tabIndex={sidebarOpen ? 0 : -1}
+          >
+            {headerIcons.close}
+          </button>
+        </div>
+
+        <nav className="nav-section" aria-label={t('sidebar.navigation')}>
+          {navGroups.map((group) => (
+            <div className="nav-group" key={group.id} role="group" aria-label={t(group.labelKey)}>
+              {group.items.map((item) => renderNavItem(item))}
+            </div>
+          ))}
+        </nav>
+
+        <div className="sidebar-footer">
+          <button
+            type="button"
+            className="nav-item sidebar-collapse-toggle"
+            onClick={() => {
+              focusedRailItemRef.current = null;
+              hideRailTooltip();
+              setSidebarCollapsed((prev) => !prev);
+            }}
+            onMouseEnter={
+              showSidebarLabels
+                ? undefined
+                : (event) =>
+                    handleRailTooltipMouseEnter(
+                      event,
+                      'sidebar-toggle',
+                      sidebarToggleLabel,
+                      shortcutText
+                    )
+            }
+            onMouseLeave={showSidebarLabels ? undefined : handleRailTooltipMouseLeave}
+            onFocus={
+              showSidebarLabels
+                ? undefined
+                : (event) =>
+                    handleRailTooltipFocus(
+                      event,
+                      'sidebar-toggle',
+                      sidebarToggleLabel,
+                      shortcutText
+                    )
+            }
+            onBlur={
+              showSidebarLabels
+                ? undefined
+                : (event) =>
+                    handleRailTooltipBlur(event, 'sidebar-toggle', sidebarToggleLabel, shortcutText)
+            }
+            aria-label={`${sidebarToggleLabel} (${shortcutText})`}
+            aria-describedby={
+              railTooltip?.targetID === 'sidebar-toggle' ? NAV_TOOLTIP_ID : undefined
+            }
+          >
+            <span className="nav-icon">
+              {sidebarCollapsed ? headerIcons.chevronRight : headerIcons.chevronLeft}
+            </span>
+            {showSidebarLabels && (
+              <>
+                <span className="nav-text">
+                  <span className="nav-label">{sidebarToggleLabel}</span>
+                </span>
+                <kbd className="nav-shortcut">{shortcutText}</kbd>
+              </>
+            )}
+          </button>
+        </div>
+      </aside>
+
+      {railTooltip && (
+        <div
+          ref={railTooltipRef}
+          id={NAV_TOOLTIP_ID}
+          className="nav-tooltip"
+          role="tooltip"
+          style={{ top: railTooltip.top }}
         >
-          {sidebarCollapsed ? headerIcons.chevronRight : headerIcons.chevronLeft}
-        </button>
+          <span className="nav-tooltip-label" aria-hidden="true">
+            {railTooltip.label}
+          </span>
+          {railTooltip.meta ? <span className="nav-tooltip-meta">{railTooltip.meta}</span> : null}
+        </div>
+      )}
 
-        <div className="mobile-sidebar-actions">
-          <Button
-            className="mobile-menu-btn"
-            variant="ghost"
-            size="sm"
+      <div
+        className={`content${isLogsPage ? ' content-logs' : ''}${
+          isPluginResourcePage ? ' content-plugin-resource' : ''
+        }`}
+        ref={contentRef}
+      >
+        <header className="status-strip" ref={headerRef} aria-label={t('status_strip.label')}>
+          <button
+            type="button"
+            ref={mobileMenuButtonRef}
+            className="status-action status-menu-button"
             onClick={() => setSidebarOpen((prev) => !prev)}
             title={mobileSidebarToggleLabel}
             aria-label={mobileSidebarToggleLabel}
+            aria-controls={SIDEBAR_ID}
+            aria-expanded={sidebarOpen}
           >
-            {sidebarOpen ? headerIcons.close : headerIcons.menu}
-          </Button>
-        </div>
+            {headerIcons.menu}
+          </button>
 
-        <div className="header-actions floating-actions">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefreshAll}
-            title={t('header.refresh_all')}
-          >
-            {headerIcons.refresh}
-          </Button>
-          <div className={`language-menu ${languageMenuOpen ? 'open' : ''}`} ref={languageMenuRef}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleLanguageMenu}
-              title={t('language.switch')}
-              aria-label={t('language.switch')}
-              aria-haspopup="menu"
-              aria-expanded={languageMenuOpen}
-            >
-              {headerIcons.language}
-            </Button>
-            {languageMenuOpen && (
-              <div
-                className="notification entering language-menu-popover"
-                role="menu"
-                aria-label={t('language.switch')}
-              >
-                {LANGUAGE_ORDER.map((lang) => (
-                  <button
-                    key={lang}
-                    type="button"
-                    className={`language-menu-option ${language === lang ? 'active' : ''}`}
-                    onClick={() => handleLanguageSelect(lang)}
-                    role="menuitemradio"
-                    aria-checked={language === lang}
-                  >
-                    <span>{t(LANGUAGE_LABEL_KEYS[lang])}</span>
-                    {language === lang ? <span className="language-menu-check">✓</span> : null}
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="status-strip-meta">
+            <span className="status-strip-connection">
+              <span className={`status-dot is-${connectionStatus}`} aria-hidden="true" />
+              <span aria-live="polite">{connectionLabel}</span>
+            </span>
+            {versionLabel ? <span className="status-strip-version">{versionLabel}</span> : null}
+            {hostLabel ? (
+              <span className="status-strip-host" title={apiBase}>
+                {hostLabel}
+              </span>
+            ) : null}
           </div>
-          <div className={`theme-menu ${themeMenuOpen ? 'open' : ''}`} ref={themeMenuRef}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleThemeMenu}
-              title={t('theme.switch')}
-              aria-label={t('theme.switch')}
-              aria-haspopup="menu"
-              aria-expanded={themeMenuOpen}
+
+          <div className="status-strip-actions">
+            <button
+              type="button"
+              className="status-action"
+              onClick={handleRefreshAll}
+              title={t('header.refresh_all')}
+              aria-label={t('header.refresh_all')}
             >
-              {theme === 'auto'
-                ? headerIcons.autoTheme
-                : theme === 'dark'
-                  ? headerIcons.moon
-                  : theme === 'white'
-                    ? headerIcons.whiteTheme
-                    : headerIcons.sun}
-            </Button>
-            {themeMenuOpen && (
-              <div
-                className="notification entering theme-menu-popover"
-                role="menu"
+              {headerIcons.refresh}
+            </button>
+
+            <div className="status-popover-anchor" ref={themeMenuRef}>
+              <button
+                type="button"
+                className="status-action"
+                onClick={toggleThemeMenu}
+                title={t('theme.switch')}
                 aria-label={t('theme.switch')}
+                aria-haspopup="menu"
+                aria-expanded={themeMenuOpen}
               >
-                {THEME_CARDS.map((tc) => (
-                  <button
-                    key={tc.key}
-                    type="button"
-                    className={`theme-card ${theme === tc.key ? 'active' : ''}`}
-                    onClick={() => handleThemeSelect(tc.key)}
-                    role="menuitemradio"
-                    aria-checked={theme === tc.key}
-                  >
-                    <div
-                      className="theme-card-preview"
-                      style={{
-                        background: tc.colors.bg,
-                        border: `1px solid ${tc.colors.border}`,
-                      }}
+                {themeIcon}
+              </button>
+              {themeMenuOpen && (
+                <div className="status-popover" role="menu" aria-label={t('theme.switch')}>
+                  {THEME_OPTIONS.map((option) => (
+                    <button
+                      key={option.key}
+                      type="button"
+                      className={`status-popover-option ${theme === option.key ? 'active' : ''}`}
+                      onClick={() => handleThemeSelect(option.key)}
+                      role="menuitemradio"
+                      aria-checked={theme === option.key}
                     >
-                      <div
-                        className="theme-card-header"
-                        style={{
-                          background: tc.colors.card,
-                          borderBottom: `1px solid ${tc.colors.border}`,
-                        }}
-                      />
-                      <div className="theme-card-body">
-                        <div
-                          className="theme-card-sidebar"
-                          style={{
-                            background: tc.colors.card,
-                            borderRight: `1px solid ${tc.colors.border}`,
-                          }}
-                        />
-                        <div className="theme-card-content" style={{ background: tc.colors.bg }}>
-                          <div
-                            className="theme-card-line"
-                            style={{ background: tc.colors.textMuted }}
-                          />
-                          <div
-                            className="theme-card-line short"
-                            style={{ background: tc.colors.textMuted }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <span className="theme-card-label">{t(tc.labelKey)}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <Button variant="ghost" size="sm" onClick={logout} title={t('header.logout')}>
-            {headerIcons.logout}
-          </Button>
-        </div>
-      </header>
-
-      <div className="main-body">
-        <button
-          type="button"
-          className={`sidebar-backdrop ${sidebarOpen ? 'visible' : ''}`}
-          onClick={() => setSidebarOpen(false)}
-          aria-label={t('common.close')}
-          aria-hidden={!sidebarOpen}
-          tabIndex={sidebarOpen ? 0 : -1}
-        />
-
-        <aside
-          className={`sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}
-        >
-          <div className="sidebar-header">
-            <div className="sidebar-brand" title={fullBrandName}>
-              <img src={INLINE_LOGO_JPEG} alt="CPAMC logo" className="sidebar-brand-logo" />
-              {showSidebarLabels && (
-                <span className="sidebar-brand-text">
-                  <span className="sidebar-brand-title">{abbrBrandName}</span>
-                  <span className="sidebar-brand-subtitle">{t('sidebar.subtitle')}</span>
-                </span>
+                      <span>{t(option.labelKey)}</span>
+                      {theme === option.key ? (
+                        <span className="status-popover-check">{headerIcons.check}</span>
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
-          </div>
 
-          <div className="nav-section">
-            {navGroups.map((group, idx) => (
-              <div className="nav-group" key={group.id}>
-                {showSidebarLabels ? (
-                  <div className="nav-group-label">{t(group.labelKey)}</div>
-                ) : (
-                  idx > 0 && <div className="nav-group-divider" aria-hidden="true" />
-                )}
-                {group.items.map((item) => renderNavItem(item))}
-              </div>
-            ))}
-          </div>
-        </aside>
+            <div className="status-popover-anchor" ref={languageMenuRef}>
+              <button
+                type="button"
+                className="status-action"
+                onClick={toggleLanguageMenu}
+                title={t('language.switch')}
+                aria-label={t('language.switch')}
+                aria-haspopup="menu"
+                aria-expanded={languageMenuOpen}
+              >
+                {headerIcons.language}
+              </button>
+              {languageMenuOpen && (
+                <div className="status-popover" role="menu" aria-label={t('language.switch')}>
+                  {LANGUAGE_ORDER.map((lang) => (
+                    <button
+                      key={lang}
+                      type="button"
+                      className={`status-popover-option ${language === lang ? 'active' : ''}`}
+                      onClick={() => handleLanguageSelect(lang)}
+                      role="menuitemradio"
+                      aria-checked={language === lang}
+                    >
+                      <span>{t(LANGUAGE_LABEL_KEYS[lang])}</span>
+                      {language === lang ? (
+                        <span className="status-popover-check">{headerIcons.check}</span>
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-        {railTooltip && (
-          <div
-            ref={railTooltipRef}
-            id={NAV_TOOLTIP_ID}
-            className="nav-tooltip"
-            role="tooltip"
-            style={{ top: railTooltip.top }}
-          >
-            <span className="nav-tooltip-label" aria-hidden="true">
-              {railTooltip.label}
-            </span>
-            {railTooltip.meta ? <span className="nav-tooltip-meta">{railTooltip.meta}</span> : null}
+            <button
+              type="button"
+              className="status-action"
+              onClick={logout}
+              title={t('header.logout')}
+              aria-label={t('header.logout')}
+            >
+              {headerIcons.logout}
+            </button>
           </div>
-        )}
+        </header>
 
-        <div
-          className={`content${isLogsPage ? ' content-logs' : ''}${
-            isPluginResourcePage ? ' content-plugin-resource' : ''
+        <main
+          className={`main-content${isLogsPage ? ' main-content-logs' : ''}${
+            isPluginResourcePage ? ' main-content-plugin-resource' : ''
           }`}
-          ref={contentRef}
         >
-          <main
-            className={`main-content${isLogsPage ? ' main-content-logs' : ''}${
-              isPluginResourcePage ? ' main-content-plugin-resource' : ''
-            }`}
-          >
-            <PageTransition
-              render={(location) => <MainRoutes location={location} />}
-              getRouteOrder={getRouteOrder}
-              getTransitionVariant={getTransitionVariant}
-              scrollContainerRef={contentRef}
-            />
-          </main>
-        </div>
+          <PageTransition
+            render={(location) => <MainRoutes location={location} />}
+            getRouteOrder={getRouteOrder}
+            getTransitionVariant={getTransitionVariant}
+            scrollContainerRef={contentRef}
+          />
+        </main>
       </div>
     </div>
   );

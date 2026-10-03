@@ -12,7 +12,6 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { OAuthModelAliasEntry } from '@/types';
-import { useThemeStore } from '@/stores';
 import { AliasColumn, ProviderColumn, SourceColumn } from './ModelMappingDiagramColumns';
 import { DiagramContextMenu } from './ModelMappingDiagramContextMenu';
 import {
@@ -44,22 +43,6 @@ export interface ModelMappingDiagramProps {
   className?: string;
 }
 
-const PROVIDER_COLORS = [
-  '#8b8680',
-  '#10b981',
-  '#f59e0b',
-  '#c65746',
-  '#8b5cf6',
-  '#ec4899',
-  '#06b6d4',
-  '#84cc16',
-];
-
-function getProviderColor(provider: string): string {
-  const hash = provider.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return PROVIDER_COLORS[hash % PROVIDER_COLORS.length];
-}
-
 export interface ModelMappingDiagramRef {
   collapseAll: () => void;
   refreshLayout: () => void;
@@ -82,8 +65,6 @@ export const ModelMappingDiagram = forwardRef<ModelMappingDiagramRef, ModelMappi
     ref
   ) {
     const { t } = useTranslation();
-    const resolvedTheme = useThemeStore((state) => state.resolvedTheme);
-    const isDark = resolvedTheme === 'dark';
     const enableTapLinking = useMemo(() => {
       if (typeof window === 'undefined' || typeof window.matchMedia === 'undefined') return false;
       return (
@@ -210,7 +191,7 @@ export const ModelMappingDiagram = forwardRef<ModelMappingDiagramRef, ModelMappi
     const updateLines = useCallback(() => {
       if (!containerRef.current) return;
       const containerRect = containerRef.current.getBoundingClientRect();
-      const newLines: { path: string; color: string; id: string }[] = [];
+      const newLines: { path: string; id: string }[] = [];
       const nextProviderGroupHeights: Record<string, number> = {};
 
       const bezier = (x1: number, y1: number, x2: number, y2: number) => {
@@ -242,7 +223,6 @@ export const ModelMappingDiagram = forwardRef<ModelMappingDiagramRef, ModelMappi
         const providerRect = providerEl.getBoundingClientRect();
         const px = providerRect.right - containerRect.left;
         const py = providerRect.top + providerRect.height / 2 - containerRect.top;
-        const color = getProviderColor(provider);
 
         // Provider → Source (branch link, no dot)
         sources.forEach((source) => {
@@ -254,7 +234,6 @@ export const ModelMappingDiagram = forwardRef<ModelMappingDiagramRef, ModelMappi
           newLines.push({
             id: `provider-${provider}-source-${source.id}`,
             path: bezier(px, py, sx, sy),
-            color,
           });
         });
         // Source → Alias: one line per alias
@@ -278,7 +257,6 @@ export const ModelMappingDiagram = forwardRef<ModelMappingDiagramRef, ModelMappi
             newLines.push({
               id: `${source.id}-${aliasEntry.alias}`,
               path: bezier(x1, y1, x2, y2),
-              color,
             });
           });
         });
@@ -549,6 +527,11 @@ export const ModelMappingDiagram = forwardRef<ModelMappingDiagramRef, ModelMappi
       }
     };
 
+    const isLineActive = (lineId: string) =>
+      enableTapLinking &&
+      !!tapSourceId &&
+      (lineId.startsWith(`${tapSourceId}-`) || lineId.endsWith(`-source-${tapSourceId}`));
+
     return (
       <div className={[styles.scrollContainer, className].filter(Boolean).join(' ')}>
         {enableTapLinking && onUpdate && (
@@ -568,8 +551,7 @@ export const ModelMappingDiagram = forwardRef<ModelMappingDiagramRef, ModelMappi
               <path
                 key={line.id}
                 d={line.path}
-                stroke={line.color}
-                strokeOpacity={isDark ? 0.4 : 0.3}
+                className={isLineActive(line.id) ? styles.connectionActive : undefined}
               />
             ))}
           </svg>
@@ -577,7 +559,6 @@ export const ModelMappingDiagram = forwardRef<ModelMappingDiagramRef, ModelMappi
           <ProviderColumn
             providerNodes={providerNodes}
             collapsedProviders={collapsedProviders}
-            getProviderColor={getProviderColor}
             providerGroupHeights={providerGroupHeights}
             providerRefs={providerRefs}
             onToggleCollapse={toggleProviderCollapse}
@@ -590,7 +571,6 @@ export const ModelMappingDiagram = forwardRef<ModelMappingDiagramRef, ModelMappi
             providerNodes={providerNodes}
             collapsedProviders={collapsedProviders}
             sourceRefs={sourceRefs}
-            getProviderColor={getProviderColor}
             selectedSourceId={enableTapLinking ? tapSourceId : null}
             onSelectSource={enableTapLinking ? handleTapSelectSource : undefined}
             draggedSource={draggedSource}

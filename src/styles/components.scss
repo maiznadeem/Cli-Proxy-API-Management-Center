@@ -1,106 +1,210 @@
-@use 'sass:color';
+/**
+ * Global component classes used by the shared primitives in components/ui.
+ * Class names are a public contract (pages and tests reference them): restyle freely,
+ * never rename. Colors come from theme tokens only; depth comes from surface steps.
+ */
 @use './variables.scss' as *;
+
+// Shared interaction vocabulary (DESIGN.md > Motion).
+@mixin focus-ring {
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+@mixin pressable {
+  transition:
+    background-color var(--dur-hover) var(--ease-standard),
+    border-color var(--dur-hover) var(--ease-standard),
+    color var(--dur-hover) var(--ease-standard),
+    box-shadow var(--dur-hover) var(--ease-standard),
+    transform var(--dur-press) var(--ease-standard);
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:active:not(:disabled) {
+      transform: none;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Button: primary / secondary / ghost / danger at 28 (sm), 32 (md), 36 (lg)
+// ---------------------------------------------------------------------------
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: $spacing-sm;
+  height: 32px;
+  padding: 0 12px;
   border: 1px solid transparent;
-  border-radius: $radius-md;
-  padding: 10px 14px;
-  font-weight: 600;
+  border-radius: var(--radius-control);
+  background-color: var(--panel-raised);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: $text-body;
+  line-height: $lh-body;
+  font-weight: 500;
+  white-space: nowrap;
   cursor: pointer;
-  transition: all $transition-fast;
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+  @include pressable;
+  @include focus-ring;
+
+  > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  .loading-spinner {
+    width: 14px;
+    height: 14px;
+    border-width: 2px;
+  }
 
   &.btn-primary {
-    background-color: var(--primary-color);
-    color: var(--primary-contrast, #fff);
-    border-color: var(--primary-color);
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-contrast);
 
-    &:hover {
-      background-color: var(--primary-hover);
-      border-color: var(--primary-hover);
+    &:hover:not(:disabled) {
+      background-color: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--accent-active);
+      border-color: var(--accent-active);
     }
   }
 
   &.btn-secondary {
-    background-color: var(--bg-tertiary);
-    border-color: var(--border-color);
-    color: var(--text-primary);
+    background-color: var(--panel-raised);
+    border-color: var(--hairline);
+    color: var(--ink);
 
-    &:hover {
-      background-color: var(--bg-hover, var(--bg-tertiary));
-      border-color: var(--border-hover);
+    &:hover:not(:disabled) {
+      background-color: var(--panel-hover);
+      border-color: var(--hairline-strong);
     }
   }
 
   &.btn-ghost {
-    background: transparent;
+    background-color: transparent;
     border-color: transparent;
-    color: var(--text-secondary);
+    color: var(--ink-muted);
 
-    &:hover {
-      color: var(--text-primary);
-      background: var(--bg-tertiary);
+    &:hover:not(:disabled) {
+      background-color: var(--panel-hover);
+      color: var(--ink);
     }
   }
 
   &.btn-danger {
-    background-color: $error-color;
-    border-color: $error-color;
-    color: #fff;
+    background-color: var(--cap-depleted);
+    border-color: var(--cap-depleted);
+    color: var(--accent-contrast);
 
-    &:hover {
-      background-color: color.adjust($error-color, $lightness: -5%);
+    &:hover:not(:disabled) {
+      background-color: color-mix(in srgb, var(--cap-depleted) 86%, var(--ink));
+      border-color: color-mix(in srgb, var(--cap-depleted) 86%, var(--ink));
     }
+  }
+
+  &.btn-sm {
+    height: 28px;
+    padding: 0 10px;
+    gap: 6px;
+    font-size: $text-dense;
+    line-height: $lh-dense;
+  }
+
+  &.btn-lg {
+    height: 36px;
+    padding: 0 16px;
   }
 
   &.btn-full {
     width: 100%;
   }
 
-  &.btn-sm {
-    padding: 8px 10px;
-    font-size: 14px;
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Inputs: 32px, sunken surface, hairline border, accent border on focus
+// ---------------------------------------------------------------------------
+
+.input,
+textarea {
+  width: 100%;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background-color: var(--panel-sunken);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: $text-body;
+  line-height: $lh-body;
+  transition:
+    border-color var(--dur-hover) var(--ease-standard),
+    box-shadow var(--dur-hover) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard);
+
+  &::placeholder {
+    color: var(--ink-faint);
+  }
+
+  &:hover:not(:disabled):not(:focus) {
+    border-color: var(--hairline-strong);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  &:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--cap-depleted);
+  }
+
+  &[readonly] {
+    color: var(--ink-muted);
   }
 
   &:disabled {
+    color: var(--ink-muted);
     opacity: 0.6;
     cursor: not-allowed;
   }
 }
 
-[data-theme='dark'] {
-  .btn {
-    color: #fff;
-  }
-
-  .btn.btn-secondary,
-  .btn.btn-ghost {
-    color: #fff;
-  }
+.input {
+  height: 32px;
+  padding: 0 10px;
 }
 
-.input,
 textarea {
-  width: 100%;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-md;
-  padding: 10px 12px;
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-  transition:
-    border-color $transition-fast,
-    box-shadow $transition-fast;
-
-  &:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba($primary-color, 0.18);
-  }
+  padding: 6px 10px;
 }
 
 .form-group {
@@ -110,21 +214,28 @@ textarea {
   margin-bottom: $spacing-md;
 
   label {
-    font-weight: 600;
-    color: var(--text-primary);
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    font-weight: 500;
+    color: var(--ink);
   }
 
   .hint {
-    color: var(--text-secondary);
-    font-size: 13px;
+    font-size: $text-caption;
+    line-height: $lh-caption;
+    color: var(--ink-muted);
   }
 }
 
+// ---------------------------------------------------------------------------
+// Card (panel): surface step plus hairline, no shadow
+// ---------------------------------------------------------------------------
+
 .card {
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: $radius-lg;
-  box-shadow: var(--shadow);
+  background-color: var(--panel);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  box-shadow: none;
   padding: $spacing-lg;
 }
 
@@ -143,74 +254,94 @@ textarea {
   .title {
     flex: 1 1 auto;
     min-width: 0;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-size: $text-lead;
+    line-height: $lh-lead;
+    font-weight: 600;
+    color: var(--ink);
   }
 }
 
+@media (max-width: $breakpoint-mobile) {
+  .card {
+    padding: $spacing-md;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Badges and pills
+// ---------------------------------------------------------------------------
+
 .status-badge {
+  --badge-tone: var(--ink-muted);
+
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  border-radius: $radius-full;
-  font-size: 13px;
-  border: 1px solid var(--border-color);
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--hairline);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--badge-tone);
   margin-bottom: $spacing-md;
 
-  // 确保后续内容换行显示
+  // Keep following content on its own line.
   + * {
     display: block;
   }
 
   &.success {
-    color: $success-color;
-    border-color: rgba($success-color, 0.35);
-    background: rgba($success-color, 0.08);
+    --badge-tone: var(--cap-plenty);
   }
 
   &.warning {
-    color: $warning-color;
-    border-color: rgba($warning-color, 0.35);
-    background: rgba($warning-color, 0.08);
+    --badge-tone: var(--cap-watch);
   }
 
   &.error {
-    color: $error-color;
-    border-color: rgba($error-color, 0.35);
-    background: rgba($error-color, 0.08);
+    --badge-tone: var(--cap-depleted);
+  }
+
+  &.success,
+  &.warning,
+  &.error {
+    border-color: color-mix(in srgb, var(--badge-tone) 36%, transparent);
+    background: color-mix(in srgb, var(--badge-tone) 10%, transparent);
   }
 
   &.muted {
-    color: var(--text-secondary);
+    color: var(--ink-muted);
   }
 }
 
 .pill {
-  padding: 4px 10px;
-  border-radius: $radius-full;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--panel-raised);
+  color: var(--ink-muted);
+  border: 1px solid var(--hairline);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-variant-numeric: tabular-nums;
 }
+
+// ---------------------------------------------------------------------------
+// Spinner
+// ---------------------------------------------------------------------------
 
 .loading-spinner {
-  // Fallback: legacy white spinner (in case color-mix is unsupported)
-  border: 3px solid rgba(255, 255, 255, 0.2);
-  border-top-color: #fff;
-  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
   width: 16px;
   height: 16px;
+  border: 2px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
   animation: spin 0.8s linear infinite;
-}
-
-@supports (color: color-mix(in srgb, currentColor 22%, transparent)) {
-  .loading-spinner {
-    border-color: color-mix(in srgb, currentColor 22%, transparent);
-    border-top-color: currentColor;
-  }
 }
 
 @keyframes spin {
@@ -222,10 +353,27 @@ textarea {
   }
 }
 
+@keyframes spinner-pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  // No rotation; a slow opacity pulse still says "working".
+  .loading-spinner {
+    animation: spinner-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Modal: a floating layer, so it may carry a shadow
+// ---------------------------------------------------------------------------
+
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: color-mix(in srgb, var(--canvas) 72%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -233,15 +381,15 @@ textarea {
   padding: $spacing-lg;
 
   &.modal-overlay-entering {
-    animation: modal-overlay-fade-in 0.25s ease-out forwards;
+    animation: modal-fade-in var(--dur-base) var(--ease-standard) forwards;
   }
 
   &.modal-overlay-closing {
-    animation: modal-overlay-fade-out 0.35s ease-in forwards;
+    animation: modal-fade-out var(--dur-fast) var(--ease-standard) forwards;
   }
 }
 
-@keyframes modal-overlay-fade-in {
+@keyframes modal-fade-in {
   from {
     opacity: 0;
   }
@@ -250,7 +398,7 @@ textarea {
   }
 }
 
-@keyframes modal-overlay-fade-out {
+@keyframes modal-fade-out {
   from {
     opacity: 1;
   }
@@ -260,108 +408,98 @@ textarea {
 }
 
 .modal {
-  background: var(--bg-primary);
-  border-radius: $radius-lg;
-  border: 1px solid var(--border-color);
-  box-shadow: $shadow-lg;
+  background: var(--panel-raised);
+  color: var(--ink);
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-sheet);
   max-width: 100%;
   max-height: 90vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
-  // 关闭按钮中心位置: right 12px + 16px = 28px, top 12px + 16px = 28px
-  transform-origin: calc(100% - 28px) 28px;
+  outline: none;
 
   &.modal-entering {
-    animation: modal-scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: modal-in var(--dur-base) var(--ease-standard) forwards;
   }
 
   &.modal-closing {
-    animation: modal-collapse-to-close 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: modal-out var(--dur-fast) var(--ease-standard) forwards;
   }
 }
 
-@keyframes modal-scale-in {
+@keyframes modal-in {
   from {
     opacity: 0;
-    transform: scale(0.85) translateY(20px);
+    transform: translateY(8px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: none;
   }
 }
 
-@keyframes modal-collapse-to-close {
-  0% {
+@keyframes modal-out {
+  from {
     opacity: 1;
-    transform: scale(1);
+    transform: none;
   }
-  100% {
+  to {
     opacity: 0;
-    transform: scale(0);
+    transform: scale(0.98);
   }
 }
 
 .modal-close-floating {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
+  top: 14px;
+  right: 14px;
+  width: 28px;
+  height: 28px;
   padding: 0;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ink-muted);
   cursor: pointer;
-  border-radius: $radius-full;
+  border-radius: var(--radius-control);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition:
-    color 0.15s ease,
-    background-color 0.15s ease,
-    transform 0.15s ease;
   z-index: 10;
+  @include pressable;
+  @include focus-ring;
 
   svg {
     display: block;
+    width: 16px;
+    height: 16px;
   }
 
-  &:hover {
-    color: var(--text-primary);
-    background: var(--bg-tertiary);
-    transform: scale(1.1);
-  }
-
-  &:active {
-    transform: scale(0.95);
+  &:hover:not(:disabled) {
+    color: var(--ink);
+    background: var(--panel-hover);
   }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.6;
-    transform: none;
-  }
-
-  &:disabled:hover {
-    color: var(--text-secondary);
-    background: var(--bg-secondary);
-    transform: none;
+    opacity: 0.5;
   }
 }
 
 .modal-header {
   display: flex;
   align-items: center;
-  padding: $spacing-md $spacing-lg;
-  border-bottom: 1px solid var(--border-color);
+  min-height: 56px;
+  padding: $spacing-md 56px $spacing-md $spacing-lg;
+  border-bottom: 1px solid var(--hairline);
 
   .modal-title {
-    font-weight: 700;
-    font-size: 18px;
-    color: var(--text-primary);
+    font-size: $text-lead;
+    line-height: $lh-lead;
+    font-weight: 600;
+    color: var(--ink);
   }
 }
 
@@ -372,12 +510,12 @@ textarea {
 }
 
 .modal-footer {
-  padding: $spacing-md $spacing-lg;
-  border-top: 1px solid var(--border-color);
+  padding: 12px $spacing-lg;
+  border-top: 1px solid var(--hairline);
   display: flex;
   justify-content: flex-end;
   gap: $spacing-sm;
-  background: var(--bg-primary);
+  background: transparent;
 }
 
 @media (max-width: $breakpoint-mobile) {
@@ -387,7 +525,6 @@ textarea {
 
   .modal {
     max-height: calc(100vh - #{$spacing-md * 2});
-    border-radius: $radius-md;
   }
 
   @supports (height: 100dvh) {
@@ -397,8 +534,7 @@ textarea {
   }
 
   .modal-header {
-    padding: $spacing-md;
-    padding-right: 52px;
+    padding: 12px 52px 12px $spacing-md;
   }
 
   .modal-body {
@@ -413,13 +549,24 @@ textarea {
   }
 
   .modal-footer {
-    padding: $spacing-md;
+    padding: 12px $spacing-md;
     flex-direction: column-reverse;
     align-items: stretch;
   }
 
   .modal-footer .btn {
     width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  // Durations already collapse via tokens; also drop the transform keyframes.
+  .modal.modal-entering {
+    animation-name: modal-fade-in;
+  }
+
+  .modal.modal-closing {
+    animation-name: modal-fade-out;
   }
 }
 
@@ -434,58 +581,64 @@ textarea {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Empty state: one sentence, one action
+// ---------------------------------------------------------------------------
+
 .empty-state {
-  border: 1px dashed var(--border-color);
-  border-radius: $radius-lg;
-  padding: $spacing-lg;
-  background: var(--bg-secondary);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  padding: $spacing-md $spacing-lg;
+  background: var(--panel);
   display: flex;
   justify-content: space-between;
   gap: $spacing-md;
   align-items: center;
+  flex-wrap: wrap;
 
   .empty-content {
     display: flex;
     align-items: center;
-    gap: $spacing-md;
+    gap: 12px;
+    min-width: 0;
   }
 
   .empty-icon {
-    width: 42px;
-    height: 42px;
-    flex: 0 0 42px;
-    border-radius: $radius-full;
-    border: 2px solid var(--border-color);
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border-radius: var(--radius-control);
+    background: var(--panel-raised);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     line-height: 0;
-    color: var(--text-secondary);
+    color: var(--ink-faint);
 
     svg {
       display: block;
-      width: 20px;
-      height: 20px;
+      width: 16px;
+      height: 16px;
       flex-shrink: 0;
     }
   }
 
   .empty-title {
-    font-weight: 700;
-    color: var(--text-primary);
+    font-size: $text-body;
+    line-height: $lh-body;
+    font-weight: 500;
+    color: var(--ink);
   }
 
   .empty-desc {
-    color: var(--text-secondary);
-    margin-top: 4px;
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    color: var(--ink-muted);
+    margin-top: 2px;
   }
 
-  .empty-action .btn > span {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    line-height: 1;
+  .empty-action {
+    flex-shrink: 0;
   }
 
   .empty-action .btn svg {
@@ -494,6 +647,10 @@ textarea {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Item rows
+// ---------------------------------------------------------------------------
+
 .item-list {
   display: flex;
   flex-direction: column;
@@ -501,32 +658,38 @@ textarea {
 }
 
 .item-row {
-  border: 1px solid var(--border-color);
-  border-radius: $radius-md;
-  padding: $spacing-md;
-  background: var(--bg-primary);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  padding: 12px $spacing-md;
+  background: var(--panel);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: $spacing-md;
   flex-wrap: wrap;
+  transition: background-color var(--dur-hover) var(--ease-standard);
+
+  &:hover {
+    background: var(--panel-hover);
+  }
 
   .item-meta {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
+    min-width: 0;
   }
 
   .item-title {
-    font-weight: 700;
-    color: var(--text-primary);
+    font-weight: 500;
+    color: var(--ink);
   }
 
   .item-subtitle {
-    color: var(--text-secondary);
-    font-family:
-      ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-      'Courier New', monospace;
+    color: var(--ink-muted);
+    font-family: $font-mono;
+    font-size: $text-caption;
+    line-height: $lh-caption;
     word-break: break-all;
   }
 
@@ -536,12 +699,18 @@ textarea {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Inline feedback
+// ---------------------------------------------------------------------------
+
 .error-box {
-  background: rgba($error-color, 0.1);
-  border: 1px solid rgba($error-color, 0.4);
-  border-radius: $radius-md;
-  padding: $spacing-sm $spacing-md;
-  color: $error-color;
+  background: color-mix(in srgb, var(--cap-depleted) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cap-depleted) 36%, transparent);
+  border-radius: var(--radius-control);
+  padding: $spacing-sm 12px;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--cap-depleted);
 }
 
 .stack {
@@ -551,5 +720,69 @@ textarea {
 }
 
 .hint {
-  color: var(--text-secondary);
+  color: var(--ink-muted);
+}
+
+// ---------------------------------------------------------------------------
+// Autocomplete (AutocompleteInput)
+// ---------------------------------------------------------------------------
+
+.autocomplete-control {
+  position: relative;
+
+  .input {
+    padding-right: 32px;
+  }
+}
+
+.autocomplete-trigger {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-faint);
+  cursor: pointer;
+
+  &.is-disabled {
+    pointer-events: none;
+  }
+}
+
+.autocomplete-dropdown {
+  background: var(--panel-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-popover);
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.autocomplete-option {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  color: var(--ink);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  transition: background-color var(--dur-hover) var(--ease-standard);
+
+  &.is-highlighted {
+    background: var(--panel-hover);
+  }
+}
+
+.autocomplete-option-value {
+  font-weight: 500;
+}
+
+.autocomplete-option-label {
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
 }

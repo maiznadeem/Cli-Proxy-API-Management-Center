@@ -1,116 +1,88 @@
 @use '../../../styles/mixins' as *;
-@use '../../../styles/variables' as *;
+
+/* Recent-request status: one 13px line of status dots and a success rate. */
 
 .statusBar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content;
+  display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
   max-width: 100%;
+  font-size: $text-dense;
+  line-height: $lh-dense;
 }
 
 .statusBlocks {
-  display: flex;
-  gap: 2px;
-  width: 100%;
-  min-width: 0;
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .statusBlockWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 1 1 0;
   min-width: 0;
-  position: relative;
+  max-width: 10px;
+  height: 14px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
 .statusBlock {
-  width: 100%;
+  width: 6px;
   height: 6px;
-  border-radius: 2px;
-  transition:
-    transform 0.15s ease,
-    opacity 0.15s ease;
+  border-radius: var(--radius-pill);
+  transition: transform var(--dur-hover) var(--ease-standard);
 
   .statusBlockWrapper:hover &,
   .statusBlockWrapper.statusBlockActive & {
-    transform: scaleY(1.8);
-    opacity: 0.9;
+    transform: scale(1.4);
   }
 }
 
 .statusBlockIdle {
-  background-color: var(--border-color);
+  background-color: var(--cap-track);
 }
 
 .statusTooltip {
   position: absolute;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 12px;
-  line-height: 1.5;
-  white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   z-index: $z-dropdown;
+  padding: 6px 10px;
+  border-radius: var(--radius-control);
+  background: var(--panel-raised);
+  box-shadow: var(--shadow-popover);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink);
   pointer-events: none;
-  color: var(--text-primary);
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 5px solid transparent;
-    border-top-color: var(--bg-primary);
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-top-color: var(--border-color);
-  }
 }
 
 .statusTooltipLeft {
   left: 0;
-  transform: translateX(0);
-
-  &::after,
-  &::before {
-    left: 8px;
-    transform: none;
-  }
+  transform: none;
 }
 
 .statusTooltipRight {
   left: auto;
   right: 0;
-  transform: translateX(0);
-
-  &::after,
-  &::before {
-    left: auto;
-    right: 8px;
-    transform: none;
-  }
+  transform: none;
 }
 
 .tooltipTime {
-  color: var(--text-secondary);
   display: block;
   margin-bottom: 2px;
+  color: var(--ink-muted);
 }
 
 .tooltipStats {
@@ -120,44 +92,57 @@
 }
 
 .tooltipSuccess {
-  color: var(--success-color, #22c55e);
+  color: var(--cap-plenty);
 }
 
 .tooltipFailure {
-  color: var(--danger-color, #ef4444);
+  color: var(--cap-depleted);
 }
 
 .tooltipRate {
-  color: var(--text-secondary);
-  margin-left: 2px;
+  color: var(--ink-muted);
 }
 
 .statusRate {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 48px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
+  gap: 6px;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink-faint);
 }
 
-.statusRateHigh {
-  color: var(--success-badge-text, #065f46);
-  background: var(--success-badge-bg, #d1fae5);
-}
-
-.statusRateMedium {
-  color: var(--warning-text, #92400e);
-  background: var(--warning-bg, #fef3c7);
-}
-
+.statusRateHigh,
+.statusRateMedium,
 .statusRateLow {
-  color: var(--failure-badge-text);
-  background: var(--failure-badge-bg);
+  color: var(--ink);
+
+  &::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-pill);
+  }
+}
+
+.statusRateHigh::before {
+  background: var(--cap-plenty);
+}
+
+.statusRateMedium::before {
+  background: var(--cap-watch);
+}
+
+.statusRateLow::before {
+  background: var(--cap-depleted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statusBlock {
+    transition: none;
+  }
 }

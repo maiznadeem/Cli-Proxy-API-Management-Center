@@ -1,0 +1,25 @@
+@use '../../../styles/mixins' as *;
+
+/* Sheet chrome owned by the provider editor: footer buttons with a leading icon. */
+
+.buttonWithIcon > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spin {
+  animation: provider-sheet-spin 0.8s linear infinite;
+}
+
+@keyframes provider-sheet-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}

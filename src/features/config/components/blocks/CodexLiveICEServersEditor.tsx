@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { makeClientId, type CodexLiveICEServerDraft } from '@/types/visualConfig';
 import { FieldGrid, FieldGroup, FieldShell, FieldStack } from '../fields/FieldPrimitives';
+import styles from './Blocks.module.scss';
 
 export function CodexLiveICEServersEditor({
   value,
@@ -106,11 +107,10 @@ export function CodexLiveICEServersEditor({
                 </div>
               );
             })}
-            <div>
+            <div className={styles.actionRow}>
               <Button
                 type="button"
                 variant="secondary"
-                size="sm"
                 disabled={disabled}
                 onClick={() =>
                   onChange([

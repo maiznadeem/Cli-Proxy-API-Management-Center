@@ -14,6 +14,7 @@
 
 .disabled {
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .root input {
@@ -24,35 +25,65 @@
 }
 
 .track {
-  width: 44px;
-  height: 24px;
-  background: var(--border-color);
-  border-radius: $radius-full;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  background: var(--hairline-strong);
+  border-radius: var(--radius-pill);
   position: relative;
-  transition: background $transition-fast;
+  transition:
+    background-color var(--dur-hover) var(--ease-standard),
+    box-shadow var(--dur-hover) var(--ease-standard),
+    transform var(--dur-press) var(--ease-standard);
 }
 
 .thumb {
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 18px;
-  height: 18px;
-  background: #fff;
-  border-radius: $radius-full;
-  box-shadow: $shadow-sm;
-  transition: transform $transition-fast;
+  width: 14px;
+  height: 14px;
+  background: var(--ink-muted);
+  border-radius: var(--radius-pill);
+  transition:
+    transform var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard);
+}
+
+.root:hover:not(.disabled) input:not(:checked) + .track {
+  background: color-mix(in srgb, var(--hairline-strong) 80%, var(--ink));
+}
+
+.root:active:not(.disabled) .track {
+  transform: scale(0.98);
 }
 
 .root input:checked + .track {
-  background: var(--primary-color);
+  background: var(--accent);
+}
+
+.root:hover:not(.disabled) input:checked + .track {
+  background: var(--accent-hover);
 }
 
 .root input:checked + .track .thumb {
-  transform: translateX(20px);
+  background: var(--accent-contrast);
+  transform: translateX(16px);
+}
+
+.root input:focus-visible + .track {
+  box-shadow: var(--focus-ring);
 }
 
 .label {
-  color: var(--text-primary);
-  font-weight: 600;
+  color: var(--ink);
+  font-size: $text-body;
+  line-height: $lh-body;
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root:active:not(.disabled) .track {
+    transform: none;
+  }
 }

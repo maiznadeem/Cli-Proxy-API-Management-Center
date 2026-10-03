@@ -11,8 +11,8 @@ interface AnimatedNotification extends Notification {
   isExiting?: boolean;
 }
 
-// Matches the exit transition; each card owns and cleans up its removal timer.
-const EXIT_DURATION_MS = 160;
+// Matches the exit transition (180ms); each card owns and cleans up its removal timer.
+const EXIT_DURATION_MS = 180;
 
 const notificationIcons = {
   success: IconCheckCircle2,
@@ -34,8 +34,23 @@ function NotificationCard({
   const removeNotification = useNotificationStore((state) => state.removeNotification);
   const timerRef = useRef<ReturnType<typeof createNotificationTimer> | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLSpanElement>(null);
+  const pausesRef = useRef(new Set<string>());
   const { id, type, message, duration = NOTIFICATION_DURATION_MS, isExiting } = notification;
   const Icon = notificationIcons[type];
+  const showProgress = duration > 0 && !isExiting;
+
+  // Mirror the timer's pause reasons onto the progress line so it stops exactly when
+  // the countdown does (hover, focus, hidden tab).
+  const setPaused = useCallback((reason: string, paused: boolean) => {
+    timerRef.current?.setPaused(reason, paused);
+    const pauses = pausesRef.current;
+    if (paused) pauses.add(reason);
+    else pauses.delete(reason);
+    if (progressRef.current) {
+      progressRef.current.style.animationPlayState = pauses.size ? 'paused' : 'running';
+    }
+  }, []);
 
   useEffect(() => {
     if (isExiting) {
@@ -45,17 +60,17 @@ function NotificationCard({
 
     const timer = createNotificationTimer(duration, () => removeNotification(id));
     timerRef.current = timer;
-    const syncVisibility = () => timer.setPaused('hidden', document.hidden);
+    const syncVisibility = () => setPaused('hidden', document.hidden);
     syncVisibility();
-    timer.setPaused('focus', Boolean(cardRef.current?.contains(document.activeElement)));
-    timer.setPaused('hover', Boolean(cardRef.current?.matches(':hover')));
+    setPaused('focus', Boolean(cardRef.current?.contains(document.activeElement)));
+    setPaused('hover', Boolean(cardRef.current?.matches(':hover')));
     document.addEventListener('visibilitychange', syncVisibility);
     return () => {
       document.removeEventListener('visibilitychange', syncVisibility);
       timer.dispose();
       timerRef.current = null;
     };
-  }, [duration, id, isExiting, onExited, removeNotification]);
+  }, [duration, id, isExiting, onExited, removeNotification, setPaused]);
 
   const dismiss = (skipAnimation = false) => {
     const card = cardRef.current;
@@ -79,13 +94,13 @@ function NotificationCard({
       aria-hidden={isExiting || undefined}
       inert={isExiting || undefined}
       onPointerEnter={(event) => {
-        if (event.pointerType !== 'touch') timerRef.current?.setPaused('hover', true);
+        if (event.pointerType !== 'touch') setPaused('hover', true);
       }}
-      onPointerLeave={() => timerRef.current?.setPaused('hover', false)}
-      onFocusCapture={() => timerRef.current?.setPaused('focus', true)}
+      onPointerLeave={() => setPaused('hover', false)}
+      onFocusCapture={() => setPaused('focus', true)}
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) {
-          timerRef.current?.setPaused('focus', false);
+          setPaused('focus', false);
         }
       }}
       onKeyDown={(event) => {
@@ -114,6 +129,14 @@ function NotificationCard({
       >
         <IconX size={16} />
       </button>
+      {showProgress ? (
+        <span
+          ref={progressRef}
+          className={styles.progress}
+          style={{ animationDuration: `${duration}ms` }}
+          aria-hidden="true"
+        />
+      ) : null}
     </div>
   );
 }

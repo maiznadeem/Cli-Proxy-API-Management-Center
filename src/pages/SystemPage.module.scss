@@ -1,371 +1,328 @@
+@use '../styles/mixins' as *;
+
+/* ============================================================
+ * Management Center (system) page: page header and quiet panels.
+ * ============================================================ */
+
 .container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
   width: 100%;
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .pageTitle {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 $spacing-xl 0;
+  margin: 0;
+  color: var(--ink);
+  font-size: $text-page;
+  line-height: $lh-page;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.meta {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: $text-dense;
+  line-height: $lh-dense;
 }
 
 .content {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-xl;
-}
-
-.aboutCard {
-  overflow: hidden;
-}
-
-.aboutHeader {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  gap: $spacing-md;
-  padding: $spacing-lg 0 $spacing-xl;
-}
-
-.aboutLogo {
-  width: 108px;
-  height: 108px;
-  border-radius: 26px;
-  object-fit: cover;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
-}
-
-.aboutTitle {
-  width: min(100%, 920px);
-  font-size: clamp(28px, 4.2vw, 44px);
-  font-weight: 800;
-  line-height: 1.12;
-  color: var(--text-primary);
-  letter-spacing: -0.02em;
-  text-align: center;
-  text-wrap: balance;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.aboutInfoGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: $spacing-md;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
 }
 
-.infoTile {
+/* ---------- Panels ---------- */
+
+.panel {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  min-height: 120px;
-  padding: $spacing-md $spacing-lg;
-  border-radius: $radius-lg;
-  border: 1px solid var(--border-color);
-  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
-  text-align: left;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 20px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  background: var(--panel);
 }
 
-.tapTile {
-  border: 1px solid var(--border-color);
-  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
-  color: inherit;
-  padding: $spacing-md $spacing-lg;
-  cursor: pointer;
-  transition:
-    transform 0.18s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+.panelWide {
+  grid-column: 1 / -1;
+}
 
-  &:hover {
-    transform: translateY(-1px);
-    border-color: var(--primary-color);
-    box-shadow: 0 8px 18px rgba($primary-color, 0.18);
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.panelTitle {
+  margin: 0;
+  color: var(--ink);
+  font-size: $text-lead;
+  line-height: $lh-lead;
+  font-weight: 600;
+}
+
+.description {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+}
+
+/* ---------- Versions ---------- */
+
+.definitions {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.definitionRow {
+  display: grid;
+  grid-template-columns: minmax(120px, 2fr) minmax(0, 3fr);
+  gap: 4px 16px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-top: 1px solid var(--hairline);
+
+  &:first-child {
+    border-top: 0;
+    padding-top: 0;
   }
+
+  dt {
+    color: var(--ink-muted);
+    font-size: $text-dense;
+    line-height: $lh-dense;
+  }
+
+  dd {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    color: var(--ink);
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    overflow-wrap: anywhere;
+  }
+}
+
+.mono {
+  font-family: $font-mono;
+  font-size: $text-caption;
+  font-variant-numeric: tabular-nums;
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+.subValue {
+  color: var(--ink-muted);
+}
+
+/* The UI version doubles as the hidden request-log switch (seven taps). */
+.versionTap {
+  @include button-reset;
+  align-self: flex-start;
+  margin: -2px -4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: var(--ink);
+  font-family: $font-mono;
+  font-size: $text-caption;
+  line-height: $lh-dense;
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+  transition: transform var(--dur-press) var(--ease-standard);
 
   &:active {
-    transform: translateY(0);
+    transform: scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
-.tileLabel {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
+/* ---------- Status text with dot ---------- */
 
-.tileHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: $spacing-sm;
-  min-height: 40px;
-}
-
-.tileAction {
-  flex-shrink: 0;
-  white-space: nowrap;
-  margin: -4px -8px 0 0;
-}
-
-.tileValue {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.25;
-  word-break: break-word;
-}
-
-.tileSub {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  line-height: 1.4;
-}
-
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-md;
-}
-
-.sectionTitle {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 $spacing-md 0;
-}
-
-.sectionDescription {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0 0 $spacing-md 0;
-}
-
-.clearLoginActions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.infoGrid {
-  display: grid;
-  gap: $spacing-sm;
-
-  .infoRow {
-    display: flex;
-    justify-content: space-between;
-    padding: $spacing-sm $spacing-md;
-    background-color: var(--bg-secondary);
-    border-radius: $radius-md;
-
-    .label {
-      font-weight: 500;
-      color: var(--text-secondary);
-    }
-
-    .value {
-      color: var(--text-primary);
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    }
-  }
-}
-
-.modelsList {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-sm;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.modelItem {
-  padding: $spacing-sm $spacing-md;
-  background-color: var(--bg-secondary);
-  border-radius: $radius-md;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 13px;
-
-  &:hover {
-    background-color: var(--bg-hover);
-  }
-}
-
-.modelTags {
-  display: flex;
-  flex-wrap: wrap;
-  flex: 0 0 100%;
-  gap: $spacing-sm;
-}
-
-.groupTitle {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-}
-
-.groupIcon {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
-.modelTag {
+.status {
+  --status-tone: var(--ink-faint);
   display: inline-flex;
   align-items: center;
-  gap: $spacing-xs;
-  padding: 4px 10px;
-  border-radius: $radius-full;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-secondary);
-  font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-    monospace;
+  gap: 8px;
+  min-width: 0;
+  color: var(--ink);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+
+  &[data-tone='success'] {
+    --status-tone: var(--cap-plenty);
+  }
+
+  &[data-tone='warning'] {
+    --status-tone: var(--cap-watch);
+  }
+
+  &[data-tone='error'] {
+    --status-tone: var(--cap-depleted);
+  }
+
+  &[data-tone='muted'] {
+    color: var(--ink-muted);
+  }
+}
+
+.statusDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--status-tone);
+}
+
+/* ---------- Updates ---------- */
+
+.updateRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+/* ---------- Models ---------- */
+
+.modelsTable {
+  --table-max-height: 480px;
+  min-width: 0;
 }
 
 .modelName {
-  color: var(--text-primary);
-  font-weight: 600;
+  font-family: $font-mono;
+  font-size: $text-caption;
+  color: var(--ink);
+  overflow-wrap: anywhere;
 }
 
 .modelAlias {
-  color: var(--text-secondary);
-  font-size: 12px;
+  margin-left: 8px;
+  font-family: $font-mono;
+  font-size: $text-caption;
+  color: var(--ink-muted);
+  overflow-wrap: anywhere;
 }
 
-.versionCheck {
+.providerCell {
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+/* ---------- Links ---------- */
+
+.links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: $spacing-md;
 }
 
-.versionInfo {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: $spacing-md;
-
-  .versionItem {
-    padding: $spacing-md;
-    background-color: var(--bg-secondary);
-    border-radius: $radius-md;
-
-    .label {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-bottom: $spacing-xs;
-    }
-
-    .version {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-primary);
-      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    }
-  }
-}
-
-.quickLinks {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: $spacing-md;
-}
-
-.linkCard {
+.link {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
-  padding: $spacing-md $spacing-lg;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: $radius-lg;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 -8px;
+  padding: 8px;
+  border-radius: var(--radius-control);
+  color: var(--ink);
   text-decoration: none;
-  color: inherit;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: var(--bg-hover);
-    border-color: var(--primary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
+  transition:
+    background-color var(--dur-hover) var(--ease-standard),
+    transform var(--dur-press) var(--ease-standard);
 
   &:active {
-    transform: translateY(0);
+    transform: scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
-.linkIcon {
+.linkText {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: $radius-md;
-  background-color: #24292f;
-  color: white;
-  flex-shrink: 0;
-
-  &.github,
-  &.docs {
-    background-color: #24292f;
-  }
-}
-
-.linkContent {
-  flex: 1;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
 }
 
 .linkTitle {
-  display: flex;
-  align-items: center;
-  gap: $spacing-xs;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-
-  svg {
-    opacity: 0.5;
-    flex-shrink: 0;
-  }
+  font-size: $text-body;
+  line-height: $lh-body;
+  font-weight: 500;
 }
 
 .linkDesc {
-  font-size: 13px;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--ink-muted);
+  font-size: $text-dense;
+  line-height: $lh-dense;
 }
 
-@media (max-width: 768px) {
-  .aboutLogo {
-    width: 92px;
-    height: 92px;
-    border-radius: 22px;
-  }
+.linkIcon {
+  flex: none;
+  color: var(--ink-faint);
+}
 
-  .aboutTitle {
-    width: min(100%, 24ch);
-    font-size: clamp(22px, 6.6vw, 34px);
-    font-weight: 700;
-    line-height: 1.18;
-    letter-spacing: -0.012em;
+@media (hover: hover) and (pointer: fine) {
+  .link:hover {
+    background: var(--panel-hover);
   }
 }
 
-@media (max-width: 520px) {
-  .aboutTitle {
-    width: min(100%, 19ch);
-    font-size: clamp(20px, 7.2vw, 28px);
-    font-weight: 600;
-    line-height: 1.22;
-    letter-spacing: -0.006em;
+@include mobile {
+  .container {
+    gap: 16px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .definitionRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .versionTap,
+  .link {
+    transition: none;
+  }
+
+  .versionTap:active,
+  .link:active {
+    transform: none;
   }
 }

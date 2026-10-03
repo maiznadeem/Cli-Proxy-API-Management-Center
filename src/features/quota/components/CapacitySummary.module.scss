@@ -1,0 +1,207 @@
+@use '../../../styles/mixins' as *;
+
+/* Provider capacity summary: a strip of pressable panels, one per provider. */
+
+.strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 16px;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-hover) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard),
+    transform var(--dur-press) var(--ease-standard);
+
+  &:active {
+    transform: scale(0.99);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .panel:hover {
+    border-color: var(--hairline-strong);
+    background: var(--panel-raised);
+  }
+}
+
+.panelSelected,
+.panelSelected:hover {
+  border-color: var(--accent);
+  background: var(--accent-10);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.iconWrap {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-control);
+  background: var(--panel-raised);
+}
+
+.icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  display: block;
+}
+
+.iconFallback {
+  font-size: $text-caption;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.name {
+  font-size: $text-body;
+  line-height: $lh-body;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.count {
+  margin-left: auto;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.label {
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
+}
+
+.figure {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.figureMain {
+  font-size: $text-page;
+  line-height: $lh-page;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.figureOf {
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
+}
+
+.figureMuted {
+  font-size: $text-lead;
+  line-height: $lh-page;
+  color: var(--ink-faint);
+}
+
+/* One segment per credential; fill width is that account's remaining percent. */
+.segments {
+  display: flex;
+  gap: 4px;
+  height: 6px;
+}
+
+.segment {
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: var(--radius-pill);
+  background: var(--cap-track);
+  overflow: hidden;
+}
+
+.segmentFill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  transition: width var(--dur-meter) var(--ease-standard);
+}
+
+.segment[data-tone='plenty'] .segmentFill {
+  background: color-mix(
+    in oklab,
+    var(--cap-plenty) calc((var(--meter-value, 100) - 70) / 30 * 100%),
+    var(--cap-watch)
+  );
+}
+
+.segment[data-tone='watch'] .segmentFill {
+  background: var(--cap-watch);
+}
+
+.segment[data-tone='depleted'] .segmentFill {
+  background: color-mix(
+    in oklab,
+    var(--cap-watch) calc(var(--meter-value, 0) / 30 * 100%),
+    var(--cap-depleted)
+  );
+}
+
+.reset {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-variant-numeric: tabular-nums;
+}
+
+.resetRelative {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.resetAbsolute {
+  color: var(--ink-faint);
+}
+
+@include mobile {
+  .strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .segmentFill {
+    transition: none;
+  }
+
+  .panel:active {
+    transform: none;
+  }
+}

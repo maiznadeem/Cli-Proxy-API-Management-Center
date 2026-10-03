@@ -30,4 +30,4 @@ export interface ContextMenuState {
   data?: string;
 }
 
-export type DiagramLine = { path: string; color: string; id: string };
+export type DiagramLine = { path: string; id: string };

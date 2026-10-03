@@ -1,324 +1,329 @@
-@use '../styles/variables.scss' as *;
+// Login: a single quiet column on the canvas (DESIGN.md > Shape, Motion).
 
-// 主容器 - 左右分栏布局
 .container {
+  position: relative;
   min-height: 100vh;
-  display: flex;
-  background: var(--bg-secondary);
-}
-
-// 左侧品牌展示区
-.brandPanel {
-  flex: 1;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  background: #000000;
-  padding: $spacing-2xl;
-  position: relative;
-  overflow: hidden;
-
-  // 移动端隐藏
-  @media (max-width: $breakpoint-mobile) {
-    display: none;
-  }
-}
-
-// 品牌文字容器
-.brandContent {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  width: 100%;
-  padding: 0;
-  gap: 0;
-}
-
-// 品牌大字淡入动画
-@keyframes brandFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: var(--target-opacity, 0.9);
-    transform: translateY(0);
-  }
-}
-
-// 品牌大字
-.brandWord {
-  font-size: 14vw;
-  font-weight: 900;
-  color: rgba(255, 255, 255, 0.9);
-  letter-spacing: -0.02em;
-  line-height: 0.85;
-  text-transform: uppercase;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-  text-align: right;
-  padding-right: 0;
-  opacity: 0;
-  animation: brandFadeIn 0.8s ease-out forwards;
-
-  // 不同字有不同的透明度和延迟，从上到下依次显现
-  &:nth-child(1) {
-    --target-opacity: 0.95;
-    animation-delay: 0.1s;
-  }
-
-  &:nth-child(2) {
-    --target-opacity: 0.7;
-    animation-delay: 0.35s;
-  }
-
-  &:nth-child(3) {
-    --target-opacity: 0.45;
-    animation-delay: 0.6s;
-  }
-}
-
-// 右侧功能交互区
-.formPanel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
   justify-content: center;
-  align-items: center;
-  padding: $spacing-2xl;
-  background: var(--bg-secondary);
-  position: relative;
+  padding: $spacing-2xl $spacing-lg;
+  background: var(--canvas);
+  color: var(--ink);
+
+  // Short viewports: top-align so the panel never clips under the fold.
+  @media (max-height: 720px) {
+    justify-content: flex-start;
+    padding-top: 12vh;
+  }
 
   @media (max-width: $breakpoint-mobile) {
-    padding: $spacing-lg;
-    min-height: 100vh;
+    padding-left: $spacing-lg;
+    padding-right: $spacing-lg;
   }
 }
 
-// 右侧内容容器
-.formContent {
-  width: 100%;
-  max-width: 420px;
+// ---------------------------------------------------------------------------
+// Language switcher (top-right)
+// ---------------------------------------------------------------------------
+
+.languageAnchor {
+  position: absolute;
+  top: $spacing-md;
+  right: $spacing-md;
+  z-index: $z-dropdown;
+}
+
+.languageMenu {
+  position: absolute;
+  top: calc(100% + #{$spacing-xs});
+  right: 0;
   display: flex;
   flex-direction: column;
+  gap: 2px;
+  min-width: 184px;
+  padding: $spacing-xs;
+  border-radius: var(--radius-panel);
+  background: var(--panel-raised);
+  box-shadow: var(--shadow-popover);
+}
+
+.languageOption {
+  display: flex;
   align-items: center;
-  gap: $spacing-xl;
-}
-
-// Logo
-.logo {
-  width: 80px;
-  height: 80px;
-  border-radius: $radius-lg;
-  object-fit: cover;
-  box-shadow: var(--shadow-lg);
-  border: 3px solid var(--border-color);
-}
-
-// 登录表单卡片
-.loginCard {
   width: 100%;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: $radius-lg;
-  box-shadow: var(--shadow-lg);
-  padding: $spacing-xl;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: $text-body;
+  line-height: $lh-body;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-hover) var(--ease-standard);
+
+  &:hover {
+    background: var(--panel-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  &[aria-checked='true'] {
+    color: var(--accent);
+    font-weight: 500;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Column
+// ---------------------------------------------------------------------------
+
+.column {
+  width: 100%;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
   gap: $spacing-lg;
-
-  @media (max-width: $breakpoint-mobile) {
-    padding: $spacing-lg;
-    box-shadow: none;
-    border: none;
-    background: transparent;
-  }
 }
 
-// 登录头部
-.loginHeader {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-sm;
-  text-align: center;
-}
-
-// 标题行
-.titleRow {
+.brand {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: $spacing-sm;
-  flex-wrap: wrap;
+  gap: 12px;
 }
 
-// 标题
-.title {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--text-primary);
+.mark {
+  flex-shrink: 0;
+  display: block;
 }
 
-// 副标题
-.subtitle {
-  color: var(--text-secondary);
-  font-size: 14px;
+.brandText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
-// 语言下拉选择
-.languageSelect {
-  min-width: 108px;
-  flex: 0 0 auto;
+.productName {
+  font-size: $text-lead;
+  line-height: $lh-lead;
+  font-weight: 600;
+  color: var(--ink);
 }
 
-// 连接信息框
-.connectionBox {
-  background: var(--bg-secondary);
-  border: 1px dashed var(--border-color);
-  border-radius: $radius-md;
-  padding: $spacing-md;
+.productSubtitle {
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
+}
+
+.heading {
   display: flex;
   flex-direction: column;
   gap: $spacing-xs;
-
-  .label {
-    color: var(--text-secondary);
-    font-size: 14px;
-  }
-
-  .value {
-    font-weight: 700;
-    color: var(--text-primary);
-    word-break: break-all;
-  }
-
-  .hint {
-    color: var(--text-secondary);
-    font-size: 12px;
-  }
 }
 
-// 复选框行
-.toggleAdvanced {
-  display: flex;
-  justify-content: flex-start;
-  width: 100%;
+.title {
+  margin: 0;
+  font-size: $text-page;
+  line-height: $lh-page;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
 }
 
-.toggleLabel {
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
+.subtitle {
+  margin: 0;
+  font-size: $text-body;
+  line-height: $lh-body;
+  color: var(--ink-muted);
 }
 
-// 错误提示框
-.errorBox {
-  background: rgba($error-color, 0.1);
-  border: 1px solid rgba($error-color, 0.4);
-  border-radius: $radius-md;
-  padding: $spacing-sm $spacing-md;
-  color: $error-color;
-  font-size: 14px;
-}
+// ---------------------------------------------------------------------------
+// Panel
+// ---------------------------------------------------------------------------
 
-// ========== 启动动画（右侧） ==========
-
-// 启动动画进入效果
-@keyframes splashEnter {
-  from {
-    opacity: 0;
-    transform: scale(0.9) translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-// Logo 脉冲效果
-@keyframes splashLogoPulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-// 加载条动画
-@keyframes splashLoading {
-  0% {
-    transform: scaleX(0);
-    transform-origin: left;
-  }
-  50% {
-    transform: scaleX(1);
-    transform-origin: left;
-  }
-  50.01% {
-    transform-origin: right;
-  }
-  100% {
-    transform: scaleX(0);
-    transform-origin: right;
-  }
-}
-
-// 启动动画内容容器
-.splashContent {
+.panel {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: $spacing-md;
-  animation: splashEnter 0.6s ease-out;
+  padding: $spacing-lg;
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
 }
 
-// 启动动画 Logo
-.splashLogo {
-  height: 80px;
-  width: auto;
-  border-radius: $radius-lg;
-  box-shadow: $shadow-lg;
-  animation: splashLogoPulse 1.5s ease-in-out infinite;
+// The shared .form-group carries a bottom margin; the panel gap owns spacing here.
+.field :global(.form-group) {
+  margin-bottom: 0;
 }
 
-// 启动动画标题
-.splashTitle {
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.5px;
+.connection {
+  display: flex;
+  flex-direction: column;
 }
 
-// 启动动画副标题
-.splashSubtitle {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin: 0;
-  margin-top: -8px;
+.connectionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-// 启动动画加载条容器
-.splashLoader {
-  width: 120px;
-  height: 3px;
-  background: var(--border-color);
-  border-radius: $radius-full;
+.connectionText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.connectionLabel {
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  color: var(--ink-muted);
+}
+
+.connectionValue {
+  font-family: $font-mono;
+  font-size: $text-body;
+  line-height: $lh-body;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+// Height expand via grid rows (0fr -> 1fr) so no measured height is needed.
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-base) var(--ease-standard);
+
+  &[data-open='true'] {
+    grid-template-rows: 1fr;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.collapseInner {
+  min-height: 0;
   overflow: hidden;
-  margin-top: $spacing-md;
+  // Widen the clip box by the focus-ring width so the ring is not cut off.
+  margin: 0 -4px;
+  padding: 0 4px;
+
+  > .field {
+    padding: 12px 0 4px;
+  }
 }
 
-// 启动动画加载条
-.splashLoaderBar {
-  width: 100%;
+.keyInput.keyInput {
+  padding-right: 40px;
+  font-family: $font-mono;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: -4px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-hover) var(--ease-standard),
+    color var(--dur-hover) var(--ease-standard);
+
+  &:hover {
+    background: var(--panel-hover);
+    color: var(--ink);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.errorBox {
+  padding: $spacing-sm 12px;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--cap-depleted) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cap-depleted) 36%, transparent);
+  color: var(--cap-depleted);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  overflow-wrap: anywhere;
+}
+
+.checkboxLabel {
+  font-size: $text-body;
+  line-height: $lh-body;
+  color: var(--ink);
+}
+
+.footnote {
+  margin: 0;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-faint);
+}
+
+// ---------------------------------------------------------------------------
+// Session restore (shown while a stored session is re-validated)
+// ---------------------------------------------------------------------------
+
+.splash {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.splashText {
+  margin: 0;
+  font-size: $text-body;
+  line-height: $lh-body;
+  color: var(--ink-muted);
+}
+
+.splashTrack {
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--cap-track);
+  overflow: hidden;
+}
+
+.splashBar {
+  width: 40%;
   height: 100%;
-  background: var(--primary-color);
-  border-radius: $radius-full;
-  animation: splashLoading 1.2s ease-in-out infinite;
+  border-radius: inherit;
+  background: var(--accent);
+  animation: splashSlide 1.2s var(--ease-standard) infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    width: 100%;
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+@keyframes splashSlide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
 }

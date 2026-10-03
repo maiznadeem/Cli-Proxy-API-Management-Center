@@ -3,9 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Collapsible } from '@/components/ui/Collapsible';
 import { Select } from '@/components/ui/Select';
 import {
-  IconAlertTriangle,
   IconChevronDown,
-  IconCheckCircle2,
   IconDollarSign,
   IconDownload,
   IconEye,
@@ -572,17 +570,10 @@ function SponsorKeyEntryCard({
                     .join(' ')}
                 >
                   <div className={styles.sponsorUsageMain}>
-                    {usageHealthy ? (
-                      <IconCheckCircle2
-                        className={`${styles.statusIcon} ${styles.statusIconSuccess}`}
-                        size={14}
-                      />
-                    ) : (
-                      <IconAlertTriangle
-                        className={`${styles.statusIcon} ${styles.statusIconError}`}
-                        size={14}
-                      />
-                    )}
+                    <span
+                      aria-hidden="true"
+                      className={`${styles.statusDot} ${usageHealthy ? '' : styles.statusDotWarning}`}
+                    />
                     <span>
                       {t('providersPage.sponsor.usageRemaining', {
                         amount: usageRemaining,

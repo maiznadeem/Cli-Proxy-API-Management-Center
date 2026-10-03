@@ -10,16 +10,13 @@ import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
 import { lockScroll, unlockScroll } from '@/components/ui/scrollLock';
 import {
   IconCopy,
-  IconCode,
   IconDownload,
   IconEye,
-  IconEyeOff,
   IconMaximize2,
   IconMinimize2,
   IconRefreshCw,
   IconSearch,
   IconSlidersHorizontal,
-  IconTimer,
   IconTrash2,
   IconX,
 } from '@/components/ui/icons';
@@ -42,6 +39,7 @@ import { formatUnixTimestamp } from '@/utils/format';
 import { MANAGEMENT_API_PREFIX } from '@/utils/constants';
 import { HTTP_METHODS, STATUS_GROUPS, type LogState } from './model/logTypes';
 import { createLogRequestGuard } from './model/logRequests';
+import { splitHighlight } from './model/logHighlight';
 import { errorLogViewerReducer } from './model/errorLogViewer';
 import { shouldExitLogFullscreen } from './model/logFullscreen';
 import { useLogFilters } from './hooks/useLogFilters';
@@ -397,10 +395,46 @@ export function LogsPage() {
     };
   }, [fullscreenLogs]);
 
+  const readStatusKey =
+    catchingUp && autoRefresh
+      ? 'logs.read_status_catching_up'
+      : autoRefresh
+        ? 'logs.read_status_live'
+        : 'logs.read_status_paused';
+  const highlightNeedle = isSearching ? trimmedSearchQuery : '';
+  const highlight = (text: string) =>
+    highlightNeedle
+      ? splitHighlight(text, highlightNeedle).map((segment, index) =>
+          segment.match ? (
+            <mark key={index} className={styles.match}>
+              {segment.text}
+            </mark>
+          ) : (
+            segment.text
+          )
+        )
+      : text;
+
   return (
     <div className={styles.container}>
       <header className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>{t('logs.title')}</h1>
+        <div className={styles.headerCopy}>
+          <h1 className={styles.pageTitle}>{t('logs.title')}</h1>
+          {activeTab === 'logs' && (
+            <p className={styles.meta}>
+              <span>{t('logs.loaded_lines', { count: logBuffer.buffer.length })}</span>
+              <span className={styles.metaSep} aria-hidden="true" />
+              <span
+                className={styles.readStatus}
+                role="status"
+                data-live={autoRefresh && !disableControls}
+              >
+                <span className={styles.statusDot} aria-hidden="true" />
+                {t(readStatusKey)}
+              </span>
+            </p>
+          )}
+        </div>
         <div className={styles.tabBar} role="group" aria-label={t('logs.title')}>
           <button
             type="button"
@@ -426,10 +460,11 @@ export function LogsPage() {
 
       <div className={styles.content}>
         {activeTab === 'logs' && (
-          <Card
+          <section
             className={[styles.logCard, fullscreenLogs ? styles.logCardFullscreen : '']
               .filter(Boolean)
               .join(' ')}
+            aria-label={t('logs.title')}
           >
             {showFileLoggingRequired && (
               <div className="status-badge warning">
@@ -444,56 +479,6 @@ export function LogsPage() {
               <div className="error-box" role="alert">
                 {error}
               </div>
-            )}
-            <footer className={styles.statusBar}>
-              <div
-                className={styles.readStatus}
-                role="status"
-                data-live={autoRefresh && !disableControls}
-              >
-                <span className={styles.statusDot} aria-hidden="true" />
-                {t(
-                  catchingUp && autoRefresh
-                    ? 'logs.read_status_catching_up'
-                    : autoRefresh
-                      ? 'logs.read_status_live'
-                      : 'logs.read_status_paused'
-                )}
-                {lastUpdated && (
-                  <>
-                    {' '}
-                    · {t('logs.last_updated', { time: new Date(lastUpdated).toLocaleTimeString() })}
-                  </>
-                )}
-              </div>
-              <div className={styles.bufferStatus}>
-                {t('logs.buffer_scope', {
-                  count: logBuffer.buffer.length,
-                  matched: filteredLines.length,
-                })}
-              </div>
-            </footer>
-            <div className={styles.notices}>
-              {wasReset && (
-                <div className="hint" role="status">
-                  {t('logs.cursor_reset_notice')}
-                </div>
-              )}
-              {historyEvicted && (
-                <div className="hint" role="status">
-                  {t('logs.history_evicted')}
-                </div>
-              )}
-            </div>
-            {!isFollowing && (
-              <Button
-                className={styles.followButton}
-                variant="secondary"
-                size="sm"
-                onClick={resumeFollowing}
-              >
-                {t('logs.resume_following', { count: pendingLines })}
-              </Button>
             )}
 
             <div className={styles.filters}>
@@ -513,10 +498,10 @@ export function LogsPage() {
                         title={t('logs.clear_search')}
                         aria-label={t('logs.clear_search')}
                       >
-                        <IconX size={16} />
+                        <IconX size={14} />
                       </button>
                     ) : (
-                      <IconSearch size={16} className={styles.searchIcon} />
+                      <IconSearch size={14} className={styles.searchIcon} />
                     )
                   }
                 />
@@ -532,7 +517,7 @@ export function LogsPage() {
                   { value: '', label: t('logs.all_levels') },
                   ...['trace', 'debug', 'info', 'warn', 'error', 'fatal'].map((level) => ({
                     value: level,
-                    label: level.toUpperCase(),
+                    label: `${level.charAt(0).toUpperCase()}${level.slice(1)}`,
                   })),
                 ]}
               />
@@ -548,7 +533,7 @@ export function LogsPage() {
                   title={t('logs.filter_panel_title')}
                 >
                   <span className={styles.filterPanelButtonContent}>
-                    <IconSlidersHorizontal size={16} />
+                    <IconSlidersHorizontal size={14} />
                     <span className={styles.filterPanelLabel}>{t('logs.filter_panel_title')}</span>
                     {structuredFilterCount > 0 && (
                       <span className={styles.filterPanelCount}>
@@ -557,6 +542,20 @@ export function LogsPage() {
                     )}
                   </span>
                 </Button>
+              </div>
+
+              <div className={styles.switches}>
+                <ToggleSwitch
+                  checked={autoRefresh}
+                  onChange={setAutoRefresh}
+                  disabled={autoRefreshDisabled}
+                  label={t('logs.auto_refresh')}
+                />
+                <ToggleSwitch
+                  checked={hideManagementLogs}
+                  onChange={setHideManagementLogs}
+                  label={t('logs.hide_management_logs', { prefix: MANAGEMENT_API_PREFIX })}
+                />
               </div>
 
               <Modal
@@ -586,7 +585,8 @@ export function LogsPage() {
                             disabled={count === 0 && !active}
                             aria-pressed={active}
                           >
-                            {method} ({count})
+                            {method}
+                            <span className={styles.filterChipCount}>{count}</span>
                           </button>
                         );
                       })}
@@ -608,7 +608,8 @@ export function LogsPage() {
                             disabled={count === 0 && !active}
                             aria-pressed={active}
                           >
-                            {t(`logs.filter_status_${statusGroup}`)} ({count})
+                            {t(`logs.filter_status_${statusGroup}`)}
+                            <span className={styles.filterChipCount}>{count}</span>
                           </button>
                         );
                       })}
@@ -627,12 +628,13 @@ export function LogsPage() {
                             <button
                               key={path}
                               type="button"
-                              className={`${styles.filterChip} ${active ? styles.filterChipActive : ''}`}
+                              className={`${styles.filterChip} ${styles.filterChipMono} ${active ? styles.filterChipActive : ''}`}
                               onClick={() => filters.togglePathFilter(path)}
                               aria-pressed={active}
                               title={path}
                             >
-                              {path} ({count})
+                              {path}
+                              <span className={styles.filterChipCount}>{count}</span>
                             </button>
                           );
                         })
@@ -640,14 +642,16 @@ export function LogsPage() {
                     </div>
                   </div>
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={filters.clearStructuredFilters}
-                    disabled={!filters.hasStructuredFilters}
-                  >
-                    {t('logs.clear_filters')}
-                  </Button>
+                  <div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={filters.clearStructuredFilters}
+                      disabled={!filters.hasStructuredFilters}
+                    >
+                      {t('logs.clear_filters')}
+                    </Button>
+                  </div>
                 </div>
 
                 <div className={styles.displayOptions}>
@@ -657,27 +661,14 @@ export function LogsPage() {
                     label={t('logs.wrap_lines')}
                   />
                   <ToggleSwitch
-                    checked={hideManagementLogs}
-                    onChange={setHideManagementLogs}
-                    label={
-                      <span className={styles.switchLabel}>
-                        <IconEyeOff size={16} />
-                        {t('logs.hide_management_logs', { prefix: MANAGEMENT_API_PREFIX })}
-                      </span>
-                    }
-                  />
-
-                  <ToggleSwitch
                     checked={showRawLogs}
                     onChange={setShowRawLogs}
                     label={
                       <span
-                        className={styles.switchLabel}
                         title={t('logs.show_raw_logs_hint', {
                           defaultValue: 'Show original log text for easier multi-line copy',
                         })}
                       >
-                        <IconCode size={16} />
                         {t('logs.show_raw_logs', { defaultValue: 'Show raw logs' })}
                       </span>
                     }
@@ -687,7 +678,7 @@ export function LogsPage() {
 
               <div className={styles.toolbar}>
                 <Button
-                  variant="secondary"
+                  variant="ghost"
                   size="sm"
                   onClick={() => loadLogs(false)}
                   disabled={refreshDisabled}
@@ -698,19 +689,7 @@ export function LogsPage() {
                   <IconRefreshCw size={16} />
                 </Button>
                 <Button
-                  variant="secondary"
-                  size="sm"
-                  className={styles.actionButton}
-                  aria-pressed={autoRefresh}
-                  aria-label={t('logs.reading_enabled')}
-                  title={t('logs.reading_enabled')}
-                  onClick={() => setAutoRefresh(!autoRefresh)}
-                  disabled={autoRefreshDisabled}
-                >
-                  <IconTimer size={16} />
-                </Button>
-                <Button
-                  variant="secondary"
+                  variant="ghost"
                   size="sm"
                   onClick={downloadLogs}
                   disabled={logBuffer.buffer.length === 0}
@@ -732,7 +711,7 @@ export function LogsPage() {
                   <IconTrash2 size={16} />
                 </Button>
                 <Button
-                  variant="secondary"
+                  variant="ghost"
                   size="sm"
                   onClick={() => setFullscreenLogs((prev) => !prev)}
                   className={styles.actionButton}
@@ -751,9 +730,22 @@ export function LogsPage() {
               </div>
             </div>
 
+            <div className={styles.notices}>
+              {wasReset && (
+                <div className={styles.notice} role="status">
+                  {t('logs.cursor_reset_notice')}
+                </div>
+              )}
+              {historyEvicted && (
+                <div className={styles.notice} role="status">
+                  {t('logs.history_evicted')}
+                </div>
+              )}
+            </div>
+
             <div className={styles.viewerArea}>
               {loading && logBuffer.buffer.length === 0 ? (
-                <div className="hint">{t('logs.loading')}</div>
+                <div className={styles.viewerHint}>{t('logs.loading')}</div>
               ) : logBuffer.buffer.length > 0 && filteredLines.length > 0 ? (
                 <div
                   ref={logViewerRef}
@@ -784,36 +776,44 @@ export function LogsPage() {
                       <div className={styles.loadMoreStats}>
                         <span>{t('logs.loaded_lines', { count: parsedVisibleLines.length })}</span>
                         {removedCount > 0 && (
-                          <span className={styles.loadMoreCount}>
-                            {t('logs.filtered_lines', { count: removedCount })}
-                          </span>
+                          <span>{t('logs.filtered_lines', { count: removedCount })}</span>
                         )}
-                        <span className={styles.loadMoreCount}>
-                          {t('logs.hidden_lines', { count: logState.visibleFrom })}
-                        </span>
+                        <span>{t('logs.hidden_lines', { count: logState.visibleFrom })}</span>
                       </div>
                     </div>
                   )}
                   {showRawLogs ? (
                     <pre className={styles.rawLog} spellCheck={false}>
                       {parsedVisibleLines.map((line) => (
-                        <span key={line.id} data-log-id={line.id} style={{ display: 'block' }}>
-                          {line.raw || '\u00a0'}
+                        <span key={line.id} data-log-id={line.id} className={styles.rawLine}>
+                          {line.raw ? highlight(line.raw) : ' '}
                         </span>
                       ))}
                     </pre>
                   ) : (
                     <div className={styles.logList}>
                       {parsedVisibleLines.map((line) => {
-                        const rowClassNames = [styles.logRow];
-                        if (line.level === 'warn') rowClassNames.push(styles.rowWarn);
-                        if (line.level === 'error' || line.level === 'fatal')
-                          rowClassNames.push(styles.rowError);
+                        const levelTone =
+                          line.level === 'error' || line.level === 'fatal'
+                            ? 'error'
+                            : line.level === 'warn'
+                              ? 'warn'
+                              : line.level === 'info'
+                                ? 'info'
+                                : 'quiet';
+                        const statusTone =
+                          typeof line.statusCode !== 'number'
+                            ? undefined
+                            : line.statusCode >= 500
+                              ? 'error'
+                              : line.statusCode >= 400
+                                ? 'warn'
+                                : 'ok';
                         return (
                           <div
                             key={line.id}
                             data-log-id={line.id}
-                            className={rowClassNames.join(' ')}
+                            className={styles.logRow}
                             onDoubleClick={() => {
                               void copyLogLine(line.raw);
                             }}
@@ -824,34 +824,22 @@ export function LogsPage() {
                             <div className={styles.timestamp}>{line.timestamp || ''}</div>
                             <div className={styles.rowMain}>
                               {line.level && (
-                                <span
-                                  className={[
-                                    styles.badge,
-                                    line.level === 'info' ? styles.levelInfo : '',
-                                    line.level === 'warn' ? styles.levelWarn : '',
-                                    line.level === 'error' || line.level === 'fatal'
-                                      ? styles.levelError
-                                      : '',
-                                    line.level === 'debug' ? styles.levelDebug : '',
-                                    line.level === 'trace' ? styles.levelTrace : '',
-                                  ]
-                                    .filter(Boolean)
-                                    .join(' ')}
-                                >
-                                  {line.level.toUpperCase()}
+                                <span className={styles.level} data-tone={levelTone}>
+                                  <span className={styles.levelDot} aria-hidden="true" />
+                                  {line.level}
                                 </span>
                               )}
 
                               {line.source && (
                                 <span className={styles.source} title={line.source}>
-                                  {line.source}
+                                  {highlight(line.source)}
                                 </span>
                               )}
 
                               {line.requestId && (
                                 <button
                                   type="button"
-                                  className={[styles.badge, styles.requestIdBadge].join(' ')}
+                                  className={styles.requestId}
                                   title={t('logs.view_request', { id: line.requestId })}
                                   aria-label={t('logs.view_request', { id: line.requestId })}
                                   onClick={() =>
@@ -866,19 +854,7 @@ export function LogsPage() {
                               )}
 
                               {typeof line.statusCode === 'number' && (
-                                <span
-                                  className={[
-                                    styles.badge,
-                                    styles.statusBadge,
-                                    line.statusCode >= 200 && line.statusCode < 300
-                                      ? styles.statusSuccess
-                                      : line.statusCode >= 300 && line.statusCode < 400
-                                        ? styles.statusInfo
-                                        : line.statusCode >= 400 && line.statusCode < 500
-                                          ? styles.statusWarn
-                                          : styles.statusError,
-                                  ].join(' ')}
-                                >
+                                <span className={styles.statusCode} data-tone={statusTone}>
                                   {line.statusCode}
                                 </span>
                               )}
@@ -886,20 +862,16 @@ export function LogsPage() {
                               {line.latency && <span className={styles.pill}>{line.latency}</span>}
                               {line.ip && <span className={styles.pill}>{line.ip}</span>}
 
-                              {line.method && (
-                                <span className={[styles.badge, styles.methodBadge].join(' ')}>
-                                  {line.method}
-                                </span>
-                              )}
+                              {line.method && <span className={styles.method}>{line.method}</span>}
 
                               {line.path && (
                                 <span className={styles.path} title={line.path}>
-                                  {line.path}
+                                  {highlight(line.path)}
                                 </span>
                               )}
 
                               {line.message && (
-                                <span className={styles.message}>{line.message}</span>
+                                <span className={styles.message}>{highlight(line.message)}</span>
                               )}
                               <Button
                                 variant="ghost"
@@ -937,10 +909,30 @@ export function LogsPage() {
                   )}
                 />
               ) : (
-                <EmptyState title={t('logs.empty_title')} description={t('logs.empty_desc')} />
+                <EmptyState title={t('logs.empty_title')} />
+              )}
+
+              {!isFollowing && (
+                <button type="button" className={styles.followPill} onClick={resumeFollowing}>
+                  {t('logs.resume_following', { count: pendingLines })}
+                </button>
               )}
             </div>
-          </Card>
+
+            <footer className={styles.statusBar}>
+              <span className={styles.bufferStatus}>
+                {t('logs.buffer_scope', {
+                  count: logBuffer.buffer.length,
+                  matched: filteredLines.length,
+                })}
+              </span>
+              {lastUpdated && (
+                <span>
+                  {t('logs.last_updated', { time: new Date(lastUpdated).toLocaleTimeString() })}
+                </span>
+              )}
+            </footer>
+          </section>
         )}
 
         {activeTab === 'errors' && (
@@ -960,7 +952,7 @@ export function LogsPage() {
             }
           >
             <div className={styles.errorBody}>
-              <div className="hint">{t('logs.error_logs_description')}</div>
+              <p className={styles.errorDescription}>{t('logs.error_logs_description')}</p>
 
               {requestLogEnabled && (
                 <div>
@@ -974,21 +966,25 @@ export function LogsPage() {
 
               <div className={styles.errorPanel}>
                 {loadingErrors ? (
-                  <div className="hint">{t('common.loading')}</div>
+                  <div className={styles.viewerHint}>{t('common.loading')}</div>
                 ) : errorLogs.length === 0 ? (
-                  <div className="hint">{t('logs.error_logs_empty')}</div>
+                  <div className={styles.viewerHint}>{t('logs.error_logs_empty')}</div>
                 ) : (
-                  <div className="item-list">
+                  <ul className={styles.errorList}>
                     {errorLogs.map((item) => (
-                      <div key={item.name} className="item-row">
-                        <div className="item-meta">
-                          <div className="item-title">{item.name}</div>
-                          <div className="item-subtitle">
-                            {item.size ? `${(item.size / 1024).toFixed(1)} KB` : ''}{' '}
-                            {item.modified ? formatUnixTimestamp(item.modified) : ''}
-                          </div>
+                      <li key={item.name} className={styles.errorRow}>
+                        <div className={styles.errorMeta}>
+                          <span className={styles.errorName}>{item.name}</span>
+                          <span className={styles.errorSub}>
+                            {item.size ? (
+                              <span>{`${(item.size / 1024).toFixed(1)} KB`}</span>
+                            ) : null}
+                            {item.modified ? (
+                              <span>{formatUnixTimestamp(item.modified)}</span>
+                            ) : null}
+                          </span>
                         </div>
-                        <div className="item-actions">
+                        <div className={styles.errorActions}>
                           <Button
                             variant="secondary"
                             size="sm"
@@ -998,7 +994,7 @@ export function LogsPage() {
                             disabled={disableControls}
                           >
                             <span className={styles.buttonContent}>
-                              <IconEye size={16} />
+                              <IconEye size={14} />
                               {t('logs.error_logs_open')}
                             </span>
                           </Button>
@@ -1011,9 +1007,9 @@ export function LogsPage() {
                             {t('logs.error_logs_download')}
                           </Button>
                         </div>
-                      </div>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
               </div>
             </div>

@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { CONFIG_TAB_ICONS } from '../../constants';
 import type { ConfigSectionProps } from '../../types';
 import { getValidationMessage } from '../blocks/shared';
 import { SectionCard } from '../SectionCard';
@@ -16,8 +15,6 @@ import {
   SponsorHintSpacer,
 } from '../fields/sharedFields';
 
-const Icon = CONFIG_TAB_ICONS.common;
-
 /**
  * 「常用」tab：原简单模式的 8 个高频字段，别名视图（不占分区序号）。
  * 渲染源与正典分区共享（sharedFields），数据同为 useVisualConfig 一份状态。
@@ -26,7 +23,6 @@ export function SectionCommon({
   values,
   validationErrors,
   disabled,
-  animateIn,
   onChange,
 }: ConfigSectionProps) {
   const { t } = useTranslation();
@@ -34,10 +30,8 @@ export function SectionCommon({
 
   return (
     <SectionCard
-      icon={<Icon size={16} />}
       title={t('config_management.visual.sections.common.title')}
       description={t('config_management.visual.sections.common.description')}
-      animateIn={animateIn}
     >
       <FieldStack>
         <FieldGrid>

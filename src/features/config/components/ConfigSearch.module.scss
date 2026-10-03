@@ -1,63 +1,50 @@
 @use '../../../styles/mixins' as *;
 
-/* 全局字段搜索 combobox：入场 160ms 淡入上浮，关闭瞬时 */
+/* Field search combobox in the header controls. The results list is a popover. */
 
 .searchBox {
   position: relative;
-  min-width: 0;
-  flex: 1 1 240px;
-  max-width: 420px;
+  flex: 0 1 280px;
+  min-width: 200px;
 
   :global(.form-group) {
     margin-bottom: 0;
   }
 
   :global(.input) {
-    height: 38px;
-    border-radius: 10px;
-    font-size: 13px;
+    height: 32px;
+    font-size: $text-dense;
   }
 }
 
 .searchControl {
-  padding-right: 38px !important;
+  padding-right: 32px !important;
 }
 
 .searchIcon {
   display: inline-flex;
   align-items: center;
-  color: var(--text-tertiary);
+  color: var(--ink-faint);
   pointer-events: none;
 }
 
 .searchResults {
   position: absolute;
-  z-index: 20;
-  top: calc(100% + 6px);
-  left: 0;
+  z-index: $z-dropdown;
+  top: calc(100% + 4px);
   right: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  width: max(100%, 360px);
+  max-width: calc(100vw - 32px);
   max-height: 320px;
   overflow-y: auto;
-  padding: 6px;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  background: var(--floating-surface, var(--bg-primary));
-  box-shadow: var(
-    --floating-shadow,
-    0 14px 32px color-mix(in srgb, var(--text-primary) 16%, transparent)
-  );
-  transform-origin: top center;
-  animation: config-search-in var(--dur-press, 160ms) var(--ease-out-strong, ease-out) both;
-}
-
-@keyframes config-search-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
+  padding: 4px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  background: var(--panel-raised);
+  box-shadow: var(--shadow-popover);
 }
 
 .searchResultItem {
@@ -67,66 +54,71 @@
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  padding: 9px 10px;
-  border-radius: 8px;
+  min-height: 32px;
+  padding: 6px 8px;
+  border-radius: var(--radius-control);
   text-align: left;
-  transition: background-color $transition-fast;
+  transition: background-color var(--dur-hover) var(--ease-standard);
 
   &:hover {
-    background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+    background: var(--panel-hover);
   }
 }
 
-/* Keyboard/pointer "active" option — the aria-activedescendant target. */
+/* Keyboard/pointer active option, the aria-activedescendant target. */
 .searchResultItemActive {
-  background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  background: var(--panel-hover);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .searchResultLabel {
   display: inline-flex;
   align-items: baseline;
-  gap: 7px;
+  gap: 8px;
   min-width: 0;
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 1.3;
+  color: var(--ink);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
 }
 
 .searchResultQualifier {
-  color: var(--text-tertiary);
-  font-size: 11px;
-  font-weight: 600;
+  color: var(--ink-faint);
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-weight: 400;
   white-space: nowrap;
 }
 
 .searchResultSection {
   flex: 0 0 auto;
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 650;
+  color: var(--ink-muted);
+  font-size: $text-caption;
+  line-height: $lh-caption;
   white-space: nowrap;
 }
 
 .searchEmpty {
-  padding: 12px 10px;
-  color: var(--text-secondary);
-  font-size: 13px;
+  padding: 12px 8px;
+  color: var(--ink-muted);
+  font-size: $text-dense;
+  line-height: $lh-dense;
   text-align: center;
 }
 
 @include mobile {
   .searchBox {
-    max-width: none;
-    flex-basis: 100%;
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .searchResults {
+    left: 0;
+    width: auto;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .searchResults {
-    animation: none;
-  }
-
   .searchResultItem {
     transition: none;
   }

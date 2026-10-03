@@ -26,7 +26,7 @@ const getSystemTheme = (): ResolvedTheme => {
 };
 
 const resolveAutoTheme = (): AppliedTheme => {
-  return getSystemTheme() === 'dark' ? 'dark' : 'white';
+  return getSystemTheme();
 };
 
 const normalizeResolvedTheme = (theme: AppliedTheme): ResolvedTheme => {
@@ -43,25 +43,17 @@ const resolveTheme = (theme: Theme): AppliedTheme => {
   return theme;
 };
 
+// Dark is the stylesheet default (:root). Every resolved theme is written explicitly so the
+// attribute always reflects what is on screen.
 const applyTheme = (resolved: AppliedTheme) => {
-  if (resolved === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    return;
-  }
-
-  if (resolved === 'white') {
-    document.documentElement.setAttribute('data-theme', 'white');
-    return;
-  }
-
-  document.documentElement.removeAttribute('data-theme');
+  document.documentElement.setAttribute('data-theme', resolved);
 };
 
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
-      theme: 'auto',
-      resolvedTheme: 'light',
+      theme: 'dark',
+      resolvedTheme: 'dark',
 
       setTheme: (theme) => {
         const resolved = resolveTheme(theme);

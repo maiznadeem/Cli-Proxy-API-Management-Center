@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { IconRefreshCw, IconUpload } from '@/components/ui/icons';
-import { useRevealGroup } from '@/hooks/motion';
 import styles from './VaultHeader.module.scss';
 
 export type VaultHeaderProps = {
@@ -14,14 +14,16 @@ export type VaultHeaderProps = {
   disableControls: boolean;
   onUpload: () => void;
   onRefresh: () => void;
+  onOpenOAuth?: () => void;
   refreshingCredentials?: boolean;
   credentialRefreshDisabled?: boolean;
   onRefreshCredentials?: () => void;
 };
 
 /**
- * 凭证库头部：eyebrow（▍游标前缀）+ 标题 + mono 遥测 meta 行 + 动作区。
- * meta 行同时承载 VaultPulse 的文字等价信息（谱条本身 aria-hidden）。
+ * Credentials page header: title, a one-line summary, and the page actions.
+ * Summary parts are separated by spacing and a hairline, not punctuation; the summary is
+ * also the text equivalent of the health strip below it.
  */
 export function VaultHeader(props: VaultHeaderProps) {
   const {
@@ -34,34 +36,28 @@ export function VaultHeader(props: VaultHeaderProps) {
     disableControls,
     onUpload,
     onRefresh,
+    onOpenOAuth,
     refreshingCredentials = false,
     credentialRefreshDisabled = false,
     onRefreshCredentials,
   } = props;
   const { t } = useTranslation();
-  const revealRef = useRevealGroup<HTMLElement>();
 
   return (
-    <header className={styles.header} ref={revealRef}>
+    <header className={styles.header}>
       <div className={styles.copy}>
-        <h1 className={styles.title} data-reveal>
-          {t('auth_files.title')}
-        </h1>
-        <p className={styles.meta} data-reveal>
+        <h1 className={styles.title}>{t('auth_files.title')}</h1>
+        <p className={styles.meta}>
           <span className={styles.metaTotal}>
             {t('auth_files.meta_total', { count: totalCount })}
           </span>
-          <span className={styles.metaDot} aria-hidden="true">
-            ·
-          </span>
+          <span className={styles.metaSep} aria-hidden="true" />
           <span className={activeCount > 0 ? styles.metaActive : styles.metaMuted}>
             {t('auth_files.meta_active', { count: activeCount })}
           </span>
           {problemCount > 0 && (
             <>
-              <span className={styles.metaDot} aria-hidden="true">
-                ·
-              </span>
+              <span className={styles.metaSep} aria-hidden="true" />
               <span className={styles.metaProblem}>
                 {t('auth_files.meta_problem', { count: problemCount })}
               </span>
@@ -69,38 +65,46 @@ export function VaultHeader(props: VaultHeaderProps) {
           )}
         </p>
       </div>
-      <div className={styles.actions} data-reveal>
+      <div className={styles.actions}>
+        <Button
+          variant="ghost"
+          onClick={onRefresh}
+          disabled={loading || refreshing}
+          className={styles.iconAction}
+          title={t('common.refresh')}
+          aria-label={t('common.refresh')}
+        >
+          <IconRefreshCw
+            size={16}
+            aria-hidden="true"
+            className={refreshing ? styles.spinning : undefined}
+          />
+        </Button>
         {onRefreshCredentials && (
-          <button
-            type="button"
-            className={styles.ghostAction}
+          <Button
+            variant="ghost"
             onClick={onRefreshCredentials}
             disabled={
               disableControls || loading || refreshingCredentials || credentialRefreshDisabled
             }
           >
-            {refreshingCredentials ? <LoadingSpinner size={14} /> : <IconRefreshCw size={14} />}
+            {refreshingCredentials ? (
+              <LoadingSpinner size={14} />
+            ) : (
+              <IconRefreshCw size={14} aria-hidden="true" />
+            )}
             {t('auth_files.refresh_all_button')}
-          </button>
+          </Button>
         )}
-        <button
-          type="button"
-          className={styles.ghostAction}
-          onClick={onRefresh}
-          disabled={loading || refreshing}
-        >
-          <IconRefreshCw size={14} className={refreshing ? styles.spinning : undefined} />
-          {t('common.refresh')}
-        </button>
-        <button
-          type="button"
-          className={styles.primaryAction}
-          onClick={onUpload}
-          disabled={disableControls || uploading}
-        >
-          {uploading ? <LoadingSpinner size={14} /> : <IconUpload size={15} />}
+        {onOpenOAuth && (
+          <Button variant="secondary" onClick={onOpenOAuth}>
+            {t('auth_files.empty_oauth_link')}
+          </Button>
+        )}
+        <Button variant="primary" onClick={onUpload} disabled={disableControls || uploading}>
+          {uploading ? <LoadingSpinner size={14} /> : <IconUpload size={14} aria-hidden="true" />}
           {t('auth_files.upload_button')}
-        </button>
+        </Button>
       </div>
     </header>
   );

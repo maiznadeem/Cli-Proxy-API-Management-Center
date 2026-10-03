@@ -6,6 +6,7 @@ import {
   niceCeil,
   providerLabel,
   splitWindowMinutes,
+  TONE_COLORS,
   toneForSuccessRate,
 } from '../src/features/dashboard/utils';
 
@@ -94,6 +95,17 @@ describe('toneForSuccessRate', () => {
     expect(toneForSuccessRate(94.9)).toBe('warning');
     expect(toneForSuccessRate(80)).toBe('warning');
     expect(toneForSuccessRate(79.9)).toBe('critical');
+  });
+});
+
+describe('TONE_COLORS', () => {
+  test('paints severity with capacity tokens only, never interactive blue', () => {
+    expect(TONE_COLORS).toEqual({
+      good: 'var(--cap-plenty)',
+      warning: 'var(--cap-watch)',
+      critical: 'var(--cap-depleted)',
+      idle: 'var(--ink-ghost)',
+    });
   });
 });
 

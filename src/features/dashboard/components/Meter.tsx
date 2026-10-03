@@ -1,12 +1,5 @@
-import { toneForSuccessRate, type MeterTone } from '../utils';
+import { TONE_COLORS, toneForSuccessRate, type MeterTone } from '../utils';
 import styles from './Meter.module.scss';
-
-const TONE_COLORS: Record<MeterTone, string> = {
-  good: 'var(--viz-success, #10b981)',
-  warning: 'var(--amber-color)',
-  critical: 'var(--viz-failure, #c65746)',
-  idle: 'var(--text-quaternary)',
-};
 
 interface MeterProps {
   /** 0–100；null 表示窗口内无请求 */
@@ -17,8 +10,8 @@ interface MeterProps {
 }
 
 /**
- * 细条计量器：填充色承载严重度，轨道是同色淡化步阶，
- * 因此在整条上都能读出状态。
+ * 细条计量器：填充色取容量色板，轨道是中性 cap-track。
+ * 挂载时（即数据到达时）走一次填充动画，之后不再随滚动或刷新重播。
  */
 export function Meter({ value, tone, ariaLabel, className }: MeterProps) {
   const resolvedTone = tone ?? toneForSuccessRate(value);

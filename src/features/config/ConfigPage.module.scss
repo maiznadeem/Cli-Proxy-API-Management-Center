@@ -1,33 +1,23 @@
 @use '../../styles/mixins' as *;
 
-/* 配置面板页壳：纯布局，视觉细节都在各组件的 colocated 模块里。 */
+/* Settings page shell: layout only. Visual detail lives in each component module. */
 
 .page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   width: 100%;
   min-width: 0;
-  /* 悬浮保存栏出现时由 --config-action-bar-height 撑出底部留白 */
+  /* Room for the floating save bar while it is shown (--config-action-bar-height). */
   padding-bottom: calc(
     var(--config-action-bar-height, 0px) + 16px + env(safe-area-inset-bottom, 0px)
   );
 }
 
-/* 工具栏行：模式相关搜索（字段搜索 / 源码搜索）+ 右端的模式切换 */
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 10px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
 .tabsRow {
   display: flex;
   min-width: 0;
-  border-bottom: 1px solid var(--border-color);
+  margin-bottom: -8px;
 }
 
 .panel {

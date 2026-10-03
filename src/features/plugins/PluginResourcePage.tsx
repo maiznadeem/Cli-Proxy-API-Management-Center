@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { pluginsApi } from '@/services/api';
 import { useAuthStore } from '@/stores';
@@ -86,12 +87,18 @@ export function PluginResourcePage() {
   }, [data?.plugins, menuIndex, pluginID]);
 
   const iframeSrc = resource ? resolvePluginAssetURL(resource.menu.path, apiBase) : '';
+  const menuTitle = resource?.menu.menu.trim() ?? '';
 
   return (
     <div className={styles.page}>
       {loading ? (
-        <div className={styles.stateShell}>
-          <div className={styles.statusPanel}>{t('common.loading')}</div>
+        <div className={styles.stateShell} aria-busy="true">
+          <div className={styles.skeletonStack}>
+            <span className={styles.srOnly}>{t('common.loading')}</span>
+            <Skeleton height={16} width="32%" />
+            <Skeleton height={56} rounded={10} />
+            <Skeleton height={56} rounded={10} />
+          </div>
         </div>
       ) : error ? (
         <div className={styles.stateShell}>
@@ -112,13 +119,24 @@ export function PluginResourcePage() {
           />
         </div>
       ) : (
-        <iframe
-          className={styles.frame}
-          src={iframeSrc}
-          title={resource.label}
-          referrerPolicy="no-referrer"
-          allow="clipboard-read; clipboard-write"
-        />
+        <>
+          <div className={styles.breadcrumb}>
+            <span className={styles.crumbPlugin}>{resource.pluginTitle}</span>
+            {menuTitle ? (
+              <>
+                <span className={styles.crumbSep} aria-hidden="true" />
+                <span className={styles.crumbMenu}>{menuTitle}</span>
+              </>
+            ) : null}
+          </div>
+          <iframe
+            className={styles.frame}
+            src={iframeSrc}
+            title={resource.label}
+            referrerPolicy="no-referrer"
+            allow="clipboard-read; clipboard-write"
+          />
+        </>
       )}
     </div>
   );

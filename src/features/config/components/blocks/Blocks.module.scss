@@ -1,130 +1,168 @@
 @use '../../../../styles/mixins' as *;
 
-/* 区块编辑器（API 密钥 / 字符串列表 / 插件源认证 / 载荷规则）的共享样式。
-   规则从旧 VisualConfigEditor.module.scss 收编，几何统一到 10px 圆角并引用动效 tokens。 */
+/* Shared styles for the block editors: API keys, string lists, plugin-store auth and
+   payload rules. Lists are rows with 32px ghost icon actions; adds are dashed buttons. */
 
-/* ---------- 可展开输入 ---------- */
+/* ---------- Expandable input ---------- */
 
 .expandableInputWrapper {
   position: relative;
   display: flex;
   align-items: flex-start;
-  min-width: 0;
   flex: 1;
+  min-width: 0;
 }
 
 .expandableInputWrapper > .expandableTextarea,
 .expandableInputWrapper > :global(.input) {
   flex: 1;
   min-width: 0;
-  padding-right: 28px;
-}
-
-.expandableTextarea {
-  resize: none;
-  min-height: 60px;
-  overflow: hidden;
-  line-height: 1.5;
   padding-right: 32px;
 }
 
-.expandableToggle {
-  position: absolute;
-  right: 7px;
-  top: 50%;
-  z-index: 1;
-  transform: translateY(-50%);
-  padding: 2px;
-  border: 0;
-  background: none;
-  color: var(--text-secondary);
-  font-size: 10px;
-  line-height: 1;
-  cursor: pointer;
-  opacity: 0.58;
-  transition: opacity var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+.expandableTextarea {
+  min-height: 56px;
+  overflow: hidden;
+  resize: none;
+}
 
-  &:hover {
-    opacity: 1;
+.expandableToggle {
+  @include button-reset;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-control);
+  color: var(--ink-faint);
+  transition:
+    color var(--dur-hover) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard);
+
+  &:hover:not(:disabled) {
+    color: var(--ink);
+    background: var(--panel-hover);
   }
 
   &:disabled {
-    cursor: default;
-    opacity: 0.35;
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
   }
 }
 
-.expandableInputExpanded .expandableToggle {
-  top: 9px;
-  right: 12px;
-  transform: none;
-}
-
-/* ---------- 通用块布局 ---------- */
+/* ---------- Block layout ---------- */
 
 .blockHeaderRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 8px 12px;
 }
 
 .blockStack {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .blockLabel {
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.4;
+  color: var(--ink);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  font-weight: 500;
 }
 
+/* Add actions: a dashed 32px button that turns accent on hover.
+   The doubled class outranks the global .btn variant and size rules. */
 .actionRow {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
+}
+
+.actionRow.actionRow {
+  > :global(.btn) {
+    height: 32px;
+    padding: 0 12px;
+    border: 1px dashed var(--hairline-strong);
+    background: transparent;
+    color: var(--ink-muted);
+
+    &:hover:not(:disabled) {
+      border-style: solid;
+      border-color: var(--accent);
+      background: var(--accent-10);
+      color: var(--ink);
+    }
+  }
+}
+
+/* 32px square ghost icon action (copy, edit, delete). */
+.iconAction:global(.btn) {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+
+  > span {
+    display: inline-flex;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .iconActionDanger.iconActionDanger:global(.btn):hover:not(:disabled) {
+    color: var(--cap-depleted);
+  }
 }
 
 .emptyState {
-  border: 1px dashed var(--border-color);
-  border-radius: 10px;
   padding: 16px;
-  color: var(--text-secondary);
-  text-align: center;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-panel);
   background: transparent;
+  color: var(--ink-muted);
+  font-size: $text-dense;
+  line-height: $lh-dense;
+  text-align: center;
 }
 
-/* ---------- 规则卡 ---------- */
+/* ---------- Rule cards ---------- */
 
 .ruleCard {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--bg-secondary) 64%, transparent);
+  padding: 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  background: var(--panel-sunken);
 }
 
 .ruleCardHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 8px 12px;
 }
 
 .ruleCardTitle {
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.25;
+  color: var(--ink);
+  font-size: $text-body;
+  line-height: $lh-body;
+  font-weight: 600;
 }
 
-/* ---------- 字符串列表 ---------- */
+/* ---------- String list ---------- */
 
 .stringList {
   display: flex;
@@ -134,46 +172,44 @@
 
 .stringListRow {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px;
 }
 
-/* ---------- API 密钥弹窗 ---------- */
+/* ---------- API key modal ---------- */
 
 .apiKeyModalInputRow {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 8px;
 
   :global(.input) {
     flex: 1;
+    font-family: $font-mono;
+    font-size: $text-dense;
   }
 }
 
-/* 强度参考条：四段承载档位，颜色承载严重度。
-   段的填充走 scaleX（只碰 transform），键入时逐字重算也不掉帧。 */
+/* Strength meter: four segments coloured from the capacity scale. Fill uses scaleX only. */
 
 .strengthMeter {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 10px;
+  gap: 4px;
+  margin-top: 8px;
 }
 
 .strengthTrack {
   display: flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 .strengthSegment {
   flex: 1;
   height: 4px;
-  border-radius: $radius-full;
   overflow: hidden;
-  // 轨道 = 填充色的淡化步阶，未点亮的段也带着当前状态
-  background: color-mix(in srgb, var(--strength-color) 16%, transparent);
-  transition: background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+  border-radius: var(--radius-pill);
+  background: var(--cap-track);
 }
 
 .strengthSegmentFill {
@@ -183,20 +219,18 @@
   background: var(--strength-color);
   transform: scaleX(0);
   transform-origin: left center;
-  // 段内比常规交互再快一档，把预算让给段间的 stagger
   transition:
-    transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out),
-    background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+    transform var(--dur-press) var(--ease-standard),
+    background-color var(--dur-hover) var(--ease-standard);
 
-  // 延迟写在目标态上：点亮时依次排队，熄灭是系统响应，立刻发生
+  /* The delay sits on the target state: filling cascades, emptying is immediate. */
   &[data-filled='true'] {
     transform: scaleX(1);
     transition-delay: var(--segment-delay, 0ms);
   }
 
-  // 降级只去掉位移和排队，颜色变化保留（它才是状态本身）
   @media (prefers-reduced-motion: reduce) {
-    transition: background-color var(--dur-hover, 200ms) linear;
+    transition: none;
 
     &[data-filled='true'] {
       transition-delay: 0ms;
@@ -206,35 +240,34 @@
 
 .strengthLabel {
   min-height: 16px;
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--strength-color);
-  transition: color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+  color: var(--ink-muted);
+  font-size: $text-caption;
+  line-height: $lh-caption;
 }
 
-/* ---------- 插件源认证 ---------- */
+/* ---------- Plugin store auth ---------- */
 
 .storeAuthEditor {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .storeAuthEmpty {
   margin: 0;
-  color: var(--text-secondary);
-  font-size: 13px;
-  line-height: 1.5;
+  color: var(--ink-muted);
+  font-size: $text-dense;
+  line-height: $lh-dense;
 }
 
 .storeAuthRule {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--bg-secondary) 42%, transparent);
+  padding: 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  background: var(--panel-sunken);
 }
 
 .storeAuthRuleHeader {
@@ -246,80 +279,81 @@
 
   strong {
     min-width: 0;
-    overflow: hidden;
-    color: var(--text-primary);
-    font-size: 13px;
-    font-weight: 700;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    color: var(--ink);
+    font-family: $font-mono;
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    font-weight: 500;
+    @include text-ellipsis;
   }
 }
 
 .storeAuthGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 
   @include mobile {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 .storeAuthField {
   display: flex;
-  min-width: 0;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  min-width: 0;
 
   > span {
-    color: var(--text-secondary);
-    font-size: 12px;
-    font-weight: 700;
+    color: var(--ink);
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    font-weight: 500;
   }
 }
 
 .storeAuthApplyTo {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 4px;
 
   > span {
-    color: var(--text-secondary);
-    font-size: 12px;
-    font-weight: 700;
+    color: var(--ink);
+    font-size: $text-dense;
+    line-height: $lh-dense;
+    font-weight: 500;
   }
 
   small {
-    color: var(--text-tertiary);
-    font-size: 12px;
-    line-height: 1.45;
+    color: var(--ink-faint);
+    font-size: $text-caption;
+    line-height: $lh-caption;
   }
 }
 
 .storeAuthCheckboxes {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px 16px;
 }
 
 .storeAuthCheckbox {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 28px;
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 650;
-  line-height: 1.4;
+  gap: 8px;
+  min-height: 32px;
+  color: var(--ink);
+  font-size: $text-dense;
+  line-height: $lh-dense;
 
   input {
     width: 14px;
     height: 14px;
-    accent-color: var(--primary-color);
+    accent-color: var(--accent);
   }
 }
 
-/* ---------- 载荷规则 ---------- */
+/* ---------- Payload rules ---------- */
 
 .payloadRuleModelRow {
   display: grid;
@@ -342,15 +376,15 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-left: 10px;
-  padding-left: 12px;
-  border-left: 2px solid var(--border-color);
+  margin-left: 8px;
+  padding-left: 16px;
+  border-left: 1px solid var(--hairline-strong);
 }
 
 .payloadAdvancedGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .payloadHeaderRow {
@@ -374,13 +408,14 @@
 .payloadRuleParamGroup {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .payloadJsonInput {
   min-height: 112px;
   resize: vertical;
   font-family: $font-mono;
+  font-size: $text-dense;
 }
 
 .payloadParamError {
@@ -399,7 +434,7 @@
   justify-self: start;
 }
 
-/* ---------- 响应式 ---------- */
+/* ---------- Responsive ---------- */
 
 @media (max-width: 900px) {
   .payloadRuleModelRow,
@@ -423,7 +458,7 @@
 @include mobile {
   .storeAuthRule,
   .ruleCard {
-    padding: 14px;
+    padding: 12px;
   }
 
   .blockHeaderRow,
@@ -431,31 +466,17 @@
     align-items: stretch;
   }
 
-  .blockHeaderRow :global(.btn),
-  .ruleCardHeader :global(.btn),
-  .actionRow :global(.btn),
-  .stringListRow :global(.btn) {
+  .ruleCardHeader :global(.btn) {
+    width: 100%;
+  }
+
+  .actionRow > :global(.btn) {
     width: 100%;
     justify-content: center;
   }
-
-  .actionRow {
-    justify-content: stretch;
-  }
-
-  .stringListRow {
-    align-items: stretch;
-  }
 }
 
-@media (max-width: 380px) {
-  .storeAuthRule,
-  .ruleCard {
-    padding: 12px;
-  }
-}
-
-/* ---------- 无障碍 ---------- */
+/* ---------- Reduced motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {
   .expandableToggle {

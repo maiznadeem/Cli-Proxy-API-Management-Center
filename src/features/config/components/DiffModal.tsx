@@ -258,19 +258,7 @@ export function DiffModal({
               {diff.hunks.map((hunk, hunkIdx) => (
                 <div key={hunkIdx} className={styles.hunk}>
                   <div className={styles.hunkHeader}>
-                    <span className={styles.hunkGutter}>
-                      <svg
-                        className={styles.hunkExpandIcon}
-                        viewBox="0 0 16 16"
-                        width="12"
-                        height="12"
-                      >
-                        <path
-                          d="M8.177 1.677l2.896 2.896a.25.25 0 01-.177.427H8.75v1.25a.75.75 0 01-1.5 0V5H5.104a.25.25 0 01-.177-.427l2.896-2.896a.25.25 0 01.354 0zM7.25 11.75a.75.75 0 011.5 0V13h2.146a.25.25 0 01.177.427l-2.896 2.896a.25.25 0 01-.354 0l-2.896-2.896A.25.25 0 015.104 13H7.25v-1.25z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </span>
+                    <span className={styles.hunkGutter} />
                     <span className={styles.hunkGutter} />
                     <span className={styles.hunkText}>
                       @@ -{hunk.oldStart},{hunk.oldCount} +{hunk.newStart},{hunk.newCount} @@

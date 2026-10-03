@@ -59,25 +59,21 @@ export function OAuthModelAliasCard(props: OAuthModelAliasCardProps) {
       <header className={styles.panelHead}>
         <h3 className={styles.panelTitle}>{t('oauth_model_alias.title')}</h3>
         <div className={styles.panelExtra}>
-          <div className={styles.viewModeSwitch}>
-            <Button
-              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => onViewModeChange('list')}
-              disabled={disableControls || modelAliasError !== null}
-              aria-pressed={viewMode === 'list'}
-            >
-              {t('oauth_model_alias.view_mode_list')}
-            </Button>
-            <Button
-              variant={viewMode === 'diagram' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => onViewModeChange('diagram')}
-              disabled={disableControls || modelAliasError !== null}
-              aria-pressed={viewMode === 'diagram'}
-            >
-              {t('oauth_model_alias.view_mode_diagram')}
-            </Button>
+          <div className={styles.viewModeSwitch} role="group" aria-label={t('oauth_model_alias.title')}>
+            {(['list', 'diagram'] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                className={`${styles.viewModeOption} ${
+                  viewMode === mode ? styles.viewModeOptionActive : ''
+                }`}
+                onClick={() => onViewModeChange(mode)}
+                disabled={disableControls || modelAliasError !== null}
+                aria-pressed={viewMode === mode}
+              >
+                {t(`oauth_model_alias.view_mode_${mode}`)}
+              </button>
+            ))}
           </div>
           <Button size="sm" onClick={onAdd} disabled={disableControls || modelAliasError !== null}>
             {t('oauth_model_alias.add')}

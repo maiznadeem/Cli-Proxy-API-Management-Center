@@ -1,6 +1,7 @@
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { IconTrash2 } from '@/components/ui/icons';
 import { makeClientId } from '@/types/visualConfig';
 import { ExpandableInput } from './ExpandableInput';
 import styles from './Blocks.module.scss';
@@ -52,8 +53,15 @@ export const StringListEditor = memo(function StringListEditor({
             onChange={(nextValue) => updateItem(index, nextValue)}
             disabled={disabled}
           />
-          <Button variant="ghost" size="sm" onClick={() => removeItem(index)} disabled={disabled}>
-            {t('config_management.visual.common.delete')}
+          <Button
+            variant="ghost"
+            className={`${styles.iconAction} ${styles.iconActionDanger}`}
+            onClick={() => removeItem(index)}
+            disabled={disabled}
+            title={t('config_management.visual.common.delete')}
+            aria-label={t('config_management.visual.common.delete')}
+          >
+            <IconTrash2 size={16} />
           </Button>
         </div>
       ))}

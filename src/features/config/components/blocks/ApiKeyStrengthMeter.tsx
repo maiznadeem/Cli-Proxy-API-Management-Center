@@ -8,12 +8,12 @@ import {
 import { segmentFillDelayMs } from './shared';
 import styles from './Blocks.module.scss';
 
-// 三档语义色 + 段数承担第四档的区分：翡翠绿留给「活的流量」，此处用语义 success。
+// Meter colours come from the capacity scale; segment count separates good from strong.
 const TIER_COLORS: Record<ApiKeyStrengthTier, string> = {
-  weak: 'var(--error-color)',
-  fair: 'var(--amber-color)',
-  good: 'var(--success-color)',
-  strong: 'var(--success-color)',
+  weak: 'var(--cap-depleted)',
+  fair: 'var(--cap-watch)',
+  good: 'var(--cap-plenty)',
+  strong: 'var(--cap-plenty)',
 };
 
 const SEGMENT_INDEXES = Array.from({ length: API_KEY_STRENGTH_SEGMENTS }, (_, index) => index);
@@ -42,7 +42,7 @@ export const ApiKeyStrengthMeter = memo(function ApiKeyStrengthMeter({ value }: 
       className={styles.strengthMeter}
       style={
         {
-          '--strength-color': empty ? 'var(--text-quaternary)' : TIER_COLORS[tier],
+          '--strength-color': empty ? 'var(--ink-ghost)' : TIER_COLORS[tier],
         } as CSSProperties
       }
     >
