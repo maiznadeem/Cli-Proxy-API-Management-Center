@@ -264,6 +264,10 @@
   background: var(--ink-muted);
 }
 
+.chartBox {
+  position: relative;
+}
+
 .chart {
   display: flex;
   align-items: stretch;
@@ -327,8 +331,7 @@
 
 .tooltip {
   position: absolute;
-  bottom: 24px;
-  left: 50%;
+  top: 8px;
   z-index: 5;
   transform: translateX(-50%);
   min-width: 168px;
