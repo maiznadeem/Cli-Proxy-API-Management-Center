@@ -1,5 +1,5 @@
 import type { UsageBucket, UsageStatsResponse } from '@/services/api/usageStats';
-import { computeCost, findPrice, type PricingTable, type UsageCounters } from './pricing';
+import { computeCost, resolvePrice, type PricingTable, type UsageCounters } from './pricing';
 
 export type UsageRange = 'today' | '7d' | '30d' | 'all';
 export const USAGE_RANGES: readonly UsageRange[] = ['today', '7d', '30d', 'all'];
@@ -40,7 +40,7 @@ export function formatUsd(value: number): string {
 export interface CostEstimate {
   /** null when no price applies. */
   value: number | null;
-  /** True when derived from blended rates rather than the bucket's own model. */
+  /** True when derived from blended rates or a family fallback rather than an exact row. */
   approx: boolean;
 }
 
@@ -60,8 +60,9 @@ export function blendedPrice(
   let priced = false;
   for (const row of byModel) {
     if (provider && row.provider && row.provider !== provider) continue;
-    const price = findPrice(row.key, table);
-    if (!price) continue;
+    const match = resolvePrice(row.key, table);
+    if (!match) continue;
+    const price = match.price;
     priced = true;
     const out = row.output + row.reasoning;
     tokens.input += row.input;
@@ -93,12 +94,12 @@ export function estimateBucket(
 ): CostEstimate {
   const counters: UsageCounters = bucket;
   if (kind === 'model') {
-    const price = findPrice(bucket.key, table);
-    return price ? { value: computeCost(counters, price), approx: false } : NO_PRICE;
+    const match = resolvePrice(bucket.key, table);
+    return match ? { value: computeCost(counters, match.price), approx: match.fallback } : NO_PRICE;
   }
   if (kind === 'session' && bucket.models?.length === 1) {
-    const price = findPrice(bucket.models[0], table);
-    return price ? { value: computeCost(counters, price), approx: false } : NO_PRICE;
+    const match = resolvePrice(bucket.models[0], table);
+    return match ? { value: computeCost(counters, match.price), approx: match.fallback } : NO_PRICE;
   }
   const blended = blendedPrice(
     data.by_model,
@@ -108,19 +109,27 @@ export function estimateBucket(
   return blended ? { value: computeCost(counters, blended), approx: true } : NO_PRICE;
 }
 
-/** Sum of exact per-model costs; models without a price are counted separately. */
+/**
+ * Sum of per-model costs. Models without any price are counted in `unpriced`; models
+ * priced through a family fallback are counted in `estimated`.
+ */
 export function estimateTotal(
   data: UsageStatsResponse,
   table: PricingTable
-): { value: number; unpriced: number } {
+): { value: number; unpriced: number; estimated: number } {
   let value = 0;
   let unpriced = 0;
+  let estimated = 0;
   for (const row of data.by_model) {
-    const price = findPrice(row.key, table);
-    if (price) value += computeCost(row, price);
-    else unpriced += 1;
+    const match = resolvePrice(row.key, table);
+    if (!match) {
+      unpriced += 1;
+      continue;
+    }
+    value += computeCost(row, match.price);
+    if (match.fallback) estimated += 1;
   }
-  return { value, unpriced };
+  return { value, unpriced, estimated };
 }
 
 export const sortByTotalDesc = (rows: UsageBucket[]): UsageBucket[] =>

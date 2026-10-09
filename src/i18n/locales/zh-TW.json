@@ -2374,6 +2374,8 @@
     "tile_cost_sub": "What you would have paid on API pricing",
     "tile_cost_unpriced_one": "{{count}} model has no price",
     "tile_cost_unpriced_other": "{{count}} models have no price",
+    "tile_cost_estimated_one": "{{count}} model priced by family estimate",
+    "tile_cost_estimated_other": "{{count}} models priced by family estimate",
     "chart_title": "Tokens per day",
     "chart_empty": "No daily data in this range.",
     "chart_day_label": "{{day}}: {{tokens}} tokens",

@@ -3,6 +3,7 @@ import {
   computeCost,
   DEFAULT_PRICING,
   findPrice,
+  resolvePrice,
   modelCost,
   sanitizePricing,
 } from '@/features/usage/pricing';
@@ -24,7 +25,9 @@ const bucket = (key: string, over: Partial<UsageBucket> = {}): UsageBucket => ({
 
 describe('findPrice', () => {
   test('longest prefix wins', () => {
-    expect(findPrice('claude-fable-5-1', DEFAULT_PRICING)).toBe(DEFAULT_PRICING['claude-fable-5-1']);
+    expect(findPrice('claude-fable-5-1', DEFAULT_PRICING)).toBe(
+      DEFAULT_PRICING['claude-fable-5-1']
+    );
     expect(findPrice('claude-fable-5-1-20261001', DEFAULT_PRICING)).toBe(
       DEFAULT_PRICING['claude-fable-5-1']
     );
@@ -40,6 +43,20 @@ describe('findPrice', () => {
   test('is case-insensitive and null when nothing matches', () => {
     expect(findPrice('GPT-5.5', DEFAULT_PRICING)).toBe(DEFAULT_PRICING['gpt-5.5']);
     expect(findPrice('mystery-model', DEFAULT_PRICING)).toBeNull();
+    expect(resolvePrice('mystery-model', DEFAULT_PRICING)).toBeNull();
+    // A brand-new model id inherits its family's newest rate, flagged as a fallback.
+    expect(resolvePrice('claude-opus-6', DEFAULT_PRICING)).toEqual({
+      price: DEFAULT_PRICING['claude-opus-5-5'],
+      fallback: true,
+    });
+    expect(resolvePrice('gpt-6-nova', DEFAULT_PRICING)).toEqual({
+      price: DEFAULT_PRICING['gpt-5.6-sol'],
+      fallback: true,
+    });
+    expect(resolvePrice('claude-opus-5-5', DEFAULT_PRICING)).toEqual({
+      price: DEFAULT_PRICING['claude-opus-5-5'],
+      fallback: false,
+    });
     expect(modelCost('mystery-model', bucket('x', { input: 5 }), DEFAULT_PRICING)).toBeNull();
   });
 });
@@ -48,7 +65,13 @@ describe('computeCost', () => {
   test('sums tokens x rate per million and bills reasoning as output', () => {
     const price = { input: 10, cacheRead: 1, cacheWrite: 12.5, output: 50 };
     const cost = computeCost(
-      { input: 1_000_000, cache_read: 2_000_000, cache_write: 400_000, output: 100_000, reasoning: 100_000 },
+      {
+        input: 1_000_000,
+        cache_read: 2_000_000,
+        cache_write: 400_000,
+        output: 100_000,
+        reasoning: 100_000,
+      },
       price
     );
     // 10 + 2 + 5 + (200k * 50 / 1e6 = 10)
@@ -57,7 +80,9 @@ describe('computeCost', () => {
 
   test('uses user overrides in place of defaults', () => {
     const table = { 'claude-fable-5': { input: 1, cacheRead: 0, cacheWrite: 0, output: 2 } };
-    expect(modelCost('claude-fable-5-1', bucket('k', { input: 1e6, output: 1e6 }), table)).toBeCloseTo(3);
+    expect(
+      modelCost('claude-fable-5-1', bucket('k', { input: 1e6, output: 1e6 }), table)
+    ).toBeCloseTo(3);
   });
 });
 

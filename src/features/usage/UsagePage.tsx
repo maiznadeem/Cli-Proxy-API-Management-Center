@@ -64,7 +64,12 @@ export function UsagePage() {
   const renderBody = () => {
     if (!connected) return <p className={styles.notice}>{t('usage.disconnected')}</p>;
     if (status === 'unsupported') {
-      return <EmptyState title={t('usage.unsupported_title')} description={t('usage.unsupported_desc')} />;
+      return (
+        <EmptyState
+          title={t('usage.unsupported_title')}
+          description={t('usage.unsupported_desc')}
+        />
+      );
     }
     if (!data) {
       if (status === 'error') return null;
@@ -95,12 +100,16 @@ export function UsagePage() {
               {formatTokens(totals.total)}
             </span>
             <span className={styles.tileSub}>
-              {t('usage.tile_tokens_sub', { input: formatTokens(totals.input + totals.cache_read + totals.cache_write) })}
+              {t('usage.tile_tokens_sub', {
+                input: formatTokens(totals.input + totals.cache_read + totals.cache_write),
+              })}
             </span>
           </div>
           <div className={styles.tile}>
             <span className={styles.tileLabel}>{t('usage.tile_output')}</span>
-            <span className={styles.tileValue}>{formatTokens(totals.output + totals.reasoning)}</span>
+            <span className={styles.tileValue}>
+              {formatTokens(totals.output + totals.reasoning)}
+            </span>
             <span className={styles.tileSub}>
               {t('usage.tile_output_sub', { reasoning: formatTokens(totals.reasoning) })}
             </span>
@@ -111,7 +120,9 @@ export function UsagePage() {
             <span className={styles.tileSub}>
               {cost && cost.unpriced > 0
                 ? t('usage.tile_cost_unpriced', { count: cost.unpriced })
-                : t('usage.tile_cost_sub')}
+                : cost && cost.estimated > 0
+                  ? t('usage.tile_cost_estimated', { count: cost.estimated })
+                  : t('usage.tile_cost_sub')}
             </span>
           </div>
         </div>
@@ -165,7 +176,13 @@ export function UsagePage() {
       {renderBody()}
 
       <footer className={styles.footer}>
-        <Button variant="ghost" size="sm" onClick={() => setPricingOpen((open) => !open)} aria-expanded={pricingOpen} aria-controls="usage-pricing">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setPricingOpen((open) => !open)}
+          aria-expanded={pricingOpen}
+          aria-controls="usage-pricing"
+        >
           {t('usage.pricing_toggle')}
         </Button>
         <Button

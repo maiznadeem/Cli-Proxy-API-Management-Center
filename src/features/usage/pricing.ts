@@ -59,6 +59,43 @@ export const DEFAULT_PRICING: PricingTable = {
   'gemini-3-flash': { input: 0.5, cacheRead: 0.05, cacheWrite: 0, output: 3 },
 };
 
+/**
+ * Family fallbacks for model ids that no explicit row matches (a newly released model,
+ * for example). The value names the row whose rates the family inherits; the UI flags
+ * such costs as estimates until a real row is added.
+ */
+export const FAMILY_FALLBACKS: Record<string, string> = {
+  'claude-fable': 'claude-fable-5-1',
+  'claude-mythos': 'claude-fable-5-1',
+  'claude-opus': 'claude-opus-5-5',
+  'claude-sonnet': 'claude-sonnet-5-5',
+  'claude-haiku': 'claude-haiku-4-5',
+  claude: 'claude-sonnet-5-5',
+  gpt: 'gpt-5.6-sol',
+  gemini: 'gemini-3.5-flash',
+};
+
+export interface PriceMatch {
+  price: ModelPrice;
+  /** True when the rate came from a family fallback rather than an explicit row. */
+  fallback: boolean;
+}
+
+/** Explicit row, else family fallback (flagged), else null. */
+export function resolvePrice(model: string, table: PricingTable): PriceMatch | null {
+  const exact = findPrice(model, table);
+  if (exact) return { price: exact, fallback: false };
+  const key = model.trim().toLowerCase();
+  let family: string | null = null;
+  for (const prefix of Object.keys(FAMILY_FALLBACKS)) {
+    if (key.startsWith(prefix) && (family === null || prefix.length > family.length))
+      family = prefix;
+  }
+  if (family === null) return null;
+  const inherited = findPrice(FAMILY_FALLBACKS[family], table);
+  return inherited ? { price: inherited, fallback: true } : null;
+}
+
 /** Longest-prefix match on the lower-cased model key; null when nothing matches. */
 export function findPrice(model: string, table: PricingTable): ModelPrice | null {
   const key = model.trim().toLowerCase();
@@ -84,9 +121,13 @@ export function computeCost(counters: UsageCounters, price: ModelPrice): number 
 }
 
 /** Cost for one model key, or null when the model has no price ("no price"). */
-export function modelCost(model: string, counters: UsageCounters, table: PricingTable): number | null {
-  const price = findPrice(model, table);
-  return price ? computeCost(counters, price) : null;
+export function modelCost(
+  model: string,
+  counters: UsageCounters,
+  table: PricingTable
+): number | null {
+  const match = resolvePrice(model, table);
+  return match ? computeCost(counters, match.price) : null;
 }
 
 const isRate = (value: unknown): value is number =>
