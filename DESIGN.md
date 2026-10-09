@@ -118,7 +118,7 @@ running and the management key is correct."
 ## Self-check against generic defaults
 
 - Not cream + serif + terracotta: slate dark default, Plex Sans, blue interactive.
-- Not black + acid green: canvas is a visible slate blue, accent is a quiet blue, and
+- Not black + acid green: canvas is a visible slate blue, accent is indigo (#818cf8 dark, #5b5fe8 light), and
   green only exists as capacity meaning.
 - Not the card kit: panels use surface steps, two radii total, shadows only on floating
   layers. Account rows are ribbons, not cards.
