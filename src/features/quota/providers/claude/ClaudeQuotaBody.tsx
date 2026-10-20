@@ -12,6 +12,7 @@ import { QuotaResetLabel } from '../../components/QuotaResetLabel';
 import { collectQuotaRowInstants, pickUrgentRowId } from '../../resetSchedule';
 import type { QuotaBodyProps } from '../../types';
 import styles from './ClaudeCredits.module.scss';
+import { ClaudeUsageDetails } from './ClaudeUsageDetails';
 
 export const CLAUDE_USAGE_SETTINGS_URL = 'https://claude.ai/settings/usage';
 
@@ -108,7 +109,17 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
           </div>
         );
       })}
-      {windows.length === 0 ? (
+      {(quota.extraUsage || quota.dollarWindows?.length || quota.stale) && (
+        <ClaudeUsageDetails
+          quota={{ ...quota, windows: [], planType: null,
+            extraUsage: credits && credits.status !== 'unknown' ? null : quota.extraUsage,
+            dollarWindows: quota.dollarWindows?.filter(balance =>
+              balance.key !== 'iguana_necktie' || !allowances.some(bucket => bucket.limitDollars !== null))
+          }}
+          classes={classes}
+        />
+      )}
+      {windows.length === 0 && !credits && !allowances.length && !quota.extraUsage && !quota.dollarWindows?.length ? (
         <div className={classes.quotaMessage}>{t('claude_quota.empty_windows')}</div>
       ) : (
         windows.map((window, index) => {

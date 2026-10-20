@@ -98,8 +98,11 @@ export interface CodexUsagePayload {
 
 // Claude API payload types
 export interface ClaudeUsageWindow {
-  utilization: number;
+  utilization: number | null;
   resets_at: string | null;
+  limit_dollars?: number | null;
+  used_dollars?: number | null;
+  remaining_dollars?: number | null;
 }
 
 export interface ClaudeUsageLimit {
@@ -116,7 +119,19 @@ export interface ClaudeUsageLimit {
   } | null;
 }
 
-export interface ClaudeExtraUsage {
+export interface ClaudeExtraUsagePayload extends Partial<Omit<ClaudeExtraUsageRaw, 'is_enabled'>> {
+  is_enabled?: boolean | null;
+  monthly_limit?: number | null;
+  used_credits?: number | null;
+  utilization?: number | null;
+  currency?: string | null;
+  disabled_reason?: string | null;
+  user_disabled?: boolean | null;
+  spend_limit_reached?: boolean | null;
+}
+
+/** Amounts are in minor currency units, unlike the separate dollar windows. */
+export interface ClaudeExtraUsageRaw {
   is_enabled: boolean;
   /** Minor units (cents when decimal_places is 2). Null when no cap is set. */
   monthly_limit: number | null;
@@ -182,6 +197,34 @@ export interface ClaudeCredits {
   canToggle: boolean;
 }
 
+export interface ClaudeExtraUsage {
+  isEnabled: boolean | null;
+  monthlyLimit: number | null;
+  usedCredits: number | null;
+  utilization: number | null;
+  currency: string | null;
+  disabledReason: string | null;
+  userDisabled: boolean | null;
+  spendLimitReached: boolean | null;
+}
+
+export interface ClaudeDollarWindow {
+  /** Original upstream key; never conflated with extra usage. */
+  key: string;
+  limitDollars: number | null;
+  usedDollars: number | null;
+  remainingDollars: number | null;
+  utilization: number | null;
+  resetsAt: string | null;
+}
+
+export interface ClaudeUsageSnapshot {
+  fiveHour: { utilization: number | null; resetsAt: string | null } | null;
+  sevenDay: { utilization: number | null; resetsAt: string | null } | null;
+  extraUsage: ClaudeExtraUsage | null;
+  dollarWindows: ClaudeDollarWindow[];
+}
+
 export interface ClaudeUsagePayload {
   five_hour?: ClaudeUsageWindow | null;
   seven_day?: ClaudeUsageWindow | null;
@@ -191,8 +234,9 @@ export interface ClaudeUsagePayload {
   seven_day_cowork?: ClaudeUsageWindow | null;
   iguana_necktie?: ClaudeDollarBucketPayload | null;
   limits?: ClaudeUsageLimit[] | null;
-  extra_usage?: ClaudeExtraUsage | null;
   spend?: ClaudeSpend | null;
+  extra_usage?: ClaudeExtraUsagePayload | null;
+  [key: string]: unknown;
 }
 
 export interface ClaudeProfileResponse {
@@ -239,6 +283,9 @@ export interface ClaudeQuotaState {
   extraUsage?: ClaudeExtraUsage | null;
   credits?: ClaudeCredits;
   allowances?: ClaudeDollarBucket[];
+  dollarWindows?: ClaudeDollarWindow[];
+  observedAt?: string | null;
+  stale?: boolean;
   planType?: string | null;
   error?: string;
   errorStatus?: number;
@@ -286,6 +333,20 @@ export interface AntigravityQuotaState {
   serverTimeOffsetMs?: number | null;
   error?: string;
   errorStatus?: number;
+}
+
+/** A provider-defined numeric/currency value rendered above generic quota windows. */
+export interface PluginQuotaMetric {
+  key: string;
+  label: string;
+  value: number;
+  unit?: string;
+  format?: 'number' | 'currency';
+  currency?: string;
+}
+
+export interface PluginQuotaState extends AntigravityQuotaState {
+  summary: PluginQuotaMetric[];
 }
 
 export interface CodexQuotaWindow {

@@ -4,14 +4,13 @@ import type { VisualSectionId } from './searchIndex';
 /** 编辑模式：可视化表单 or YAML 源码。 */
 export type ConfigEditorMode = 'visual' | 'source';
 
-/** 顶部 tabs：'common'（常用，原简单模式的继任者）+ 7 个正典分区。 */
+/** 顶部 tabs：'common'（常用，原简单模式的继任者）+ 6 个正典分区。 */
 export type ConfigTabId = 'common' | VisualSectionId;
 
 export const CONFIG_SECTION_IDS = [
   'connectivity',
   'network',
   'logging',
-  'quota',
   'streaming',
   'advanced',
   'payload',
@@ -27,8 +26,6 @@ export const COMMON_FIELD_IDS = [
   'proxyUrl',
   'debug',
   'loggingToFile',
-  'quotaSwitchProject',
-  'quotaSwitchPreviewModel',
 ] as const;
 
 /**
@@ -47,7 +44,6 @@ export const SECTION_VALIDATION_FIELDS: Record<VisualSectionId, readonly VisualC
       'videoResultAuthCacheTTL',
     ],
     logging: ['errorLogsMaxFiles', 'logsMaxTotalSizeMb', 'redisUsageQueueRetentionSeconds'],
-    quota: [],
     streaming: [
       'streaming.keepaliveSeconds',
       'streaming.bootstrapRetries',
@@ -102,6 +98,7 @@ export const FIELD_VALUE_KEYS: Record<string, readonly string[]> = {
   codexLiveMediaRelayICEServers: ['codexLiveMediaRelayICEServers'],
 
   // ── connectivity ──────────────────────────────────────────────────────────
+  githubToken: ['githubToken'],
   trustedProxies: ['trustedProxies'],
   discoveryEnabled: ['discoveryEnabled'],
   discoveryServiceName: ['discoveryServiceName'],
@@ -146,15 +143,12 @@ export const FIELD_VALUE_KEYS: Record<string, readonly string[]> = {
   errorLogsMaxFiles: ['errorLogsMaxFiles'],
   redisUsageQueueRetentionSeconds: ['redisUsageQueueRetentionSeconds'],
   usageStatisticsEnabled: ['usageStatisticsEnabled'],
-  // ── quota ─────────────────────────────────────────────────────────────────
-  quotaSwitchProject: ['quotaSwitchProject'],
-  quotaSwitchPreviewModel: ['quotaSwitchPreviewModel'],
-  quotaAntigravityCredits: ['quotaAntigravityCredits'],
   // ── streaming ─────────────────────────────────────────────────────────────
   streamingKeepaliveSeconds: ['streaming.keepaliveSeconds'],
   streamingBootstrapRetries: ['streaming.bootstrapRetries'],
   streamingNonstreamKeepalive: ['streaming.nonstreamKeepaliveInterval'],
   // ── advanced ──────────────────────────────────────────────────────────────
+  quotaAntigravityCredits: ['quotaAntigravityCredits'],
   pluginsEnabled: ['pluginsEnabled'],
   pluginStoreSources: ['pluginStoreSources'],
   pluginStoreAuth: ['pluginStoreAuth'],

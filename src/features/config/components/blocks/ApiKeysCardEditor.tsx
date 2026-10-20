@@ -148,26 +148,34 @@ function ScopedApiKeysCardEditor({
   };
 
   return (
-    <div className="form-group" style={{ marginBottom: 0 }}>
-      <div className={styles.blockHeaderRow}>
-        <label style={{ margin: 0 }}>{t('config_management.visual.api_keys.label')}</label>
+    <div className={styles.apiKeys}>
+      <div className={styles.apiKeysHeader}>
+        <div className={styles.apiKeysCopy}>
+          <span className={styles.apiKeysTitle}>
+            {t('config_management.visual.api_keys.label')}
+          </span>
+          <span className={styles.apiKeysHint}>{t('config_management.visual.api_keys.hint')}</span>
+        </div>
+        <Button size="sm" onClick={openAddModal} disabled={disabled}>
+          {t('config_management.visual.api_keys.add')}
+        </Button>
       </div>
 
       {apiKeys.length === 0 ? (
         <div className={styles.emptyState}>{t('config_management.visual.api_keys.empty')}</div>
       ) : (
-        <div className="item-list">
+        <ol className={styles.apiKeyList}>
           {apiKeys.map((key, index) => (
-            <div key={renderApiKeyIds[index] ?? `${key}-${index}`} className="item-row">
-              <div className="item-meta">
-                <div className="pill">#{index + 1}</div>
-                <div className="item-title">
+            <li key={renderApiKeyIds[index] ?? `${key}-${index}`} className={styles.apiKeyRow}>
+              <span className={styles.apiKeyIndex}>#{index + 1}</span>
+              <span className={styles.apiKeyMeta}>
+                <span className={styles.apiKeyName}>
                   {names[nameFingerprints[index]] ??
                     t('config_management.visual.api_keys.input_label')}
-                </div>
-                <div className="item-subtitle">{maskApiKey(String(key || ''))}</div>
-              </div>
-              <div className="item-actions">
+                </span>
+                <span className={styles.apiKeyValue}>{maskApiKey(String(key || ''))}</span>
+              </span>
+              <span className={styles.apiKeyActions}>
                 <Button
                   variant="ghost"
                   className={styles.iconAction}
@@ -190,6 +198,7 @@ function ScopedApiKeysCardEditor({
                 </Button>
                 <Button
                   variant="ghost"
+                  size="sm"
                   className={`${styles.iconAction} ${styles.iconActionDanger}`}
                   onClick={() => handleDelete(renderApiKeyIds[index] ?? '')}
                   disabled={disabled}
@@ -198,19 +207,11 @@ function ScopedApiKeysCardEditor({
                 >
                   <IconTrash2 size={16} />
                 </Button>
-              </div>
-            </div>
+              </span>
+            </li>
           ))}
-        </div>
+        </ol>
       )}
-
-      <div className={styles.actionRow}>
-        <Button variant="secondary" onClick={openAddModal} disabled={disabled}>
-          {t('config_management.visual.api_keys.add')}
-        </Button>
-      </div>
-
-      <div className="hint">{t('config_management.visual.api_keys.hint')}</div>
 
       <Modal
         open={modalOpen}

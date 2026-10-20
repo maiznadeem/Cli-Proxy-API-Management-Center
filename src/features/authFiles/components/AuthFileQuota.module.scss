@@ -144,6 +144,7 @@ button.quotaMessageAction {
 }
 
 .quotaMeta {
+  font-size: $text-caption;
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
@@ -179,6 +180,8 @@ button.quotaMessageAction {
 }
 
 .quotaAmount {
+  font-family: $font-mono;
+  font-weight: 500;
   font-size: $text-caption;
   line-height: $lh-caption;
   font-variant-numeric: tabular-nums;
@@ -336,6 +339,7 @@ button.quotaMessageAction {
 .codexResetCreditRow {
   display: flex;
   align-items: baseline;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 8px;
   max-width: 360px;

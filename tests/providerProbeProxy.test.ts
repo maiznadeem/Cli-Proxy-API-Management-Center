@@ -122,6 +122,8 @@ describe('provider probe proxy forwarding', () => {
       'utf8'
     );
     expect(base.match(/proxyUrl: form\.proxyUrl/g)).toHaveLength(2);
-    expect(sponsor).toContain('proxyUrl: entry.proxyUrl,\n    formHeaders: discoveryHeaders');
+    expect(sponsor.replace(/\r\n/g, '\n')).toContain(
+      'proxyUrl: entry.proxyUrl,\n    formHeaders: discoveryHeaders'
+    );
   });
 });

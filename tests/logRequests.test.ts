@@ -182,7 +182,7 @@ describe('logs controller lifecycle wiring', () => {
       expect(owner).toContain('next.managementKey === previous.managementKey');
       expect(owner).toContain('next.connectionStatus === previous.connectionStatus');
       expect(owner).toContain('next.isAuthenticated === previous.isAuthenticated');
-      expect(owner).toContain(
+      expect(owner.replace(/\r\n/g, '\n')).toContain(
         'unsubscribeAuth();\n      unsubscribeConfig();\n      invalidateSession();'
       );
     }
