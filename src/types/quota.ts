@@ -258,7 +258,34 @@ export interface ClaudeProfileResponse {
     has_extra_usage_enabled?: boolean;
     subscription_status?: string;
     subscription_created_at?: string;
+    payment_auth_hosted_invoice_url?: string | null;
   };
+}
+
+/**
+ * Why a quota probe failed, beyond the bare HTTP status. Lets the cards say
+ * "OAuth is blocked for this org" or "rate limited, retry in 59 min" instead
+ * of a generic "check the credential".
+ */
+export type QuotaFailureKind =
+  'oauth_blocked' | 'unauthorized' | 'forbidden' | 'rate_limited' | 'upstream' | 'unknown';
+
+export interface QuotaFailure {
+  kind: QuotaFailureKind;
+  /** Provider error code when one was returned (e.g. oauth_not_allowed_for_organization). */
+  code?: string | null;
+  /** Seconds until a retry is allowed, from Retry-After, when the provider said so. */
+  retryAfterSeconds?: number | null;
+}
+
+/** Subscription standing read from the Claude OAuth profile. */
+export type ClaudeBillingAccess = 'active' | 'past_due' | 'inactive';
+
+export interface ClaudeBilling {
+  access: ClaudeBillingAccess;
+  subscriptionStatus: string | null;
+  /** Hosted invoice link Anthropic returns while a payment is overdue. */
+  invoiceUrl: string | null;
 }
 
 export interface ClaudeQuotaWindow {
@@ -275,6 +302,11 @@ export interface ClaudeQuotaWindow {
   resetAtMs?: number | null;
   /** Window length in hours — 5 for the rolling window, 168 for the weekly ones. */
   periodHours?: number | null;
+  /**
+   * True when the window is a placeholder pinned at 0% because the account's
+   * subscription is past due, so there is no reset to count down to.
+   */
+  locked?: boolean;
 }
 
 export interface ClaudeQuotaState {
@@ -287,8 +319,10 @@ export interface ClaudeQuotaState {
   observedAt?: string | null;
   stale?: boolean;
   planType?: string | null;
+  billing?: ClaudeBilling | null;
   error?: string;
   errorStatus?: number;
+  failure?: QuotaFailure;
 }
 
 // Quota state types

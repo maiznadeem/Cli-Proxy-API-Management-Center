@@ -54,7 +54,13 @@
     "model_alias_placeholder": "모델 별칭 (선택 사항)",
     "invalid_provider_index": "유효하지 않은 공급자 인덱스입니다.",
     "unsaved_changes_title": "저장되지 않은 변경 사항",
-    "unsaved_changes_message": "저장되지 않은 변경 사항이 있습니다. 지금 나가면 변경 사항이 삭제됩니다. 나가시겠습니까?"
+    "unsaved_changes_message": "저장되지 않은 변경 사항이 있습니다. 지금 나가면 변경 사항이 삭제됩니다. 나가시겠습니까?",
+    "quota_failure_oauth_blocked": "OAuth access is blocked for this account's organization, so the proxy cannot use it",
+    "quota_failure_unauthorized": "The token was rejected; sign in to this account again",
+    "quota_failure_forbidden": "Please check the credential status",
+    "quota_failure_rate_limited": "Rate limited by the provider; try again later",
+    "quota_failure_rate_limited_retry": "Rate limited by the provider; retry in {{minutes}} min",
+    "quota_failure_upstream": "The provider returned a server error; try again later"
   },
   "title": {
     "login": "CLI Proxy API 관리 센터",
@@ -597,7 +603,15 @@
     "monthly_allowance": "Cloud session credit",
     "allowance_amount": "{{used}} of {{limit}} left, expires {{date}}. Cloud sessions only, not used by the proxy",
     "allowance_amount_no_reset": "{{used}} of {{limit}} left. Cloud sessions only, not used by the proxy",
-    "allowance_locked": "Locked: {{reason}}"
+    "allowance_locked": "Locked: {{reason}}",
+    "billing_past_due": "Past due",
+    "billing_inactive": "Inactive",
+    "billing_locked_notice": "0% left: the subscription is past due, so Anthropic has paused this account. Usage comes back once the overdue invoice is paid.",
+    "billing_warning_notice": "The subscription is past due. Anthropic will pause this account unless the overdue invoice is paid.",
+    "billing_inactive_notice": "0% left: the subscription is inactive, so this account has no usage. Renew it on claude.ai to restore access.",
+    "billing_pay_invoice": "Pay the invoice on claude.ai",
+    "billing_manage": "Manage the subscription on claude.ai",
+    "locked_reset": "No reset until paid"
   },
   "codex_quota": {
     "title": "Codex 할당량",

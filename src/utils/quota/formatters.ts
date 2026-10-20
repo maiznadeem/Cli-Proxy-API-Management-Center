@@ -3,7 +3,7 @@
  */
 
 import type { TFunction } from 'i18next';
-import type { CodexUsageWindow } from '@/types';
+import type { CodexUsageWindow, QuotaFailure } from '@/types';
 import { normalizeNumberValue } from './parsers';
 import { formatInstantShort } from './relativeTime';
 
@@ -35,12 +35,31 @@ export function formatCodexResetLabel(window?: CodexUsageWindow | null): string 
   return '-';
 }
 
-export function createStatusError(message: string, status?: number): Error & { status?: number } {
-  const error = new Error(message) as Error & { status?: number };
+export type QuotaStatusError = Error & { status?: number; failure?: QuotaFailure };
+
+export function createStatusError(
+  message: string,
+  status?: number,
+  failure?: QuotaFailure
+): QuotaStatusError {
+  const error = new Error(message) as QuotaStatusError;
   if (status !== undefined) {
     error.status = status;
   }
+  if (failure) {
+    error.failure = failure;
+  }
   return error;
+}
+
+export function getQuotaFailureFromError(err: unknown): QuotaFailure | undefined {
+  if (typeof err === 'object' && err !== null && 'failure' in err) {
+    const failure = (err as { failure?: unknown }).failure;
+    if (typeof failure === 'object' && failure !== null && 'kind' in failure) {
+      return failure as QuotaFailure;
+    }
+  }
+  return undefined;
 }
 
 export function getStatusFromError(err: unknown): number | undefined {

@@ -6,6 +6,8 @@
 import type { TFunction } from 'i18next';
 import type {
   AuthFileItem,
+  ClaudeBilling,
+  ClaudeBillingAccess,
   ClaudeCredits,
   ClaudeDollarBucket,
   ClaudeDollarWindow,
@@ -29,6 +31,7 @@ import {
   parseClaudeUsagePayload,
   formatQuotaResetTime,
   resolveResetMs,
+  classifyQuotaFailure,
   createStatusError,
   isClaudeFile,
   isDisabledAuthFile,
@@ -44,6 +47,7 @@ export type ClaudeQuotaData = {
   planType?: string | null;
   dollarWindows: ClaudeDollarWindow[];
   observedAt: string;
+  billing?: ClaudeBilling | null;
 };
 
 /** Minor units at `decimalPlaces` -> cents. Null when the amount is absent. */
@@ -236,6 +240,59 @@ export const resolveClaudePlanType = (profile: ClaudeProfileResponse | null): st
   return null;
 };
 
+/** Stripe-style subscription statuses -> whether the account can still be served. */
+const SUBSCRIPTION_ACCESS: Record<string, ClaudeBillingAccess> = {
+  active: 'active',
+  trialing: 'active',
+  trial: 'active',
+  past_due: 'past_due',
+  unpaid: 'past_due',
+  incomplete: 'past_due',
+  canceled: 'inactive',
+  cancelled: 'inactive',
+  inactive: 'inactive',
+  expired: 'inactive',
+  incomplete_expired: 'inactive',
+  paused: 'inactive',
+};
+
+/**
+ * Subscription standing from the profile. Anthropic keeps answering the
+ * profile call while the usage call fails for an unpaid account, so this is
+ * what tells "the invoice is overdue" apart from "the credential is broken".
+ */
+export const resolveClaudeBilling = (
+  profile: ClaudeProfileResponse | null
+): ClaudeBilling | null => {
+  const subscriptionStatus =
+    normalizeStringValue(profile?.organization?.subscription_status)?.toLowerCase() ?? null;
+  const invoiceUrl =
+    normalizeStringValue(profile?.organization?.payment_auth_hosted_invoice_url) ?? null;
+  if (!subscriptionStatus && !invoiceUrl) return null;
+  const known = subscriptionStatus ? SUBSCRIPTION_ACCESS[subscriptionStatus] : undefined;
+  const access: ClaudeBillingAccess = known ?? (invoiceUrl ? 'past_due' : 'active');
+  return { access, subscriptionStatus, invoiceUrl };
+};
+
+/**
+ * Placeholder rows pinned at 0% remaining for an account whose subscription
+ * lapsed. Anthropic returns no usage payload for it, but "0% left, pay the
+ * invoice" is the truthful reading, not "failed to load".
+ */
+export const buildLockedClaudeWindows = (t: TFunction): ClaudeQuotaWindow[] =>
+  CLAUDE_USAGE_WINDOW_KEYS.filter(({ key }) => key === 'five_hour' || key === 'seven_day').map(
+    ({ key, id, labelKey }) => ({
+      id,
+      label: t(labelKey),
+      labelKey,
+      usedPercent: 100,
+      resetLabel: '-',
+      resetAtMs: null,
+      periodHours: claudePeriodHours(key),
+      locked: true,
+    })
+  );
+
 const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<ClaudeQuotaData> => {
   const rawAuthIndex = file['auth_index'] ?? file.authIndex;
   const authIndex = normalizeAuthIndex(rawAuthIndex);
@@ -258,6 +315,15 @@ const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<Claud
     }),
   ]);
 
+  const profile =
+    profileResult.status === 'fulfilled' &&
+    profileResult.value.statusCode >= 200 &&
+    profileResult.value.statusCode < 300
+      ? parseClaudeProfilePayload(profileResult.value.body ?? profileResult.value.bodyText)
+      : null;
+  const planType = resolveClaudePlanType(profile);
+  const billing = resolveClaudeBilling(profile);
+
   if (usageResult.status === 'rejected') {
     throw usageResult.reason;
   }
@@ -265,7 +331,21 @@ const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<Claud
   const result = usageResult.value;
 
   if (result.statusCode < 200 || result.statusCode >= 300) {
-    throw createStatusError(getApiCallErrorMessage(result), result.statusCode);
+    if (billing && billing.access !== 'active') {
+      return {
+        windows: buildLockedClaudeWindows(t),
+        allowances: [],
+        dollarWindows: [],
+        observedAt: new Date().toISOString(),
+        planType,
+        billing,
+      };
+    }
+    throw createStatusError(
+      getApiCallErrorMessage(result),
+      result.statusCode,
+      classifyQuotaFailure(result)
+    );
   }
 
   const payload = parseClaudeUsagePayload(result.body ?? result.bodyText);
@@ -284,23 +364,16 @@ const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<Claud
       window.id !== 'cloud-session-credits' ||
       !dollarWindows.some((balance) => balance.key === 'iguana_necktie')
   );
-  const planType =
-    profileResult.status === 'fulfilled' &&
-    profileResult.value.statusCode >= 200 &&
-    profileResult.value.statusCode < 300
-      ? resolveClaudePlanType(
-          parseClaudeProfilePayload(profileResult.value.body ?? profileResult.value.bodyText)
-        )
-      : null;
 
   return {
     windows,
-        credits: deriveClaudeCredits(payload),
+    credits: deriveClaudeCredits(payload),
     allowances: buildClaudeAllowances(payload, t),
     extraUsage: snapshot.extraUsage,
     dollarWindows,
     observedAt: new Date().toISOString(),
     planType,
+    billing,
   };
 };
 
@@ -322,11 +395,13 @@ export const CLAUDE_CONFIG: QuotaProviderData<ClaudeQuotaState, ClaudeQuotaData>
     dollarWindows: data.dollarWindows,
     observedAt: data.observedAt,
     stale: false,
+    billing: data.billing ?? null,
   }),
-  buildErrorState: (message, status) => ({
+  buildErrorState: (message, status, failure) => ({
     status: 'error',
     windows: [],
     error: message,
     errorStatus: status,
+    failure,
   }),
 };

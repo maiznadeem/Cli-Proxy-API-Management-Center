@@ -52,6 +52,32 @@
   background: var(--cap-plenty);
 }
 
+.pillWarn {
+  color: var(--cap-watch);
+  border-color: color-mix(in srgb, var(--cap-watch) 45%, transparent);
+}
+
+.pillWarn .dot {
+  background: var(--cap-watch);
+}
+
+/* Billing standing: why the meters read 0% and where to fix it. */
+.notice {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 0 100%;
+  min-width: 0;
+  padding: 8px 12px;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--cap-watch) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cap-watch) 32%, transparent);
+  border-radius: var(--radius-control);
+  overflow-wrap: anywhere;
+}
+
 .amount {
   color: var(--ink);
 }

@@ -11,11 +11,12 @@
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { captureQuotaCacheGeneration, commitIfQuotaCacheCurrent } from '@/stores';
-import { getStatusFromError } from '@/utils/quota';
+import { getQuotaFailureFromError, getStatusFromError } from '@/utils/quota';
 import { getQuotaCacheKey } from '@/utils/quota/identity';
 import type { QuotaFileEntry } from '../logic';
 import { QUOTA_ADAPTERS, getQuotaSetter, type QuotaCardState } from '../providers';
 import { enrichQuotaInBackground } from '../quotaEnrichment';
+import type { QuotaFailure } from '@/types';
 import type { QuotaProviderType } from '../providers/types';
 
 interface BatchFetchResult {
@@ -25,6 +26,7 @@ interface BatchFetchResult {
   data?: unknown;
   error?: string;
   errorStatus?: number;
+  errorFailure?: QuotaFailure;
 }
 
 export function useQuotaBatchLoader() {
@@ -79,6 +81,7 @@ export function useQuotaBatchLoader() {
                     status: 'error',
                     error: message,
                     errorStatus: getStatusFromError(err),
+                    errorFailure: getQuotaFailureFromError(err),
                   };
                 }
               })
@@ -98,7 +101,8 @@ export function useQuotaBatchLoader() {
                         ? adapter.buildSuccessState(result.data)
                         : adapter.buildErrorState(
                             result.error || t('common.unknown_error'),
-                            result.errorStatus
+                            result.errorStatus,
+                            result.errorFailure
                           );
                     committedStates.set(result.cacheKey, nextState[result.cacheKey]);
                   },

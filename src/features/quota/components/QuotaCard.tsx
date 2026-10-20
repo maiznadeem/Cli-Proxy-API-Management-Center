@@ -79,9 +79,15 @@ export function QuotaCard(props: QuotaCardProps) {
 
   const status = quota?.status ?? 'idle';
   const loading = status === 'loading';
+  // A lapsed subscription has no grants to read or spend; skip the probe so the
+  // card does not stack a "grants could not be read" line on the billing notice.
+  const claudeLocked =
+    entry.type === 'claude' &&
+    ((quota as { billing?: { access?: string } } | undefined)?.billing?.access ?? 'active') !==
+      'active';
   const claudeReset = useClaudeResetGrants(
     file,
-    entry.type === 'claude' && status !== 'idle',
+    entry.type === 'claude' && status !== 'idle' && !claudeLocked,
     !canRefresh || loading || resetting,
     quota,
     onRefresh
@@ -97,7 +103,8 @@ export function QuotaCard(props: QuotaCardProps) {
   const errorMessage = resolveQuotaErrorMessage(
     t,
     quota?.errorStatus,
-    quota?.error || t('common.unknown_error')
+    quota?.error || t('common.unknown_error'),
+    quota?.failure
   );
   const showReset =
     status === 'success' &&
@@ -132,7 +139,7 @@ export function QuotaCard(props: QuotaCardProps) {
           </span>
           <RoutingModeBadge mode={routingMode} />
         </div>
-        {entry.type === 'claude' && status === 'success' && (
+        {entry.type === 'claude' && status === 'success' && !claudeLocked && (
           <div className={styles.facts}>
             <span>
               {t('claude_reset.remaining')}{' '}
@@ -143,7 +150,9 @@ export function QuotaCard(props: QuotaCardProps) {
       </header>
 
       <div className={styles.body}>
-        {entry.type === 'claude' && status === 'success' && <ClaudeResetGrantDetails grants={claudeReset.grants} classes={quotaClasses} />}
+        {entry.type === 'claude' && status === 'success' && (
+          <ClaudeResetGrantDetails grants={claudeReset.grants} classes={quotaClasses} />
+        )}
         {entry.type === 'claude' && status === 'success' && claudeReset.message && (
           <div role="status" className={quotaClasses.codexResetCreditsError}>
             {t(`claude_reset.${claudeReset.message}`)}
@@ -197,7 +206,7 @@ export function QuotaCard(props: QuotaCardProps) {
               onChange={onRoutingModeChange}
             />
           )}
-          {status !== 'idle' && entry.type === 'claude' && (
+          {status !== 'idle' && entry.type === 'claude' && !claudeLocked && (
             <button
               type="button"
               className={styles.actionPill}

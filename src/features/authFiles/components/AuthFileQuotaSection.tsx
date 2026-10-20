@@ -7,7 +7,11 @@ import {
   useQuotaStore,
 } from '@/stores';
 import type { AuthFileItem, ClaudeQuotaState } from '@/types';
-import { getStatusFromError, resolveQuotaErrorMessage } from '@/utils/quota';
+import {
+  getQuotaFailureFromError,
+  getStatusFromError,
+  resolveQuotaErrorMessage,
+} from '@/utils/quota';
 import { getQuotaCacheKey } from '@/utils/quota/identity';
 import { isRuntimeOnlyAuthFile, type QuotaProviderType } from '@/features/authFiles/constants';
 import { Button } from '@/components/ui/Button';
@@ -87,10 +91,11 @@ export function AuthFileQuotaSection(props: AuthFileQuotaSectionProps) {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : t('common.unknown_error');
       const status = getStatusFromError(err);
+      const failure = getQuotaFailureFromError(err);
       commitIfQuotaCacheCurrent(cacheGeneration, () => {
         updateQuotaState((prev) => ({
           ...prev,
-          [cacheKey]: adapter.buildErrorState(message, status),
+          [cacheKey]: adapter.buildErrorState(message, status, failure),
         }));
         showNotification(
           t('auth_files.quota_refresh_failed', { name: file.name, message }),
@@ -187,7 +192,8 @@ export function AuthFileQuotaSection(props: AuthFileQuotaSectionProps) {
   const quotaErrorMessage = resolveQuotaErrorMessage(
     t,
     quota?.errorStatus,
-    quota?.error || t('common.unknown_error')
+    quota?.error || t('common.unknown_error'),
+    quota?.failure
   );
 
   return (

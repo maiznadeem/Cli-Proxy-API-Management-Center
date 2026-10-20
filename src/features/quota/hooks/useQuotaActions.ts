@@ -12,7 +12,7 @@ import {
   useNotificationStore,
 } from '@/stores';
 import type { AuthFileItem } from '@/types';
-import { getStatusFromError } from '@/utils/quota';
+import { getQuotaFailureFromError, getStatusFromError } from '@/utils/quota';
 import { getQuotaCacheKey } from '@/utils/quota/identity';
 import { enrichQuotaInBackground } from '../quotaEnrichment';
 import { getQuotaMap, getQuotaSetter, type QuotaAdapter, type QuotaCardState } from '../providers';
@@ -54,10 +54,11 @@ export function useQuotaActions(disableControls: boolean) {
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : t('common.unknown_error');
         const status = getStatusFromError(err);
+        const failure = getQuotaFailureFromError(err);
         commitIfQuotaCacheCurrent(cacheGeneration, () => {
           setQuota((prev) => ({
             ...prev,
-            [cacheKey]: adapter.buildErrorState(message, status),
+            [cacheKey]: adapter.buildErrorState(message, status, failure),
           }));
           showNotification(
             t('auth_files.quota_refresh_failed', { name: file.name, message }),

@@ -15,6 +15,7 @@ import styles from './ClaudeCredits.module.scss';
 import { ClaudeUsageDetails } from './ClaudeUsageDetails';
 
 export const CLAUDE_USAGE_SETTINGS_URL = 'https://claude.ai/settings/usage';
+export const CLAUDE_BILLING_URL = 'https://claude.ai/settings/billing';
 
 const formatUsd = (amount: number, language?: string): string => {
   const whole = Number.isInteger(amount);
@@ -41,6 +42,15 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
   const allowances = quota.allowances ?? [];
   const language = i18n.resolvedLanguage;
   const planType = quota.planType ?? null;
+  const billing = quota.billing ?? null;
+  const billingAccess = billing?.access ?? 'active';
+  const locked = windows.some((window) => window.locked === true);
+  const billingNoticeKey =
+    billingAccess === 'inactive'
+      ? 'claude_quota.billing_inactive_notice'
+      : locked
+        ? 'claude_quota.billing_locked_notice'
+        : 'claude_quota.billing_warning_notice';
 
   return (
     <>
@@ -48,15 +58,36 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
         <div className={classes.codexPlan}>
           <span className={classes.codexPlanLabel}>{t('claude_quota.plan_label')}</span>
           <span className={classes.codexPlanValue}>{t(`claude_quota.${planType}`)}</span>
+          {billingAccess !== 'active' && (
+            <span className={`${styles.pill} ${styles.pillWarn}`}>
+              <span className={styles.dot} aria-hidden="true" />
+              {t(`claude_quota.billing_${billingAccess}`)}
+            </span>
+          )}
+        </div>
+      )}
+      {billingAccess !== 'active' && (
+        <div className={styles.notice} role="status">
+          <span>{t(billingNoticeKey)}</span>
+          <a
+            className={styles.link}
+            href={billing?.invoiceUrl ?? CLAUDE_BILLING_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t(
+              billingAccess === 'past_due'
+                ? 'claude_quota.billing_pay_invoice'
+                : 'claude_quota.billing_manage'
+            )}
+          </a>
         </div>
       )}
       {credits && credits.status !== 'unknown' && (
         <div className={styles.credits}>
           <div className={styles.line}>
             <span className={styles.label}>{t('claude_quota.credits_label')}</span>
-            <span
-              className={`${styles.pill} ${credits.status === 'enabled' ? styles.pillOn : ''}`}
-            >
+            <span className={`${styles.pill} ${credits.status === 'enabled' ? styles.pillOn : ''}`}>
               <span className={styles.dot} aria-hidden="true" />
               {t(`claude_quota.credits_${credits.status}`)}
             </span>
@@ -85,7 +116,10 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
       )}
       {allowances.map((bucket: ClaudeDollarBucket) => {
         if (bucket.limitDollars === null) return null;
-        const used = formatUsd(Math.max(bucket.limitDollars - (bucket.usedDollars ?? 0), 0), language);
+        const used = formatUsd(
+          Math.max(bucket.limitDollars - (bucket.usedDollars ?? 0), 0),
+          language
+        );
         const limit = formatUsd(bucket.limitDollars, language);
         return (
           <div key={bucket.id} className={styles.credits}>
@@ -111,15 +145,25 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
       })}
       {(quota.extraUsage || quota.dollarWindows?.length || quota.stale) && (
         <ClaudeUsageDetails
-          quota={{ ...quota, windows: [], planType: null,
+          quota={{
+            ...quota,
+            windows: [],
+            planType: null,
             extraUsage: credits && credits.status !== 'unknown' ? null : quota.extraUsage,
-            dollarWindows: quota.dollarWindows?.filter(balance =>
-              balance.key !== 'iguana_necktie' || !allowances.some(bucket => bucket.limitDollars !== null))
+            dollarWindows: quota.dollarWindows?.filter(
+              (balance) =>
+                balance.key !== 'iguana_necktie' ||
+                !allowances.some((bucket) => bucket.limitDollars !== null)
+            ),
           }}
           classes={classes}
         />
       )}
-      {windows.length === 0 && !credits && !allowances.length && !quota.extraUsage && !quota.dollarWindows?.length ? (
+      {windows.length === 0 &&
+      !credits &&
+      !allowances.length &&
+      !quota.extraUsage &&
+      !quota.dollarWindows?.length ? (
         <div className={classes.quotaMessage}>{t('claude_quota.empty_windows')}</div>
       ) : (
         windows.map((window, index) => {
@@ -148,10 +192,14 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
                 <span className={classes.quotaModel}>{windowLabel}</span>
                 <div className={classes.quotaMeta}>
                   <span className={classes.quotaPercent}>{percentLabel}</span>
-                  {resetDisplay ? (
+                  {window.locked ? (
+                    <span className={classes.quotaReset}>{t('claude_quota.locked_reset')}</span>
+                  ) : resetDisplay ? (
                     <QuotaResetLabel display={resetDisplay} classes={classes} soon={soon} />
                   ) : (
-                    <span className={classes.quotaReset}>{t('quota_management.no_reset_pending')}</span>
+                    <span className={classes.quotaReset}>
+                      {t('quota_management.no_reset_pending')}
+                    </span>
                   )}
                 </div>
               </div>
