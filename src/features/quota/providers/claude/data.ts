@@ -17,6 +17,7 @@ import type {
   ClaudeQuotaWindow,
   ClaudeUsageWindow,
   ClaudeUsagePayload,
+  ClaudeUsageBreakdown,
 } from '@/types';
 import { apiCallApi, getApiCallErrorMessage } from '@/services/api';
 import { normalizeClaudeUsageSnapshot } from '@/services/api/claudeUsage';
@@ -48,6 +49,7 @@ export type ClaudeQuotaData = {
   dollarWindows: ClaudeDollarWindow[];
   observedAt: string;
   billing?: ClaudeBilling | null;
+  breakdown?: ClaudeUsageBreakdown | null;
 };
 
 /** Minor units at `decimalPlaces` -> cents. Null when the amount is absent. */
@@ -293,6 +295,48 @@ export const buildLockedClaudeWindows = (t: TFunction): ClaudeQuotaWindow[] =>
     })
   );
 
+/** Known surface keys get a translated label; anything new falls back to Anthropic's display name. */
+const BREAKDOWN_SURFACE_KEYS: Record<string, string> = {
+  claude_code: 'claude_quota.surface_claude_code',
+  chat: 'claude_quota.surface_chat',
+  cowork: 'claude_quota.surface_cowork',
+  other: 'claude_quota.surface_other',
+};
+
+/**
+ * Weekly consumption by surface, largest first, zero rows dropped. Each row is
+ * a share of what was used, not of the limit, so the 7-day utilization rides
+ * along to put the shares on the meter's 0..100 axis. Null when the payload
+ * carries no breakdown or every row is empty, so the card skips the column.
+ */
+export const resolveClaudeBreakdown = (
+  payload: ClaudeUsagePayload,
+  t: TFunction
+): ClaudeUsageBreakdown | null => {
+  const source = payload.seven_day_breakdown;
+  if (!source || !Array.isArray(source.rows)) return null;
+  const rows = source.rows
+    .map((row) => {
+      const percent = normalizeNumberValue(row?.percent);
+      const key = normalizeStringValue(row?.key) ?? '';
+      if (percent === null || percent <= 0 || !key) return null;
+      const labelKey = BREAKDOWN_SURFACE_KEYS[key];
+      const label = labelKey ? t(labelKey) : (normalizeStringValue(row?.display_name) ?? key);
+      return { key, label, percent: Math.min(100, percent) };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null)
+    .sort((a, b) => b.percent - a.percent);
+  if (rows.length === 0) return null;
+  const sevenDay = payload.seven_day;
+  const usedPercent =
+    sevenDay && typeof sevenDay === 'object' ? normalizeNumberValue(sevenDay.utilization) : null;
+  return {
+    asOfMs: resolveResetMs([source.as_of]),
+    usedPercent: usedPercent === null ? null : Math.max(0, Math.min(100, usedPercent)),
+    rows,
+  };
+};
+
 const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<ClaudeQuotaData> => {
   const rawAuthIndex = file['auth_index'] ?? file.authIndex;
   const authIndex = normalizeAuthIndex(rawAuthIndex);
@@ -367,6 +411,7 @@ const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<Claud
 
   return {
     windows,
+    breakdown: resolveClaudeBreakdown(payload, t),
     credits: deriveClaudeCredits(payload),
     allowances: buildClaudeAllowances(payload, t),
     extraUsage: snapshot.extraUsage,
@@ -396,6 +441,7 @@ export const CLAUDE_CONFIG: QuotaProviderData<ClaudeQuotaState, ClaudeQuotaData>
     observedAt: data.observedAt,
     stale: false,
     billing: data.billing ?? null,
+    breakdown: data.breakdown ?? null,
   }),
   buildErrorState: (message, status, failure) => ({
     status: 'error',

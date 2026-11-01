@@ -100,3 +100,155 @@
     border-radius: 2px;
   }
 }
+
+/* ---------- Body layout ----------
+ * One line: [ account facts ] [ capacity columns ] [ week by surface ].
+ * Facts used to stack as full-width lines above two meters, leaving the right
+ * two-thirds of a wide ribbon empty once Anthropic dropped the 5-hour window. */
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 12px 28px;
+  min-width: 0;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 0 1 320px;
+  min-width: 220px;
+
+  /* The credit rows size themselves for the old row layout (basis 100%); in a
+     column that basis is the height and makes them spill out. */
+  > * {
+    flex: 0 0 auto;
+  }
+}
+
+/* Two capacity columns at most; stop growing once they are at full width so
+   the week-by-surface column sits next to them instead of at the far edge. */
+.meters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 12px 24px;
+  flex: 1 1 300px;
+  min-width: 0;
+  max-width: 584px;
+}
+
+/* ---------- Week by surface ----------
+ * A single stacked bar on the same 0..100 scale as the 7-day meter, split by
+ * product surface. Monochrome by design: the capacity meters keep the colour. */
+.breakdown {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 1 1 240px;
+  min-width: 200px;
+  max-width: 460px;
+}
+
+/* Title on the same top line as the capacity labels; the bar lands on the
+   meters' baseline, the legend sits between. */
+.breakdownTitle {
+  margin-bottom: auto;
+}
+
+.stack {
+  display: flex;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--cap-track);
+  overflow: hidden;
+}
+
+.segment {
+  height: 100%;
+  background: color-mix(in srgb, var(--ink) var(--segment-ink, 60%), transparent);
+  transition: width var(--dur-meter) var(--ease-standard);
+
+  & + & {
+    box-shadow: -1px 0 0 var(--panel);
+  }
+}
+
+.segment[data-rank='0'] {
+  --segment-ink: 78%;
+}
+
+.segment[data-rank='1'] {
+  --segment-ink: 52%;
+}
+
+.segment[data-rank='2'] {
+  --segment-ink: 34%;
+}
+
+.segment[data-rank='3'] {
+  --segment-ink: 22%;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.swatch {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--ink) var(--segment-ink, 60%), transparent);
+}
+
+.swatch[data-rank='0'] {
+  --segment-ink: 78%;
+}
+
+.swatch[data-rank='1'] {
+  --segment-ink: 52%;
+}
+
+.swatch[data-rank='2'] {
+  --segment-ink: 34%;
+}
+
+.swatch[data-rank='3'] {
+  --segment-ink: 22%;
+}
+
+.swatchUnused {
+  background: var(--cap-track);
+  border: 1px solid var(--hairline-strong);
+}
+
+.legendValue {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment {
+    transition: none;
+  }
+}

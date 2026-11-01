@@ -558,7 +558,13 @@
     "billing_inactive_notice": "Осталось 0%: подписка неактивна, у аккаунта нет лимитов. Продлите её на claude.ai, чтобы восстановить доступ.",
     "billing_pay_invoice": "Оплатить счёт на claude.ai",
     "billing_manage": "Управлять подпиской на claude.ai",
-    "locked_reset": "Сброса не будет до оплаты"
+    "locked_reset": "Сброса не будет до оплаты",
+    "breakdown_title": "Неделя по продуктам",
+    "breakdown_unused": "{{percent}}% не использовано",
+    "surface_claude_code": "Claude Code",
+    "surface_chat": "Чаты",
+    "surface_cowork": "Cowork",
+    "surface_other": "Другое"
   },
   "codex_quota": {
     "title": "Квота Codex",

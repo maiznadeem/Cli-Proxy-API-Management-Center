@@ -1,5 +1,9 @@
 /**
- * Claude 额度渲染体：套餐 chip 行 + 用量积分行 + 月度额度行 + 用量窗口水位条。
+ * Claude quota body.
+ *
+ * One line, three zones: account facts (plan, usage credits, cloud session
+ * credit) on the left, the capacity columns in the middle, and the week split
+ * by surface on the right. Billing notices take their own full-width line above.
  */
 
 import { useMemo } from 'react';
@@ -13,6 +17,7 @@ import { collectQuotaRowInstants, pickUrgentRowId } from '../../resetSchedule';
 import type { QuotaBodyProps } from '../../types';
 import styles from './ClaudeCredits.module.scss';
 import { ClaudeUsageDetails } from './ClaudeUsageDetails';
+import { ClaudeWeekBreakdown } from './ClaudeWeekBreakdown';
 
 export const CLAUDE_USAGE_SETTINGS_URL = 'https://claude.ai/settings/usage';
 export const CLAUDE_BILLING_URL = 'https://claude.ai/settings/billing';
@@ -45,27 +50,33 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
   const billing = quota.billing ?? null;
   const billingAccess = billing?.access ?? 'active';
   const locked = windows.some((window) => window.locked === true);
+  const breakdown = locked ? null : (quota.breakdown ?? null);
   const billingNoticeKey =
     billingAccess === 'inactive'
       ? 'claude_quota.billing_inactive_notice'
       : locked
         ? 'claude_quota.billing_locked_notice'
         : 'claude_quota.billing_warning_notice';
+  const showCredits = Boolean(credits && credits.status !== 'unknown');
+  const showDetails = Boolean(quota.extraUsage || quota.dollarWindows?.length || quota.stale);
+  const hasFacts =
+    Boolean(planType) ||
+    showCredits ||
+    allowances.some((bucket) => bucket.limitDollars !== null) ||
+    showDetails;
+
+  if (
+    windows.length === 0 &&
+    !credits &&
+    !allowances.length &&
+    !quota.extraUsage &&
+    !quota.dollarWindows?.length
+  ) {
+    return <div className={classes.quotaMessage}>{t('claude_quota.empty_windows')}</div>;
+  }
 
   return (
     <>
-      {planType && (
-        <div className={classes.codexPlan}>
-          <span className={classes.codexPlanLabel}>{t('claude_quota.plan_label')}</span>
-          <span className={classes.codexPlanValue}>{t(`claude_quota.${planType}`)}</span>
-          {billingAccess !== 'active' && (
-            <span className={`${styles.pill} ${styles.pillWarn}`}>
-              <span className={styles.dot} aria-hidden="true" />
-              {t(`claude_quota.billing_${billingAccess}`)}
-            </span>
-          )}
-        </div>
-      )}
       {billingAccess !== 'active' && (
         <div className={styles.notice} role="status">
           <span>{t(billingNoticeKey)}</span>
@@ -83,131 +94,147 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
           </a>
         </div>
       )}
-      {credits && credits.status !== 'unknown' && (
-        <div className={styles.credits}>
-          <div className={styles.line}>
-            <span className={styles.label}>{t('claude_quota.credits_label')}</span>
-            <span className={`${styles.pill} ${credits.status === 'enabled' ? styles.pillOn : ''}`}>
-              <span className={styles.dot} aria-hidden="true" />
-              {t(`claude_quota.credits_${credits.status}`)}
-            </span>
-            {credits.limitCents !== null && (
-              <span className={styles.amount}>
-                {t('claude_quota.credits_spent', {
-                  used: formatUsd((credits.usedCents ?? 0) / 100, language),
-                  limit: formatUsd(credits.limitCents / 100, language),
-                })}
-              </span>
+      <div className={styles.layout}>
+        {hasFacts && (
+          <div className={styles.facts}>
+            {planType && (
+              <div className={classes.codexPlan}>
+                <span className={classes.codexPlanLabel}>{t('claude_quota.plan_label')}</span>
+                <span className={classes.codexPlanValue}>{t(`claude_quota.${planType}`)}</span>
+                {billingAccess !== 'active' && (
+                  <span className={`${styles.pill} ${styles.pillWarn}`}>
+                    <span className={styles.dot} aria-hidden="true" />
+                    {t(`claude_quota.billing_${billingAccess}`)}
+                  </span>
+                )}
+              </div>
             )}
-          </div>
-          {!credits.canToggle && (
-            <div className={styles.line}>
-              <a
-                className={styles.link}
-                href={CLAUDE_USAGE_SETTINGS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t('claude_quota.credits_hint')}
-              </a>
-            </div>
-          )}
-        </div>
-      )}
-      {allowances.map((bucket: ClaudeDollarBucket) => {
-        if (bucket.limitDollars === null) return null;
-        const used = formatUsd(
-          Math.max(bucket.limitDollars - (bucket.usedDollars ?? 0), 0),
-          language
-        );
-        const limit = formatUsd(bucket.limitDollars, language);
-        return (
-          <div key={bucket.id} className={styles.credits}>
-            <div className={styles.line}>
-              <span className={styles.label}>{t(bucket.labelKey)}</span>
-              <span className={styles.amount}>
-                {bucket.resetAtMs !== null
-                  ? t('claude_quota.allowance_amount', {
-                      used,
-                      limit,
-                      date: formatResetDate(bucket.resetAtMs, language),
-                    })
-                  : t('claude_quota.allowance_amount_no_reset', { used, limit })}
-              </span>
-              {bucket.lockedReason && (
-                <span className={styles.hint}>
-                  {t('claude_quota.allowance_locked', { reason: bucket.lockedReason })}
-                </span>
-              )}
-            </div>
-          </div>
-        );
-      })}
-      {(quota.extraUsage || quota.dollarWindows?.length || quota.stale) && (
-        <ClaudeUsageDetails
-          quota={{
-            ...quota,
-            windows: [],
-            planType: null,
-            extraUsage: credits && credits.status !== 'unknown' ? null : quota.extraUsage,
-            dollarWindows: quota.dollarWindows?.filter(
-              (balance) =>
-                balance.key !== 'iguana_necktie' ||
-                !allowances.some((bucket) => bucket.limitDollars !== null)
-            ),
-          }}
-          classes={classes}
-        />
-      )}
-      {windows.length === 0 &&
-      !credits &&
-      !allowances.length &&
-      !quota.extraUsage &&
-      !quota.dollarWindows?.length ? (
-        <div className={classes.quotaMessage}>{t('claude_quota.empty_windows')}</div>
-      ) : (
-        windows.map((window, index) => {
-          const used = window.usedPercent;
-          const clampedUsed = used === null ? null : Math.max(0, Math.min(100, used));
-          const remaining =
-            clampedUsed === null ? null : Math.max(0, Math.min(100, 100 - clampedUsed));
-          const percentLabel = remaining === null ? '--' : `${Math.round(remaining)}%`;
-          const windowLabel = window.labelKey ? t(window.labelKey) : window.label;
-          const resetDisplay = buildResetDisplay(
-            window.resetLabel,
-            window.resetAtMs,
-            now,
-            i18n.resolvedLanguage
-          );
-
-          const soon = window.id === soonestRowId;
-
-          return (
-            <div
-              key={window.id}
-              className={classes.quotaRow}
-              title={soon ? t('quota_management.soonest_row_hint') : undefined}
-            >
-              <div className={classes.quotaRowHeader}>
-                <span className={classes.quotaModel}>{windowLabel}</span>
-                <div className={classes.quotaMeta}>
-                  <span className={classes.quotaPercent}>{percentLabel}</span>
-                  {window.locked ? (
-                    <span className={classes.quotaReset}>{t('claude_quota.locked_reset')}</span>
-                  ) : resetDisplay ? (
-                    <QuotaResetLabel display={resetDisplay} classes={classes} soon={soon} />
-                  ) : (
-                    <span className={classes.quotaReset}>
-                      {t('quota_management.no_reset_pending')}
+            {credits && showCredits && (
+              <div className={styles.credits}>
+                <div className={styles.line}>
+                  <span className={styles.label}>{t('claude_quota.credits_label')}</span>
+                  <span
+                    className={`${styles.pill} ${credits.status === 'enabled' ? styles.pillOn : ''}`}
+                  >
+                    <span className={styles.dot} aria-hidden="true" />
+                    {t(`claude_quota.credits_${credits.status}`)}
+                  </span>
+                  {credits.limitCents !== null && (
+                    <span className={styles.amount}>
+                      {t('claude_quota.credits_spent', {
+                        used: formatUsd((credits.usedCents ?? 0) / 100, language),
+                        limit: formatUsd(credits.limitCents / 100, language),
+                      })}
                     </span>
                   )}
                 </div>
+                {!credits.canToggle && (
+                  <div className={styles.line}>
+                    <a
+                      className={styles.link}
+                      href={CLAUDE_USAGE_SETTINGS_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {t('claude_quota.credits_hint')}
+                    </a>
+                  </div>
+                )}
               </div>
-              <QuotaMeter percent={remaining} classes={classes} index={index} />
-            </div>
-          );
-        })
-      )}
+            )}
+            {allowances.map((bucket: ClaudeDollarBucket) => {
+              if (bucket.limitDollars === null) return null;
+              const used = formatUsd(
+                Math.max(bucket.limitDollars - (bucket.usedDollars ?? 0), 0),
+                language
+              );
+              const limit = formatUsd(bucket.limitDollars, language);
+              return (
+                <div key={bucket.id} className={styles.credits}>
+                  <div className={styles.line}>
+                    <span className={styles.label}>{t(bucket.labelKey)}</span>
+                    <span className={styles.amount}>
+                      {bucket.resetAtMs !== null
+                        ? t('claude_quota.allowance_amount', {
+                            used,
+                            limit,
+                            date: formatResetDate(bucket.resetAtMs, language),
+                          })
+                        : t('claude_quota.allowance_amount_no_reset', { used, limit })}
+                    </span>
+                    {bucket.lockedReason && (
+                      <span className={styles.hint}>
+                        {t('claude_quota.allowance_locked', { reason: bucket.lockedReason })}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {showDetails && (
+              <ClaudeUsageDetails
+                quota={{
+                  ...quota,
+                  windows: [],
+                  planType: null,
+                  extraUsage: showCredits ? null : quota.extraUsage,
+                  dollarWindows: quota.dollarWindows?.filter(
+                    (balance) =>
+                      balance.key !== 'iguana_necktie' ||
+                      !allowances.some((bucket) => bucket.limitDollars !== null)
+                  ),
+                }}
+                classes={classes}
+              />
+            )}
+          </div>
+        )}
+        {windows.length > 0 && (
+          <div className={styles.meters}>
+            {windows.map((window, index) => {
+              const used = window.usedPercent;
+              const clampedUsed = used === null ? null : Math.max(0, Math.min(100, used));
+              const remaining =
+                clampedUsed === null ? null : Math.max(0, Math.min(100, 100 - clampedUsed));
+              const percentLabel = remaining === null ? '--' : `${Math.round(remaining)}%`;
+              const windowLabel = window.labelKey ? t(window.labelKey) : window.label;
+              const resetDisplay = buildResetDisplay(
+                window.resetLabel,
+                window.resetAtMs,
+                now,
+                i18n.resolvedLanguage
+              );
+              const soon = window.id === soonestRowId;
+
+              return (
+                <div
+                  key={window.id}
+                  className={classes.quotaRow}
+                  title={soon ? t('quota_management.soonest_row_hint') : undefined}
+                >
+                  <div className={classes.quotaRowHeader}>
+                    <span className={classes.quotaModel}>{windowLabel}</span>
+                    <div className={classes.quotaMeta}>
+                      <span className={classes.quotaPercent}>{percentLabel}</span>
+                      {window.locked ? (
+                        <span className={classes.quotaReset}>{t('claude_quota.locked_reset')}</span>
+                      ) : resetDisplay ? (
+                        <QuotaResetLabel display={resetDisplay} classes={classes} soon={soon} />
+                      ) : (
+                        <span className={classes.quotaReset}>
+                          {t('quota_management.no_reset_pending')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <QuotaMeter percent={remaining} classes={classes} index={index} />
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {breakdown && <ClaudeWeekBreakdown breakdown={breakdown} classes={classes} />}
+      </div>
     </>
   );
 }

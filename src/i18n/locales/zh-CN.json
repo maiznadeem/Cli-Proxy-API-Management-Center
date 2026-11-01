@@ -550,7 +550,13 @@
     "billing_inactive_notice": "剩余 0%：订阅未生效，该账号没有额度。请在 claude.ai 续订以恢复访问。",
     "billing_pay_invoice": "前往 claude.ai 支付账单",
     "billing_manage": "前往 claude.ai 管理订阅",
-    "locked_reset": "付款前不会重置"
+    "locked_reset": "付款前不会重置",
+    "breakdown_title": "本周各入口用量",
+    "breakdown_unused": "{{percent}}% 未使用",
+    "surface_claude_code": "Claude Code",
+    "surface_chat": "对话",
+    "surface_cowork": "Cowork",
+    "surface_other": "其他"
   },
   "codex_quota": {
     "title": "Codex 额度",
@@ -589,7 +595,6 @@
     "reset_confirm_button": "确认重置",
     "reset_not_confirmed": "未确认额度重置成功，请刷新额度后再决定是否重试。",
     "reset_cooldown_failed": "额度已重置，但代理冷却清除失败。请在原连接的认证文件页面使用“清除冷却”，不要再次消耗重置卡。",
-
     "reset_success": "已重置 \"{{name}}\" 的 Codex 额度",
     "reset_failed": "重置 \"{{name}}\" 的 Codex 额度失败：{{message}}",
     "plan_plus": "Plus",
@@ -1484,7 +1489,6 @@
           "strategy_weighted_round_robin": "加权轮询 (Weighted Round Robin)",
           "strategy_fill_first": "填充优先 (Fill First)",
           "strategy_soonest_reset": "最早重置优先",
-          "session_affinity_ttl": "会话粘性 TTL",
           "session_affinity_ttl": "会话亲和性 TTL",
           "force_model_prefix": "强制模型前缀",
           "force_model_prefix_desc": "未带前缀的模型请求只使用无前缀凭据",

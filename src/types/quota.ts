@@ -236,7 +236,33 @@ export interface ClaudeUsagePayload {
   limits?: ClaudeUsageLimit[] | null;
   spend?: ClaudeSpend | null;
   extra_usage?: ClaudeExtraUsagePayload | null;
+  seven_day_breakdown?: ClaudeUsageBreakdownPayload | null;
   [key: string]: unknown;
+}
+
+/** How the 7-day limit was spent, split by product surface (Claude Code, chats, Cowork...). */
+export interface ClaudeUsageBreakdownPayload {
+  as_of?: string | null;
+  window_started_at?: string | null;
+  rows?: Array<{
+    key?: string | null;
+    display_name?: string | null;
+    percent?: number | null;
+  }> | null;
+}
+
+export interface ClaudeUsageBreakdownRow {
+  key: string;
+  label: string;
+  /** Share of the week's consumption this surface accounts for, 0..100. */
+  percent: number;
+}
+
+export interface ClaudeUsageBreakdown {
+  asOfMs: number | null;
+  /** 7-day limit used so far, 0..100; scales the shares onto the meter's axis. */
+  usedPercent: number | null;
+  rows: ClaudeUsageBreakdownRow[];
 }
 
 export interface ClaudeProfileResponse {
@@ -320,6 +346,7 @@ export interface ClaudeQuotaState {
   stale?: boolean;
   planType?: string | null;
   billing?: ClaudeBilling | null;
+  breakdown?: ClaudeUsageBreakdown | null;
   error?: string;
   errorStatus?: number;
   failure?: QuotaFailure;

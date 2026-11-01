@@ -611,7 +611,13 @@
     "billing_inactive_notice": "0% left: the subscription is inactive, so this account has no usage. Renew it on claude.ai to restore access.",
     "billing_pay_invoice": "Pay the invoice on claude.ai",
     "billing_manage": "Manage the subscription on claude.ai",
-    "locked_reset": "No reset until paid"
+    "locked_reset": "No reset until paid",
+    "breakdown_title": "Tuần này theo bề mặt",
+    "breakdown_unused": "{{percent}}% chưa dùng",
+    "surface_claude_code": "Claude Code",
+    "surface_chat": "Trò chuyện",
+    "surface_cowork": "Cowork",
+    "surface_other": "Khác"
   },
   "codex_quota": {
     "title": "Quota Codex",
