@@ -18,7 +18,7 @@ export interface QuotaResetLabelProps {
   /** True on the row that recovers first for this credential. */
   soon?: boolean;
   /** Name the event in the label itself; omit when a label beside it already does. */
-  verb?: 'resets';
+  verb?: 'resets' | 'expires';
 }
 
 export function QuotaResetLabel({ display, classes, soon = false, verb }: QuotaResetLabelProps) {
@@ -31,14 +31,14 @@ export function QuotaResetLabel({ display, classes, soon = false, verb }: QuotaR
     if (!display.relative) {
       return (
         <span className={classes.quotaReset}>
-          {t('quota_management.resets_at', { time: display.absolute })}
+          {t(`quota_management.${verb}_at`, { time: display.absolute })}
         </span>
       );
     }
     return (
       <span className={classes.quotaReset} title={display.absolute}>
         <span className={relativeClass}>
-          {t('quota_management.resets_relative', { relative: display.relative })}
+          {t(`quota_management.${verb}_relative`, { relative: display.relative })}
         </span>
         <span> · {display.absolute}</span>
       </span>

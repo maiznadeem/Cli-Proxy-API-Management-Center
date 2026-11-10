@@ -40,10 +40,27 @@ describe('Claude reset grant details', () => {
     expect(markup).toContain('class="codexResetCredits"');
     expect(markup).toContain('class="codexResetCreditRow"');
     expect(markup).toContain(resolveTimeZoneLabel());
-    expect(markup).toContain('Launch · 2 / 3 resets remaining');
+    expect(markup).toContain('Launch · 5-hour limit · 2 / 3 resets remaining');
+    expect(markup).toContain('Free resets · 2 left');
+    expect(markup).toContain('Expires in 11 days');
     expect(markup).toContain(formatInstantShort(expiry));
     expect(markup).toContain('class="quotaResetRelative"');
     expect(markup).toContain('in 11 days');
+  });
+
+  test('names launch and tenure grants from their ids, not the campaign copy', () => {
+    const copy = 'New model launch: one more Fable reset at 12 months&#x27; tenure';
+    const markup = render([
+      grant({ id: 'launch-2610-fable', label: 'New model launch: one Fable reset for Max', resetsTotal: 1, resetsLeft: 1, clears: ['seven_day_overage_included'] }),
+      grant({ id: 'launch-2610-fable-12mo', label: "New model launch: one more Fable reset at 12 months' tenure", resetsTotal: 1, resetsLeft: 1, clears: ['seven_day_overage_included'] }),
+      grant({ id: 'launch-2610-fable-6mo', label: 'x', resetsTotal: 1, resetsLeft: 1, clears: ['seven_day', 'seven_day_overage_included'] }),
+    ]);
+    expect(markup).toContain('Launch bonus · 7-day limit · 1 reset left');
+    expect(markup).toContain('12-month loyalty bonus · 7-day limit · 1 reset left');
+    expect(markup).toContain('6-month loyalty bonus · 7-day limit · 1 reset left');
+    expect(markup).toContain('Free resets · 3 left');
+    expect(markup).toContain(`title="${copy}"`);
+    expect(markup).not.toContain('>New model launch');
   });
 
   test('hides empty and spent grants', () => {
