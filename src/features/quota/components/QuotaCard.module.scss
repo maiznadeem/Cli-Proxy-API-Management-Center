@@ -141,7 +141,7 @@
 
   /* Anything that is not a capacity column (messages, errors) takes its own
      full-width line above the columns, so the columns always sit on one baseline. */
-  > :not([class*='quotaRow']):not([class*='antigravityQuotaGroup']):not([class*='layout']) {
+  > :not([class*='quotaRow']):not([class*='antigravityQuotaGroup']) {
     flex: 1 1 100%;
     order: -1;
     min-width: 0;

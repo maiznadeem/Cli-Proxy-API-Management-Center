@@ -44,6 +44,9 @@ export function ClaudeDetails({
   const billing = quota.billing ?? null;
   const billingAccess = billing?.access ?? 'active';
   const locked = (quota.windows ?? []).some((window) => window.locked === true);
+  const hasGrants = extras.grants.some((grant) => grant.resetsLeft > 0);
+  const weekUsed =
+    (quota.windows ?? []).find((window) => window.id === 'seven-day')?.usedPercent ?? null;
   const credits = quota.credits ?? null;
   const allowances = quota.allowances ?? [];
   const extraUsage = quota.extraUsage ?? null;
@@ -76,9 +79,6 @@ export function ClaudeDetails({
         {quota.planType && (
           <FactRow label={t('claude_quota.plan_label')}>
             <span>{t(`claude_quota.${quota.planType}`)}</span>
-            {billingAccess !== 'active' && (
-              <FactPill tone="warn">{t(`claude_quota.billing_${billingAccess}`)}</FactPill>
-            )}
           </FactRow>
         )}
         {credits && credits.status !== 'unknown' && (
@@ -202,8 +202,13 @@ export function ClaudeDetails({
         )}
       </FactSection>
 
-      {billingAccess !== 'active' && (
-        <FactSection title={t('quota_management.details_billing')}>
+      <FactSection title={t('quota_management.details_billing')}>
+        <FactRow label={t('claude_quota.billing_status_label')}>
+          <FactPill tone={billingAccess === 'active' ? 'on' : 'warn'}>
+            {t(`claude_quota.billing_${billingAccess}`)}
+          </FactPill>
+        </FactRow>
+        {billingAccess !== 'active' && (
           <FactNotice>
             {t(billingNoticeKey)}
             <FactLink href={billing?.invoiceUrl ?? CLAUDE_BILLING_URL}>
@@ -214,21 +219,42 @@ export function ClaudeDetails({
               )}
             </FactLink>
           </FactNotice>
+        )}
+      </FactSection>
+
+      {hasGrants ? (
+        <ClaudeResetGrantDetails grants={extras.grants} classes={classes} />
+      ) : (
+        <FactSection
+          title={t('claude_reset.section_title')}
+          count={0}
+          note={locked ? t('claude_reset.locked') : t('claude_reset.empty')}
+        >
+          {extras.grantMessage && !locked && (
+            <FactNotice tone="error">{t(`claude_reset.${extras.grantMessage}`)}</FactNotice>
+          )}
         </FactSection>
       )}
-
-      {!locked && <ClaudeResetGrantDetails grants={extras.grants} classes={classes} />}
-      {!locked && extras.grantMessage && (
+      {hasGrants && extras.grantMessage && (
         <FactSection title={t('claude_reset.section_title')}>
           <FactNotice tone="error">{t(`claude_reset.${extras.grantMessage}`)}</FactNotice>
         </FactSection>
       )}
 
-      {!locked && quota.breakdown && (
-        <FactSection title={t('claude_quota.breakdown_title')}>
+      <FactSection
+        title={t('claude_quota.breakdown_title')}
+        note={
+          quota.breakdown
+            ? undefined
+            : weekUsed !== null && weekUsed < 1
+              ? t('claude_quota.breakdown_empty')
+              : t('claude_quota.breakdown_unavailable')
+        }
+      >
+        {quota.breakdown && (
           <ClaudeWeekBreakdown breakdown={quota.breakdown} classes={classes} bare />
-        </FactSection>
-      )}
+        )}
+      </FactSection>
     </FactSheet>
   );
 }
