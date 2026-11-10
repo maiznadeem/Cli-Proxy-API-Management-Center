@@ -91,7 +91,11 @@ const getAntigravityPlanLabel = (
   );
 };
 
-export function AntigravityQuotaBody({ quota, classes }: QuotaBodyProps<AntigravityQuotaState>) {
+export function AntigravityQuotaBody({
+  quota,
+  classes,
+  expanded = true,
+}: QuotaBodyProps<AntigravityQuotaState>) {
   const { t } = useTranslation();
   const groups = quota.groups ?? [];
   const planLabel = getAntigravityPlanLabel(quota.subscription, t);
@@ -137,7 +141,7 @@ export function AntigravityQuotaBody({ quota, classes }: QuotaBodyProps<Antigrav
 
   return (
     <>
-      {planLabel && (
+      {expanded && planLabel && (
         <div className={classes.codexPlan}>
           <span className={classes.codexPlanItem}>
             <span className={classes.codexPlanLabel}>{t('antigravity_quota.plan_label')}</span>
@@ -167,7 +171,7 @@ export function AntigravityQuotaBody({ quota, classes }: QuotaBodyProps<Antigrav
             <div key={group.id} className={classes.antigravityQuotaGroup}>
               <div className={classes.antigravityQuotaGroupHeader}>
                 <span className={classes.antigravityQuotaGroupTitle}>{groupLabel}</span>
-                {groupDescription && (
+                {expanded && groupDescription && (
                   <span className={classes.antigravityQuotaGroupDescription}>
                     {groupDescription}
                   </span>

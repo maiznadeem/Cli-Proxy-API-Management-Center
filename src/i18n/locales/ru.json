@@ -1697,6 +1697,8 @@
     "resets_relative": "Сброс {{relative}}",
     "resets_at": "Сброс {{time}}",
     "percent_left": "Осталось {{percent}}%",
+    "details_show": "Показать подробности",
+    "details_hide": "Скрыть подробности",
     "expires_relative": "Истекает {{relative}}",
     "expires_at": "Истекает {{time}}",
     "search_label": "Поиск аккаунтов",

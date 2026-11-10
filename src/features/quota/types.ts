@@ -99,4 +99,10 @@ export function bindQuotaClasses(module: Record<string, string>, source: string)
 export interface QuotaBodyProps<TState> {
   quota: TState;
   classes: QuotaClassMap;
+  /**
+   * False renders only the capacity meters (plus a state pill where one exists);
+   * everything explanatory (plan, credits, grants, breakdowns, notices) waits for
+   * the expanded view. Defaults to true so hosts without a toggle keep showing all.
+   */
+  expanded?: boolean;
 }

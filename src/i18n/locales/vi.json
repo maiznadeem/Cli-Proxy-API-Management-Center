@@ -1682,6 +1682,8 @@
     "resets_relative": "Đặt lại {{relative}}",
     "resets_at": "Đặt lại lúc {{time}}",
     "percent_left": "Còn {{percent}}%",
+    "details_show": "Hiện chi tiết",
+    "details_hide": "Ẩn chi tiết",
     "expires_relative": "Hết hạn {{relative}}",
     "expires_at": "Hết hạn lúc {{time}}",
     "windows_idle_session": "no 5-hour window running"

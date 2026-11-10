@@ -1689,6 +1689,8 @@
     "resets_relative": "{{relative}}重置",
     "resets_at": "重置 {{time}}",
     "percent_left": "剩余 {{percent}}%",
+    "details_show": "显示详情",
+    "details_hide": "隐藏详情",
     "expires_relative": "{{relative}}过期",
     "expires_at": "{{time}} 过期",
     "search_label": "搜索账号",

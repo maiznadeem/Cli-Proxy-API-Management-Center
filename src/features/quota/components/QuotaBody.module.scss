@@ -169,6 +169,17 @@
   }
 }
 
+/* Collapsed card: one group per column, no divider, so the ribbon stays one line tall. */
+[data-expanded] .antigravityQuotaGroup,
+article:not([data-expanded]) .antigravityQuotaGroup {
+  flex: 0 1 auto;
+}
+
+article:not([data-expanded]) .antigravityQuotaGroup + .antigravityQuotaGroup {
+  padding-top: 0;
+  border-top: 0;
+}
+
 .antigravityQuotaGroupHeader {
   display: flex;
   flex-direction: column;

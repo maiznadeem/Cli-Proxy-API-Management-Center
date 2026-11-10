@@ -1726,6 +1726,8 @@
     "resets_relative": "{{relative}} 초기화",
     "resets_at": "{{time}} 초기화",
     "percent_left": "{{percent}}% 남음",
+    "details_show": "상세 보기",
+    "details_hide": "상세 숨기기",
     "expires_relative": "{{relative}} 만료",
     "expires_at": "{{time}} 만료",
     "windows_idle_session": "no 5-hour window running"

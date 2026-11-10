@@ -1,11 +1,15 @@
 /**
  * Provider quota card: identity, loading/error state, quota body, and actions.
  * Claude observations remain visible while refreshing or after a failed read.
+ *
+ * Collapsed by default: identity, the capacity meters (plus a state pill), and
+ * the actions. Clicking the ribbon, or its chevron, expands the explanatory
+ * layer: plan and credits, banked reset grants, the week breakdown, notices.
  */
 
-import { useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconRefreshCw } from '@/components/ui/icons';
+import { IconChevronDown, IconRefreshCw } from '@/components/ui/icons';
 import type { ClaudeQuotaState, ResolvedTheme, RoutingMode } from '@/types';
 import { getRoutingMode } from '@/features/authFiles/routingMode';
 import { RoutingModeBadge } from '@/features/authFiles/components/RoutingModeBadge';
@@ -30,6 +34,8 @@ import styles from './QuotaCard.module.scss';
 
 /** Bind the quota-page styles to the shared rendering contract. */
 const quotaClasses = bindQuotaClasses(bodyStyles, 'QuotaBody.module.scss');
+
+const INTERACTIVE_SELECTOR = 'a, button, input, select, textarea, [role="button"]';
 
 export type QuotaCardProps = {
   entry: QuotaFileEntry;
@@ -69,6 +75,7 @@ export function QuotaCard(props: QuotaCardProps) {
   const displayName = getQuotaDisplayName(file);
   const routingMode = getRoutingMode(file);
   const showRouting = Boolean(onRoutingModeChange) && !isRuntimeOnlyAuthFile(file);
+  const [expanded, setExpanded] = useState(false);
 
   // Capture the entrance delay only at mount, without a render-time ref read.
   const [mountEntranceDelayMs] = useState<number | null>(entranceDelayMs ?? null);
@@ -111,11 +118,33 @@ export function QuotaCard(props: QuotaCardProps) {
     Boolean(adapter.resetQuota) &&
     quota !== undefined &&
     Boolean(adapter.canResetQuota?.(quota));
+  const hasBody = status === 'success' || retainedClaudeUsage;
+  const toggleLabel = t(
+    expanded ? 'quota_management.details_hide' : 'quota_management.details_show'
+  );
+
+  const onCardClick = (event: MouseEvent<HTMLElement>) => {
+    if (!hasBody) return;
+    const target = event.target as HTMLElement;
+    if (target.closest(INTERACTIVE_SELECTOR)) return;
+    if (window.getSelection()?.toString()) return;
+    setExpanded((value) => !value);
+  };
+
+  const cardClass = [
+    styles.card,
+    mountEntranceDelayMs === null ? '' : styles.cardEnter,
+    hasBody ? styles.cardToggle : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <article
-      className={`${styles.card} ${mountEntranceDelayMs === null ? '' : styles.cardEnter}`}
+      className={cardClass}
       style={entranceStyle}
+      data-expanded={expanded ? 'true' : undefined}
+      onClick={onCardClick}
     >
       <header className={styles.head}>
         <div className={styles.identity}>
@@ -138,6 +167,18 @@ export function QuotaCard(props: QuotaCardProps) {
             {displayName}
           </span>
           <RoutingModeBadge mode={routingMode} />
+          {hasBody && (
+            <button
+              type="button"
+              className={styles.toggle}
+              aria-expanded={expanded}
+              aria-label={toggleLabel}
+              title={toggleLabel}
+              onClick={() => setExpanded((value) => !value)}
+            >
+              <IconChevronDown size={16} aria-hidden="true" />
+            </button>
+          )}
         </div>
         {entry.type === 'claude' && status === 'success' && !claudeLocked && (
           <div className={styles.facts}>
@@ -150,10 +191,10 @@ export function QuotaCard(props: QuotaCardProps) {
       </header>
 
       <div className={styles.body}>
-        {entry.type === 'claude' && status === 'success' && (
+        {expanded && entry.type === 'claude' && status === 'success' && (
           <ClaudeResetGrantDetails grants={claudeReset.grants} classes={quotaClasses} />
         )}
-        {entry.type === 'claude' && status === 'success' && claudeReset.message && (
+        {expanded && entry.type === 'claude' && status === 'success' && claudeReset.message && (
           <div role="status" className={quotaClasses.codexResetCreditsError}>
             {t(`claude_reset.${claudeReset.message}`)}
           </div>
@@ -183,7 +224,7 @@ export function QuotaCard(props: QuotaCardProps) {
             {t(`${adapter.i18nPrefix}.load_failed`, { message: errorMessage })}
           </div>
         ) : quota && !retainedClaudeUsage ? (
-          <adapter.Body quota={quota} classes={quotaClasses} />
+          <adapter.Body quota={quota} classes={quotaClasses} expanded={expanded} />
         ) : !retainedClaudeUsage ? (
           <div className={styles.idleHint}>{t(`${adapter.i18nPrefix}.idle`)}</div>
         ) : null}
@@ -192,7 +233,9 @@ export function QuotaCard(props: QuotaCardProps) {
             {t(`${adapter.i18nPrefix}.loading`)}
           </div>
         )}
-        {retainedClaudeUsage && quota && <adapter.Body quota={quota} classes={quotaClasses} />}
+        {retainedClaudeUsage && quota && (
+          <adapter.Body quota={quota} classes={quotaClasses} expanded={expanded} />
+        )}
       </div>
 
       {(status !== 'idle' || showRouting) && (

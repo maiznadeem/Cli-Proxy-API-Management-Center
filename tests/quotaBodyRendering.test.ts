@@ -35,6 +35,75 @@ beforeAll(async () => {
   await i18n.changeLanguage('en');
 });
 
+describe('collapsed bodies', () => {
+  test('Claude keeps the meters and the billing pill, drops plan, credits and breakdown', () => {
+    const quota: ClaudeQuotaState = {
+      status: 'success',
+      planType: 'max',
+      billing: { access: 'past_due', status: 'past_due', invoiceUrl: null },
+      windows: [
+        {
+          id: 'seven-day',
+          label: '7-day limit',
+          usedPercent: 40,
+          resetLabel: '08-02 18:00',
+          resetAtMs: now + 2 * DAY_MS,
+          periodHours: 24 * 7,
+        },
+      ],
+      breakdown: {
+        asOfMs: null,
+        usedPercent: 40,
+        rows: [{ key: 'claude_code', label: 'Claude Code', percent: 100 }],
+      },
+    };
+    const collapsed = renderToStaticMarkup(
+      createElement(ClaudeQuotaBody, { quota, classes, expanded: false })
+    );
+    const expanded = renderToStaticMarkup(createElement(ClaudeQuotaBody, { quota, classes }));
+    expect(collapsed).toContain('class="quotaRow"');
+    expect(collapsed).toContain('Past due');
+    expect(collapsed).not.toContain('class="codexPlan"');
+    expect(collapsed).not.toContain('This week by surface');
+    expect(collapsed).not.toContain('Pay the invoice');
+    expect(expanded).toContain('class="codexPlan"');
+    expect(expanded).toContain('This week by surface');
+    expect(expanded).toContain('Pay the invoice');
+  });
+
+  test('Codex keeps the meters and drops plan chips and reset credits', () => {
+    const quota: CodexQuotaState = {
+      status: 'success',
+      planType: 'pro',
+      windows: [
+        {
+          id: 'primary',
+          label: '5-hour limit',
+          usedPercent: 38,
+          resetLabel: '08-02 18:00',
+          resetAtMs: now + 3 * HOUR_MS,
+          periodHours: 5,
+        },
+      ],
+      rateLimitResetCredits: [
+        {
+          id: 'credit-1',
+          status: 'available',
+          grantedAt: new Date(now - DAY_MS).toISOString(),
+          expiresAt: new Date(now + 11 * DAY_MS).toISOString(),
+        },
+      ],
+      rateLimitResetCreditsAvailableCount: 1,
+    };
+    const collapsed = renderToStaticMarkup(
+      createElement(CodexQuotaBody, { quota, classes, expanded: false })
+    );
+    expect(collapsed).toContain('class="quotaRow"');
+    expect(collapsed).not.toContain('class="codexPlan"');
+    expect(collapsed).not.toContain('class="codexResetCredits"');
+  });
+});
+
 describe('CodexQuotaBody', () => {
   const quota: CodexQuotaState = {
     status: 'success',

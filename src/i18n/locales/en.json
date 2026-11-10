@@ -1698,6 +1698,8 @@
     "resets_relative": "Resets {{relative}}",
     "resets_at": "Resets {{time}}",
     "percent_left": "{{percent}}% left",
+    "details_show": "Show details",
+    "details_hide": "Hide details",
     "expires_relative": "Expires {{relative}}",
     "expires_at": "Expires {{time}}",
     "search_label": "Search accounts",

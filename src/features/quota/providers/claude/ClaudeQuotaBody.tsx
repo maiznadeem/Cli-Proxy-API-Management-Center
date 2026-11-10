@@ -35,7 +35,11 @@ const formatUsd = (amount: number, language?: string): string => {
 const formatResetDate = (ms: number, language?: string): string =>
   new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short' }).format(new Date(ms));
 
-export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaState>) {
+export function ClaudeQuotaBody({
+  quota,
+  classes,
+  expanded = true,
+}: QuotaBodyProps<ClaudeQuotaState>) {
   const { t, i18n } = useTranslation();
   const now = useNow();
   const soonestRowId = useMemo(
@@ -75,6 +79,75 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
     return <div className={classes.quotaMessage}>{t('claude_quota.empty_windows')}</div>;
   }
 
+  const meters = windows.length > 0 && (
+    <div className={styles.meters}>
+      {windows.map((window, index) => {
+        const used = window.usedPercent;
+        const clampedUsed = used === null ? null : Math.max(0, Math.min(100, used));
+        const remaining =
+          clampedUsed === null ? null : Math.max(0, Math.min(100, 100 - clampedUsed));
+        const percentLabel =
+          remaining === null
+            ? '--'
+            : t('quota_management.percent_left', { percent: Math.round(remaining) });
+        const windowLabel = window.labelKey ? t(window.labelKey) : window.label;
+        const resetDisplay = buildResetDisplay(
+          window.resetLabel,
+          window.resetAtMs,
+          now,
+          i18n.resolvedLanguage
+        );
+        const soon = window.id === soonestRowId;
+
+        return (
+          <div
+            key={window.id}
+            className={classes.quotaRow}
+            title={soon ? t('quota_management.soonest_row_hint') : undefined}
+          >
+            <div className={classes.quotaRowHeader}>
+              <span className={classes.quotaModel}>{windowLabel}</span>
+              <div className={classes.quotaMeta}>
+                <span className={classes.quotaPercent}>{percentLabel}</span>
+                {window.locked ? (
+                  <span className={classes.quotaReset}>{t('claude_quota.locked_reset')}</span>
+                ) : resetDisplay ? (
+                  <QuotaResetLabel
+                    display={resetDisplay}
+                    classes={classes}
+                    soon={soon}
+                    verb="resets"
+                  />
+                ) : (
+                  <span className={classes.quotaReset}>
+                    {t('quota_management.no_reset_pending')}
+                  </span>
+                )}
+              </div>
+            </div>
+            <QuotaMeter percent={remaining} classes={classes} index={index} />
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const billingPill = billingAccess !== 'active' && (
+    <span className={`${styles.pill} ${styles.pillWarn}`}>
+      <span className={styles.dot} aria-hidden="true" />
+      {t(`claude_quota.billing_${billingAccess}`)}
+    </span>
+  );
+
+  if (!expanded) {
+    return (
+      <div className={styles.layout}>
+        {billingPill && <div className={styles.pillSlot}>{billingPill}</div>}
+        {meters}
+      </div>
+    );
+  }
+
   return (
     <>
       {billingAccess !== 'active' && (
@@ -101,12 +174,7 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
               <div className={classes.codexPlan}>
                 <span className={classes.codexPlanLabel}>{t('claude_quota.plan_label')}</span>
                 <span className={classes.codexPlanValue}>{t(`claude_quota.${planType}`)}</span>
-                {billingAccess !== 'active' && (
-                  <span className={`${styles.pill} ${styles.pillWarn}`}>
-                    <span className={styles.dot} aria-hidden="true" />
-                    {t(`claude_quota.billing_${billingAccess}`)}
-                  </span>
-                )}
+                {billingPill}
               </div>
             )}
             {credits && showCredits && (
@@ -189,58 +257,7 @@ export function ClaudeQuotaBody({ quota, classes }: QuotaBodyProps<ClaudeQuotaSt
             )}
           </div>
         )}
-        {windows.length > 0 && (
-          <div className={styles.meters}>
-            {windows.map((window, index) => {
-              const used = window.usedPercent;
-              const clampedUsed = used === null ? null : Math.max(0, Math.min(100, used));
-              const remaining =
-                clampedUsed === null ? null : Math.max(0, Math.min(100, 100 - clampedUsed));
-              const percentLabel =
-                remaining === null
-                  ? '--'
-                  : t('quota_management.percent_left', { percent: Math.round(remaining) });
-              const windowLabel = window.labelKey ? t(window.labelKey) : window.label;
-              const resetDisplay = buildResetDisplay(
-                window.resetLabel,
-                window.resetAtMs,
-                now,
-                i18n.resolvedLanguage
-              );
-              const soon = window.id === soonestRowId;
-
-              return (
-                <div
-                  key={window.id}
-                  className={classes.quotaRow}
-                  title={soon ? t('quota_management.soonest_row_hint') : undefined}
-                >
-                  <div className={classes.quotaRowHeader}>
-                    <span className={classes.quotaModel}>{windowLabel}</span>
-                    <div className={classes.quotaMeta}>
-                      <span className={classes.quotaPercent}>{percentLabel}</span>
-                      {window.locked ? (
-                        <span className={classes.quotaReset}>{t('claude_quota.locked_reset')}</span>
-                      ) : resetDisplay ? (
-                        <QuotaResetLabel
-                          display={resetDisplay}
-                          classes={classes}
-                          soon={soon}
-                          verb="resets"
-                        />
-                      ) : (
-                        <span className={classes.quotaReset}>
-                          {t('quota_management.no_reset_pending')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <QuotaMeter percent={remaining} classes={classes} index={index} />
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {meters}
         {breakdown && <ClaudeWeekBreakdown breakdown={breakdown} classes={classes} />}
       </div>
     </>

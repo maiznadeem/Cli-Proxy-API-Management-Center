@@ -113,6 +113,13 @@
   min-width: 0;
 }
 
+/* Collapsed card: the state pill alone, centred on the meters' line. */
+.pillSlot {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
 .facts {
   display: flex;
   flex-direction: column;

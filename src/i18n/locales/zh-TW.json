@@ -1717,6 +1717,8 @@
     "resets_relative": "{{relative}}重置",
     "resets_at": "重置 {{time}}",
     "percent_left": "剩餘 {{percent}}%",
+    "details_show": "顯示詳情",
+    "details_hide": "隱藏詳情",
     "expires_relative": "{{relative}}過期",
     "expires_at": "{{time}} 過期",
     "search_label": "搜尋帳號",
