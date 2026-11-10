@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 /**
  * Antigravity 额度标签 → i18n key 解析（纯函数，便于测试）。
  *
@@ -113,3 +114,20 @@ export function shouldShowAntigravityQuotaAvailable(
       item.remainingFraction <= 0
   );
 }
+
+export const translateAntigravityQuotaLabel = (value: string, key: string | null, t: TFunction) =>
+  key ? t(`antigravity_quota.${key}`) : value;
+
+export const translateAntigravityQuotaDescription = (
+  value: string | undefined,
+  t: TFunction
+): string | undefined => {
+  if (!value) return undefined;
+  const modelsMatch = value.match(/^models within this group:\s*(.+)$/i);
+  if (modelsMatch) {
+    return t('antigravity_quota.group_models_description', {
+      models: modelsMatch[1].trim(),
+    });
+  }
+  return value;
+};

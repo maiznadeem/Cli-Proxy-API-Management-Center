@@ -5,16 +5,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import type { AntigravityQuotaState, AntigravityQuotaSubscription } from '@/types';
+import type { AntigravityQuotaState } from '@/types';
 import { QuotaMeter } from '../../components/QuotaMeter';
 import { collectQuotaRowInstants, pickUrgentRowId } from '../../resetSchedule';
 import type { QuotaBodyProps } from '../../types';
 import { getNextAntigravityCountdownUpdateDelay } from './countdown';
+import { getAntigravityPlanLabel } from './planLabel';
 import {
   resolveAntigravityBucketLabelKey,
   resolveAntigravityGroupLabelKey,
   resolveAntigravityGroupModels,
   shouldShowAntigravityQuotaAvailable,
+  translateAntigravityQuotaDescription,
+  translateAntigravityQuotaLabel,
 } from './labels';
 
 const formatAntigravityDuration = (t: TFunction, deltaMs: number): string => {
@@ -56,39 +59,6 @@ const formatAntigravityResetLabel = (
   return t('antigravity_quota.refreshes_in', {
     duration: formatAntigravityDuration(t, deltaMs),
   });
-};
-
-const translateAntigravityQuotaLabel = (value: string, key: string | null, t: TFunction) =>
-  key ? t(`antigravity_quota.${key}`) : value;
-
-const translateAntigravityQuotaDescription = (
-  value: string | undefined,
-  t: TFunction
-): string | undefined => {
-  if (!value) return undefined;
-  const modelsMatch = value.match(/^models within this group:\s*(.+)$/i);
-  if (modelsMatch) {
-    return t('antigravity_quota.group_models_description', {
-      models: modelsMatch[1].trim(),
-    });
-  }
-  return value;
-};
-
-const getAntigravityPlanLabel = (
-  subscription: AntigravityQuotaSubscription | null | undefined,
-  t: TFunction
-): string | null => {
-  if (!subscription) return null;
-  if (subscription.plan === 'free') return t('antigravity_subscription.plan_free');
-  if (subscription.plan === 'pro') return t('antigravity_subscription.plan_pro');
-  if (subscription.plan === 'ultra') return t('antigravity_subscription.plan_ultra');
-  if (subscription.plan === 'ultra-lite') return t('antigravity_subscription.plan_ultra_lite');
-  return (
-    subscription.tierName ||
-    subscription.tierId ||
-    (subscription.plan === 'unknown' ? t('antigravity_subscription.plan_unknown') : null)
-  );
 };
 
 export function AntigravityQuotaBody({

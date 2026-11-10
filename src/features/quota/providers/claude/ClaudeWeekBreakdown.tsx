@@ -13,9 +13,15 @@ import styles from './ClaudeCredits.module.scss';
 export interface ClaudeWeekBreakdownProps {
   breakdown: ClaudeUsageBreakdown;
   classes: QuotaClassMap;
+  /** Omit the title; the host already names the section. */
+  bare?: boolean;
 }
 
-export function ClaudeWeekBreakdown({ breakdown, classes }: ClaudeWeekBreakdownProps) {
+export function ClaudeWeekBreakdown({
+  breakdown,
+  classes,
+  bare = false,
+}: ClaudeWeekBreakdownProps) {
   const { t } = useTranslation();
   // Shares sum to the used part of the week; scale them onto the limit's axis.
   const shareTotal = breakdown.rows.reduce((sum, row) => sum + row.percent, 0) || 100;
@@ -28,8 +34,8 @@ export function ClaudeWeekBreakdown({ breakdown, classes }: ClaudeWeekBreakdownP
     .join(', ');
 
   return (
-    <div className={styles.breakdown}>
-      <span className={`${classes.quotaModel} ${styles.breakdownTitle}`}>{title}</span>
+    <div className={bare ? `${styles.breakdown} ${styles.breakdownBare}` : styles.breakdown}>
+      {!bare && <span className={`${classes.quotaModel} ${styles.breakdownTitle}`}>{title}</span>}
       <ul className={styles.legend}>
         {breakdown.rows.map((row, rank) => (
           <li key={row.key} className={styles.legendItem}>

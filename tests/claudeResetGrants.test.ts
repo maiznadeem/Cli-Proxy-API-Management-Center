@@ -344,8 +344,8 @@ test('card selection prefers usable recommendation and has deterministic fallbac
 test('Claude card uses Codex count and action styles and shared confirmation, not a grant dialog', async () => {
   const card = await Bun.file('src/features/quota/components/QuotaCard.tsx').text();
   const hook = await Bun.file('src/features/quota/providers/claude/ClaudeResetGrants.tsx').text();
-  // The remaining-resets count lives in the ribbon's identity column as a plain fact.
-  expect(card).toContain('styles.factValue}>{claudeReset.count');
+  // The remaining-resets count is a state pill on the ribbon, not a line of prose.
+  expect(card).toContain("t('quota_management.state_free_resets', { count: freeResets })");
   expect(card).toContain('disabled={claudeReset.blocked}');
   expect(card).toContain('onClick={claudeReset.confirm}');
   expect(hook).toContain('showConfirmation({');

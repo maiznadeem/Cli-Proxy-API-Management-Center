@@ -18,22 +18,10 @@ import type { QuotaBodyProps } from '../../types';
 import styles from './ClaudeCredits.module.scss';
 import { ClaudeUsageDetails } from './ClaudeUsageDetails';
 import { ClaudeWeekBreakdown } from './ClaudeWeekBreakdown';
+import { formatResetDate, formatUsd } from './format';
 
 export const CLAUDE_USAGE_SETTINGS_URL = 'https://claude.ai/settings/usage';
 export const CLAUDE_BILLING_URL = 'https://claude.ai/settings/billing';
-
-const formatUsd = (amount: number, language?: string): string => {
-  const whole = Number.isInteger(amount);
-  return new Intl.NumberFormat(language, {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: whole ? 0 : 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-};
-
-const formatResetDate = (ms: number, language?: string): string =>
-  new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short' }).format(new Date(ms));
 
 export function ClaudeQuotaBody({
   quota,
@@ -142,7 +130,6 @@ export function ClaudeQuotaBody({
   if (!expanded) {
     return (
       <div className={styles.layout}>
-        {billingPill && <div className={styles.pillSlot}>{billingPill}</div>}
         {meters}
       </div>
     );

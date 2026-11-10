@@ -18,6 +18,7 @@ import type {
   QuotaFailure,
   XaiQuotaState,
 } from '@/types';
+import type { QuotaClassMap } from '../types';
 
 export type QuotaUpdater<T> = T | ((prev: T) => T);
 
@@ -43,6 +44,15 @@ export interface QuotaStore {
   setPluginQuota: (updater: QuotaUpdater<Record<string, PluginQuotaState>>) => void;
   setXaiQuota: (updater: QuotaUpdater<Record<string, XaiQuotaState>>) => void;
   clearQuotaCache: () => void;
+}
+
+/** Props of a provider's details drawer on the Capacity page. */
+export interface QuotaDetailsProps<TState, TExtras = unknown> {
+  quota: TState;
+  file: AuthFileItem;
+  classes: QuotaClassMap;
+  /** Page-owned data the drawer needs beyond the quota state (Claude's grants). */
+  extras: TExtras;
 }
 
 export interface QuotaProviderData<TState, TData> {

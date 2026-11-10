@@ -1728,6 +1728,14 @@
     "percent_left": "{{percent}}% 남음",
     "details_show": "상세 보기",
     "details_hide": "상세 숨기기",
+    "just_now": "방금 전",
+    "details_account": "계정",
+    "details_credential": "자격 증명 파일",
+    "details_checked": "마지막 확인",
+    "details_billing": "결제",
+    "details_model_groups": "모델 그룹",
+    "state_free_resets_one": "무료 초기화 {{count}}회",
+    "state_free_resets_other": "무료 초기화 {{count}}회",
     "expires_relative": "{{relative}} 만료",
     "expires_at": "{{time}} 만료",
     "windows_idle_session": "no 5-hour window running"
@@ -2359,6 +2367,7 @@
   "claude_reset": {
     "expiry_title": "수동 초기화 만료 시각 ({{timezone}})",
     "details_title": "무료 초기화 · {{count}}회 남음",
+    "section_title": "무료 초기화",
     "details_hint": "Anthropic이 제공한 혜택입니다. 각 항목은 사용 한도를 한 번 초기화합니다. 한도에 걸리면 한도 초기화로 사용하세요. 만료 시각은 {{timezone}} 기준입니다.",
     "label_launch": "출시 기념 보너스",
     "label_tenure": "{{months}}개월 이용 보너스",

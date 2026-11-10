@@ -157,27 +157,12 @@
 
 /* ---------- Antigravity groups ---------- */
 
+/* One group per column on the ribbon; the drawer carries the group descriptions. */
 .antigravityQuotaGroup {
   display: flex;
   flex-wrap: wrap;
   gap: 12px 24px;
-  flex: 1 1 100%;
-
-  & + & {
-    padding-top: 12px;
-    border-top: 1px solid var(--hairline);
-  }
-}
-
-/* Collapsed card: one group per column, no divider, so the ribbon stays one line tall. */
-[data-expanded] .antigravityQuotaGroup,
-article:not([data-expanded]) .antigravityQuotaGroup {
   flex: 0 1 auto;
-}
-
-article:not([data-expanded]) .antigravityQuotaGroup + .antigravityQuotaGroup {
-  padding-top: 0;
-  border-top: 0;
 }
 
 .antigravityQuotaGroupHeader {

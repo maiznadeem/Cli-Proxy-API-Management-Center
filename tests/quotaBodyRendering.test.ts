@@ -62,7 +62,7 @@ describe('collapsed bodies', () => {
     );
     const expanded = renderToStaticMarkup(createElement(ClaudeQuotaBody, { quota, classes }));
     expect(collapsed).toContain('class="quotaRow"');
-    expect(collapsed).toContain('Past due');
+    expect(collapsed).not.toContain('Past due');
     expect(collapsed).not.toContain('class="codexPlan"');
     expect(collapsed).not.toContain('This week by surface');
     expect(collapsed).not.toContain('Pay the invoice');

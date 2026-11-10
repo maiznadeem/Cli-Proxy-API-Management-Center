@@ -1,10 +1,11 @@
 /**
- * Provider quota card: identity, loading/error state, quota body, and actions.
- * Claude observations remain visible while refreshing or after a failed read.
+ * Account ribbon on the Capacity page.
  *
- * Collapsed by default: identity, the capacity meters (plus a state pill), and
- * the actions. Clicking the ribbon, or its chevron, expands the explanatory
- * layer: plan and credits, banked reset grants, the week breakdown, notices.
+ * Collapsed, a band says who the account is, how much is left on each window,
+ * what state it is in (past due, free resets banked, focused routing) and what
+ * you can do about it. Expanded, a sunken drawer beneath carries the fact sheet:
+ * plan, credits, grants, breakdowns, notices. The band never changes shape
+ * between the two, so the list stays scannable while one row is open.
  */
 
 import { useState, type CSSProperties, type MouseEvent } from 'react';
@@ -12,10 +13,9 @@ import { useTranslation } from 'react-i18next';
 import { IconChevronDown, IconRefreshCw } from '@/components/ui/icons';
 import type { ClaudeQuotaState, ResolvedTheme, RoutingMode } from '@/types';
 import { getRoutingMode } from '@/features/authFiles/routingMode';
-import { RoutingModeBadge } from '@/features/authFiles/components/RoutingModeBadge';
 import { RoutingModeControl } from '@/features/authFiles/components/RoutingModeControl';
+import { deriveAuthFileIdentity } from '@/features/authFiles/identity';
 import { resolveQuotaErrorMessage } from '@/utils/quota';
-import { getQuotaDisplayName } from '@/utils/quota/identity';
 import {
   getAuthFileIcon,
   getThemeSurfaceIconBackground,
@@ -25,9 +25,9 @@ import {
 } from '@/features/authFiles/constants';
 import { bindQuotaClasses } from '../types';
 import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
+import { QUOTA_DETAILS, resolvePlanLabel } from '../providers/details';
 import { isQuotaRefreshDisabled, type QuotaFileEntry } from '../logic';
 import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
-import { ClaudeResetGrantDetails } from '../providers/claude/ClaudeResetGrantDetails';
 import { hasClaudeUsageData } from '../providers/claude/data';
 import bodyStyles from './QuotaBody.module.scss';
 import styles from './QuotaCard.module.scss';
@@ -69,10 +69,11 @@ export function QuotaCard(props: QuotaCardProps) {
   } = props;
   const { t } = useTranslation();
   const adapter = QUOTA_ADAPTERS[entry.type];
+  const Details = QUOTA_DETAILS[entry.type];
   const file = entry.file;
   const retainedClaudeUsage =
     entry.type === 'claude' && hasClaudeUsageData(quota as ClaudeQuotaState | undefined);
-  const displayName = getQuotaDisplayName(file);
+  const identity = deriveAuthFileIdentity(file);
   const routingMode = getRoutingMode(file);
   const showRouting = Boolean(onRoutingModeChange) && !isRuntimeOnlyAuthFile(file);
   const [expanded, setExpanded] = useState(false);
@@ -88,10 +89,11 @@ export function QuotaCard(props: QuotaCardProps) {
   const loading = status === 'loading';
   // A lapsed subscription has no grants to read or spend; skip the probe so the
   // card does not stack a "grants could not be read" line on the billing notice.
-  const claudeLocked =
-    entry.type === 'claude' &&
-    ((quota as { billing?: { access?: string } } | undefined)?.billing?.access ?? 'active') !==
-      'active';
+  const billingAccess =
+    entry.type === 'claude'
+      ? ((quota as { billing?: { access?: string } } | undefined)?.billing?.access ?? 'active')
+      : 'active';
+  const claudeLocked = billingAccess !== 'active';
   const claudeReset = useClaudeResetGrants(
     file,
     entry.type === 'claude' && status !== 'idle' && !claudeLocked,
@@ -107,6 +109,7 @@ export function QuotaCard(props: QuotaCardProps) {
       : entry.type;
   const iconSrc = getAuthFileIcon(providerType, resolvedTheme);
   const typeLabel = getTypeLabel(t, providerType);
+  const planLabel = resolvePlanLabel(entry.type, quota, t);
   const errorMessage = resolveQuotaErrorMessage(
     t,
     quota?.errorStatus,
@@ -119,12 +122,14 @@ export function QuotaCard(props: QuotaCardProps) {
     quota !== undefined &&
     Boolean(adapter.canResetQuota?.(quota));
   const hasBody = status === 'success' || retainedClaudeUsage;
+  const canExpand = hasBody && Boolean(Details) && quota !== undefined;
   const toggleLabel = t(
     expanded ? 'quota_management.details_hide' : 'quota_management.details_show'
   );
+  const freeResets = entry.type === 'claude' && !claudeLocked ? claudeReset.count : null;
 
   const onCardClick = (event: MouseEvent<HTMLElement>) => {
-    if (!hasBody) return;
+    if (!canExpand) return;
     const target = event.target as HTMLElement;
     if (target.closest(INTERACTIVE_SELECTOR)) return;
     if (window.getSelection()?.toString()) return;
@@ -134,7 +139,7 @@ export function QuotaCard(props: QuotaCardProps) {
   const cardClass = [
     styles.card,
     mountEntranceDelayMs === null ? '' : styles.cardEnter,
-    hasBody ? styles.cardToggle : '',
+    canExpand ? styles.cardToggle : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -143,62 +148,47 @@ export function QuotaCard(props: QuotaCardProps) {
     <article
       className={cardClass}
       style={entranceStyle}
-      data-expanded={expanded ? 'true' : undefined}
+      data-expanded={expanded && canExpand ? 'true' : undefined}
       onClick={onCardClick}
     >
-      <header className={styles.head}>
-        <div className={styles.identity}>
-          <span
-            className={styles.iconWrap}
-            title={typeLabel}
-            style={
-              isThemeSurfaceIconProvider(providerType)
-                ? { background: getThemeSurfaceIconBackground(resolvedTheme) }
-                : undefined
-            }
-          >
-            {iconSrc ? (
-              <img src={iconSrc} alt="" className={styles.icon} />
-            ) : (
-              <span className={styles.iconFallback}>{typeLabel.slice(0, 1).toUpperCase()}</span>
-            )}
-          </span>
-          <span className={styles.fileName} title={displayName}>
-            {displayName}
-          </span>
-          <RoutingModeBadge mode={routingMode} />
-          {hasBody && (
-            <button
-              type="button"
-              className={styles.toggle}
-              aria-expanded={expanded}
-              aria-label={toggleLabel}
-              title={toggleLabel}
-              onClick={() => setExpanded((value) => !value)}
-            >
-              <IconChevronDown size={16} aria-hidden="true" />
-            </button>
+      <div className={styles.identity}>
+        <span
+          className={styles.iconWrap}
+          title={typeLabel}
+          style={
+            isThemeSurfaceIconProvider(providerType)
+              ? { background: getThemeSurfaceIconBackground(resolvedTheme) }
+              : undefined
+          }
+        >
+          {iconSrc ? (
+            <img src={iconSrc} alt="" className={styles.icon} />
+          ) : (
+            <span className={styles.iconFallback}>{typeLabel.slice(0, 1).toUpperCase()}</span>
           )}
-        </div>
-        {entry.type === 'claude' && status === 'success' && !claudeLocked && (
-          <div className={styles.facts}>
-            <span>
-              {t('claude_reset.remaining')}{' '}
-              <span className={styles.factValue}>{claudeReset.count ?? '--'}</span>
-            </span>
-          </div>
-        )}
-      </header>
+        </span>
+        <span
+          className={
+            identity.kind === 'fileName'
+              ? `${styles.primary} ${styles.primaryMono}`
+              : styles.primary
+          }
+          title={identity.fullName}
+        >
+          {identity.primary}
+        </span>
+        <span className={styles.secondary}>
+          <span>{typeLabel}</span>
+          {planLabel && (
+            <>
+              <span className={styles.secondarySep} aria-hidden="true" />
+              <span>{planLabel}</span>
+            </>
+          )}
+        </span>
+      </div>
 
       <div className={styles.body}>
-        {expanded && entry.type === 'claude' && status === 'success' && (
-          <ClaudeResetGrantDetails grants={claudeReset.grants} classes={quotaClasses} />
-        )}
-        {expanded && entry.type === 'claude' && status === 'success' && claudeReset.message && (
-          <div role="status" className={quotaClasses.codexResetCreditsError}>
-            {t(`claude_reset.${claudeReset.message}`)}
-          </div>
-        )}
         {status === 'idle' ? (
           <button
             type="button"
@@ -224,7 +214,7 @@ export function QuotaCard(props: QuotaCardProps) {
             {t(`${adapter.i18nPrefix}.load_failed`, { message: errorMessage })}
           </div>
         ) : quota && !retainedClaudeUsage ? (
-          <adapter.Body quota={quota} classes={quotaClasses} expanded={expanded} />
+          <adapter.Body quota={quota} classes={quotaClasses} expanded={false} />
         ) : !retainedClaudeUsage ? (
           <div className={styles.idleHint}>{t(`${adapter.i18nPrefix}.idle`)}</div>
         ) : null}
@@ -234,16 +224,44 @@ export function QuotaCard(props: QuotaCardProps) {
           </div>
         )}
         {retainedClaudeUsage && quota && (
-          <adapter.Body quota={quota} classes={quotaClasses} expanded={expanded} />
+          <adapter.Body quota={quota} classes={quotaClasses} expanded={false} />
+        )}
+      </div>
+
+      <div className={styles.state}>
+        {claudeLocked && status === 'success' && (
+          <span className={`${styles.pill} ${styles.pillWarn}`}>
+            <span className={styles.pillDot} aria-hidden="true" />
+            {t(`claude_quota.billing_${billingAccess}`)}
+          </span>
+        )}
+        {routingMode !== 'normal' && (
+          <span
+            className={`${styles.pill} ${routingMode === 'focus' ? styles.pillAccent : ''}`}
+            title={t(`auth_files.routing_mode.${routingMode}_hint`)}
+          >
+            <span className={styles.pillDot} aria-hidden="true" />
+            {t(
+              routingMode === 'focus'
+                ? 'auth_files.routing_mode.badge_focused'
+                : 'auth_files.routing_mode.badge_preserved'
+            )}
+          </span>
+        )}
+        {freeResets !== null && freeResets > 0 && (
+          <span className={styles.pill} title={t('claude_reset.title')}>
+            <span className={styles.pillDot} aria-hidden="true" />
+            {t('quota_management.state_free_resets', { count: freeResets })}
+          </span>
         )}
       </div>
 
       {(status !== 'idle' || showRouting) && (
-        <footer className={styles.actionRow}>
+        <div className={styles.actions}>
           {showRouting && onRoutingModeChange && (
             <RoutingModeControl
               className={styles.routing}
-              name={displayName}
+              name={identity.primary}
               value={routingMode}
               disabled={routingDisabled || routingBusy}
               onChange={onRoutingModeChange}
@@ -276,16 +294,39 @@ export function QuotaCard(props: QuotaCardProps) {
           {status !== 'idle' && (
             <button
               type="button"
-              className={styles.actionPill}
+              className={styles.iconButton}
               onClick={onRefresh}
               disabled={isQuotaRefreshDisabled(canRefresh, loading, resetting || claudeReset.busy)}
-              title={t('auth_files.quota_refresh_hint')}
+              title={t('auth_files.quota_refresh_single')}
+              aria-label={t('auth_files.quota_refresh_single')}
             >
-              <IconRefreshCw size={13} className={loading ? styles.spinning : undefined} />
-              {t('auth_files.quota_refresh_single')}
+              <IconRefreshCw size={14} className={loading ? styles.spinning : undefined} />
             </button>
           )}
-        </footer>
+          {canExpand && (
+            <button
+              type="button"
+              className={styles.iconButton}
+              aria-expanded={expanded}
+              aria-label={toggleLabel}
+              title={toggleLabel}
+              onClick={() => setExpanded((value) => !value)}
+            >
+              <IconChevronDown size={16} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {expanded && canExpand && Details && quota && (
+        <div className={styles.drawer}>
+          <Details
+            quota={quota}
+            file={file}
+            classes={quotaClasses}
+            extras={{ grants: claudeReset.grants, grantMessage: claudeReset.message }}
+          />
+        </div>
       )}
     </article>
   );
