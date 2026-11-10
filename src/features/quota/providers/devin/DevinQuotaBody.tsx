@@ -47,7 +47,7 @@ export function DevinQuotaBody({ quota, classes }: QuotaBodyProps<DevinQuotaStat
                     : `${window.remainingPercent}%`}
                 </span>
                 {reset ? (
-                  <QuotaResetLabel display={reset} classes={classes} soon={soon} />
+                  <QuotaResetLabel display={reset} classes={classes} soon={soon} verb="resets" />
                 ) : (
                   <span className={classes.quotaReset}>{t('devin_quota.reset_unknown')}</span>
                 )}

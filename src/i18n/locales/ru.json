@@ -515,7 +515,7 @@
     "seven_day_sonnet": "7 дней Sonnet",
     "seven_day_cowork": "7 дней Cowork",
     "iguana_necktie": "Iguana Necktie",
-    "seven_day_fable": "7 дней Fable 5",
+    "seven_day_fable": "7 дней Fable",
     "credits_label": "Usage credits",
     "credits_enabled": "On",
     "credits_off_out_of_credits": "On, balance $0",
@@ -1694,6 +1694,9 @@
   },
   "quota_management": {
     "no_reset_pending": "Сброс не запланирован",
+    "resets_relative": "Сброс {{relative}}",
+    "resets_at": "Сброс {{time}}",
+    "percent_left": "Осталось {{percent}}%",
     "search_label": "Поиск аккаунтов",
     "search_placeholder": "Поиск по имени файла или электронной почте",
     "search_empty_title": "Аккаунты не найдены",

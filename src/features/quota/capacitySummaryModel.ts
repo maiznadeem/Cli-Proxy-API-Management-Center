@@ -19,7 +19,7 @@ export interface ProviderCapacity {
   segments: Array<number | null>;
   /** Soonest reset instant among loaded credentials. */
   nextResetMs: number | null;
-  /** Label of the headline window (for example "7-day Fable 5" or "Weekly limit"). */
+  /** Label of the headline window (for example "7-day Fable" or "Weekly limit"). */
   headlineLabel: string | null;
 }
 

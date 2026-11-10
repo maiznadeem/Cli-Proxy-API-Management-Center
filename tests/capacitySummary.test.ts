@@ -30,7 +30,7 @@ const claudeQuota = (fableUsed: number, sevenDayUsed: number, resetAtMs: number)
       },
       {
         id: 'seven_day_fable',
-        label: '7-day Fable 5',
+        label: '7-day Fable',
         usedPercent: fableUsed,
         resetAtMs,
         periodHours: 168,
@@ -59,7 +59,7 @@ describe('summarizeCapacity', () => {
     expect(claude.remainingSum).toBe(130);
     expect(claude.segments).toEqual([90, 40, null]);
     expect(claude.nextResetMs).toBe(1_000_000);
-    expect(claude.headlineLabel).toBe('7-day Fable 5');
+    expect(claude.headlineLabel).toBe('7-day Fable');
   });
 
   test('orders providers by the tab order and omits providers without credentials', () => {

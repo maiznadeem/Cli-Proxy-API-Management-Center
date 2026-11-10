@@ -57,7 +57,12 @@ export function MetaQuotaBody({ quota, classes }: QuotaBodyProps<MetaQuotaState>
                     : t('meta_quota.remaining', { percent: Number(remaining.toFixed(1)) })}
                 </span>
                 {resetDisplay ? (
-                    <QuotaResetLabel display={resetDisplay} classes={classes} soon={soon} />
+                    <QuotaResetLabel
+                      display={resetDisplay}
+                      classes={classes}
+                      soon={soon}
+                      verb="resets"
+                    />
                   ) : (
                     <span className={classes.quotaReset}>{t('quota_management.no_reset_pending')}</span>
                   )}

@@ -507,7 +507,7 @@
     "seven_day_sonnet": "7 天 Sonnet",
     "seven_day_cowork": "7 天 Cowork",
     "iguana_necktie": "Iguana Necktie",
-    "seven_day_fable": "7 天 Fable 5",
+    "seven_day_fable": "7 天 Fable",
     "credits_label": "Usage credits",
     "credits_enabled": "On",
     "credits_off_out_of_credits": "On, balance $0",
@@ -1686,6 +1686,9 @@
   },
   "quota_management": {
     "no_reset_pending": "暂无重置",
+    "resets_relative": "{{relative}}重置",
+    "resets_at": "重置 {{time}}",
+    "percent_left": "剩余 {{percent}}%",
     "search_label": "搜索账号",
     "search_placeholder": "按文件名或邮箱搜索",
     "search_empty_title": "没有匹配的账号",

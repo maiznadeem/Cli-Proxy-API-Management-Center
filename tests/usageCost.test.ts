@@ -32,6 +32,13 @@ describe('findPrice', () => {
       DEFAULT_PRICING['claude-fable-5-1']
     );
     expect(findPrice('claude-fable-5', DEFAULT_PRICING)).toBe(DEFAULT_PRICING['claude-fable-5']);
+    expect(findPrice('claude-fable-5-2', DEFAULT_PRICING)).toBe(
+      DEFAULT_PRICING['claude-fable-5-2']
+    );
+    expect(resolvePrice('claude-fable-6', DEFAULT_PRICING)).toEqual({
+      price: DEFAULT_PRICING['claude-fable-5-2'],
+      fallback: true,
+    });
     expect(findPrice('gpt-5.3-codex', DEFAULT_PRICING)).toBe(DEFAULT_PRICING['gpt-5.3-codex']);
     expect(findPrice('gpt-5.4-mini', DEFAULT_PRICING)).toBe(DEFAULT_PRICING['gpt-5.4-mini']);
     expect(findPrice('gemini-3.5-flash-lite', DEFAULT_PRICING)).toBe(

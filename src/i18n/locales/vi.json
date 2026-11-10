@@ -568,7 +568,7 @@
     "seven_day_sonnet": "Sonnet 7 ngày",
     "seven_day_cowork": "Cowork 7 ngày",
     "iguana_necktie": "Iguana Necktie",
-    "seven_day_fable": "Fable 5 · 7 ngày",
+    "seven_day_fable": "Fable · 7 ngày",
     "cloud_session_credits": "Tín dụng phiên đám mây",
     "extra_usage_label": "Sử dụng thêm",
     "extra_usage_enabled": "Đã bật",
@@ -1679,6 +1679,9 @@
     "search_empty_desc": "Hãy thử tên file hoặc email khác, hoặc xóa tìm kiếm.",
     "search_clear": "Xóa tìm kiếm",
     "no_reset_pending": "No reset pending",
+    "resets_relative": "Đặt lại {{relative}}",
+    "resets_at": "Đặt lại lúc {{time}}",
+    "percent_left": "Còn {{percent}}%",
     "windows_idle_session": "no 5-hour window running"
   },
   "plugin_management": {

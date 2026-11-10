@@ -115,7 +115,8 @@ const findFableUsageLimit = (payload: ClaudeUsagePayload) => {
     const modelName = (normalizeStringValue(limit?.scope?.model?.display_name) ?? '')
       .trim()
       .toLowerCase();
-    const isFable = modelName === 'fable' || modelName === 'fable 5';
+    // "Fable" today; a versioned name ("Fable 5", "Fable 5.2") is the same scoped limit.
+    const isFable = modelName.startsWith('fable');
     return kind === 'weekly_scoped' && isFable && normalizeNumberValue(limit?.percent) !== null;
   });
 
@@ -277,12 +278,12 @@ export const resolveClaudeBilling = (
 };
 
 /**
- * Placeholder rows pinned at 0% remaining for an account whose subscription
- * lapsed. Anthropic returns no usage payload for it, but "0% left, pay the
+ * Placeholder row pinned at 0% remaining for an account whose subscription
+ * lapsed. Only the 7-day window: Anthropic retired the 5-hour one in 2026-11. Anthropic returns no usage payload for it, but "0% left, pay the
  * invoice" is the truthful reading, not "failed to load".
  */
 export const buildLockedClaudeWindows = (t: TFunction): ClaudeQuotaWindow[] =>
-  CLAUDE_USAGE_WINDOW_KEYS.filter(({ key }) => key === 'five_hour' || key === 'seven_day').map(
+  CLAUDE_USAGE_WINDOW_KEYS.filter(({ key }) => key === 'seven_day').map(
     ({ key, id, labelKey }) => ({
       id,
       label: t(labelKey),

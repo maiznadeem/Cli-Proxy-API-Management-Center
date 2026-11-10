@@ -71,14 +71,13 @@ describe('Claude billing standing', () => {
 
   test('locked windows read 0% remaining with no reset to count down to', () => {
     const windows = buildLockedClaudeWindows(t);
-    expect(windows.map((w) => w.id)).toEqual(['five-hour', 'seven-day']);
+    expect(windows.map((w) => w.id)).toEqual(['seven-day']);
     for (const window of windows) {
       expect(window.usedPercent).toBe(100);
       expect(window.resetAtMs).toBeNull();
       expect(window.locked).toBe(true);
     }
-    expect(windows[0].periodHours).toBe(5);
-    expect(windows[1].periodHours).toBe(24 * 7);
+    expect(windows[0].periodHours).toBe(24 * 7);
   });
 });
 

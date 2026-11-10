@@ -24,9 +24,10 @@ export interface UsageCounters {
 export const PRICING_STORAGE_KEY = 'agent-tracker.pricing';
 
 /** Verified USD-per-million rates, as of this date. */
-export const PRICING_AS_OF = '2026-10-04';
+export const PRICING_AS_OF = '2026-11-10';
 
 export const DEFAULT_PRICING: PricingTable = {
+  'claude-fable-5-2': { input: 8, cacheRead: 0.2, cacheWrite: 10, output: 40 },
   'claude-fable-5-1': { input: 10, cacheRead: 0.25, cacheWrite: 12.5, output: 50 },
   'claude-fable-5': { input: 10, cacheRead: 1, cacheWrite: 12.5, output: 50 },
   'claude-opus-5-5': { input: 4, cacheRead: 0.2, cacheWrite: 5, output: 20 },
@@ -65,8 +66,8 @@ export const DEFAULT_PRICING: PricingTable = {
  * such costs as estimates until a real row is added.
  */
 export const FAMILY_FALLBACKS: Record<string, string> = {
-  'claude-fable': 'claude-fable-5-1',
-  'claude-mythos': 'claude-fable-5-1',
+  'claude-fable': 'claude-fable-5-2',
+  'claude-mythos': 'claude-fable-5-2',
   'claude-opus': 'claude-opus-5-5',
   'claude-sonnet': 'claude-sonnet-5-5',
   'claude-haiku': 'claude-haiku-4-5',

@@ -81,6 +81,11 @@
   }
 }
 
+/* Countdown-first form ("Resets in 5 days · 16/11, 11:00") needs no leading spacer. */
+.quotaReset .quotaResetRelative::before {
+  content: none;
+}
+
 .quotaResetRelativeSoon {
   color: var(--cap-watch);
   font-weight: 600;

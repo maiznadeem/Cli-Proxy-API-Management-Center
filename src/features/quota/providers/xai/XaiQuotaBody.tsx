@@ -219,7 +219,12 @@ export function XaiQuotaBody({ quota, classes }: QuotaBodyProps<XaiQuotaState>) 
                   : formatXaiPercent(weeklyRemaining)}
               </span>
               {weeklyResetDisplay && (
-                <QuotaResetLabel display={weeklyResetDisplay} classes={classes} soon={weeklySoon} />
+                <QuotaResetLabel
+                  display={weeklyResetDisplay}
+                  classes={classes}
+                  soon={weeklySoon}
+                  verb="resets"
+                />
               )}
             </div>
           </div>
