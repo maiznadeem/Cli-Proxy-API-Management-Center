@@ -162,7 +162,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px 24px;
-  flex: 0 1 auto;
+  flex: 1 1 260px;
+  max-width: 464px;
 }
 
 .antigravityQuotaGroupHeader {
