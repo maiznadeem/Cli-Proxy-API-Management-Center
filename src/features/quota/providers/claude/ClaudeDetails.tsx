@@ -24,7 +24,13 @@ import type { QuotaDetailsProps } from '../types';
 import { ClaudeResetGrantDetails } from './ClaudeResetGrantDetails';
 import { ClaudeWeekBreakdown } from './ClaudeWeekBreakdown';
 import { CLAUDE_BILLING_URL, CLAUDE_USAGE_SETTINGS_URL } from './ClaudeQuotaBody';
-import { formatResetDate, formatUsd } from './format';
+import { planValueClassForTier, resolveClaudeCardTier } from '../../cardTier';
+import {
+  claudeExtraUsageNotes,
+  claudeExtraUsageStatusKey,
+  formatResetDate,
+  formatUsd,
+} from './format';
 
 export interface ClaudeDetailsExtras {
   grants: readonly AnthropicResetGrant[];
@@ -50,6 +56,10 @@ export function ClaudeDetails({
   const credits = quota.credits ?? null;
   const allowances = quota.allowances ?? [];
   const extraUsage = quota.extraUsage ?? null;
+  const extraUsageStatusKey = claudeExtraUsageStatusKey(extraUsage);
+  const extraUsageOff = extraUsageStatusKey === 'claude_quota.extra_usage_disabled';
+  const extraUsageNotes = claudeExtraUsageNotes(extraUsage, t);
+  const planTier = resolveClaudeCardTier(quota.planType ?? null);
   const dollarWindows = (quota.dollarWindows ?? []).filter(
     (balance) =>
       balance.key !== 'iguana_necktie' || !allowances.some((bucket) => bucket.limitDollars !== null)
@@ -78,7 +88,13 @@ export function ClaudeDetails({
       <FactSection title={t('quota_management.details_account')}>
         {quota.planType && (
           <FactRow label={t('claude_quota.plan_label')}>
-            <span>{t(`claude_quota.${quota.planType}`)}</span>
+            <span
+              className={
+                planTier === 'standard' ? undefined : planValueClassForTier(planTier, classes)
+              }
+            >
+              {t(`claude_quota.${quota.planType}`)}
+            </span>
           </FactRow>
         )}
         {credits && credits.status !== 'unknown' && (
@@ -135,23 +151,16 @@ export function ClaudeDetails({
         {extraUsage && !credits && (
           <FactRow
             label={t('claude_quota.extra_usage_label')}
-            hint={
-              extraUsage.disabledReason
-                ? t('claude_quota.extra_usage_disabled_reason', {
-                    reason: extraUsage.disabledReason,
-                  })
-                : undefined
-            }
+            hint={extraUsageNotes.length > 0 ? extraUsageNotes.join('. ') : undefined}
           >
-            <span>
-              {t(
-                extraUsage.isEnabled === null
-                  ? 'claude_quota.plan_unknown'
-                  : extraUsage.isEnabled
-                    ? 'claude_quota.extra_usage_enabled'
-                    : 'claude_quota.extra_usage_disabled'
-              )}
-            </span>
+            <FactPill tone={extraUsageOff ? 'default' : extraUsage.isEnabled ? 'on' : 'default'}>
+              {t(extraUsageStatusKey)}
+            </FactPill>
+            {extraUsage.utilization !== null && (
+              <span>
+                {t('claude_quota.usage_utilization', { percent: extraUsage.utilization })}
+              </span>
+            )}
             <span>
               {t('claude_quota.usage_spent_limit', {
                 spent: money(extraUsage.usedCredits, extraUsage.currency ?? 'USD', 100),

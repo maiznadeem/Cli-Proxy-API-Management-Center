@@ -33,14 +33,6 @@
   font-weight: 600;
 }
 
-.description {
-  margin: 0;
-  max-width: 72ch;
-  color: var(--ink-muted);
-  font-size: $text-dense;
-  line-height: $lh-dense;
-}
-
 .content {
   display: flex;
   flex-direction: column;

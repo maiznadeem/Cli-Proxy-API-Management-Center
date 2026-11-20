@@ -1,8 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import i18n from '@/i18n';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import '../src/i18n/index';
+import i18n from '../src/i18n/index';
 import { QuotaTimeline } from '../src/features/quota/components/QuotaTimeline';
 import type { QuotaFileEntry } from '../src/features/quota/logic';
 import { buildKimiQuotaRows } from '../src/utils/quota';
@@ -163,5 +162,49 @@ describe('QuotaTimeline rendering', () => {
     );
 
     expect(markup).toBe('');
+  });
+});
+
+describe('QuotaTimeline chart note', () => {
+  const render = (initialMode: 'weekly' | 'session', periodHours: number, resetAtMs: number) =>
+    renderToStaticMarkup(
+      createElement(QuotaTimeline, {
+        ...baseProps,
+        initialMode,
+        quotaFor: () => ({
+          status: 'success',
+          windows: [{ label: 'window', usedPercent: 25, resetAtMs, periodHours }],
+        }),
+      })
+    );
+
+  test('explains the bars through an InfoTip after the title instead of a legend sentence', async () => {
+    await i18n.changeLanguage('en');
+    const markup = render('weekly', 168, new Date(2026, 7, 1, 12).getTime());
+    const title = i18n.t('quota_management.windows_title');
+    expect(markup).toContain(`>${title}</h2><button type="button" data-info-tip=""`);
+    expect(markup).toContain(`aria-label="${i18n.t('common.more_info_about', { label: title })}"`);
+    // The sentence lives only in the InfoTip's hidden description, not in the legend footer.
+    const note = i18n.t('quota_management.windows_note_weekly');
+    expect(markup).toContain(`hidden="">${note}</span>`);
+    expect(markup.split(note)).toHaveLength(2);
+    const legend = markup.slice(markup.lastIndexOf('<footer'));
+    expect(legend).toContain(i18n.t('quota_management.windows_legend_current'));
+    expect(legend).not.toContain(note);
+  });
+
+  test('follows the mode, and has nothing to explain when no lane is drawn', async () => {
+    await i18n.changeLanguage('en');
+    const session = render('session', 5, baseProps.now + 2 * 60 * 60 * 1000);
+    expect(session).toContain(
+      `hidden="">${i18n.t('quota_management.windows_note_session')}</span>`
+    );
+    expect(session).not.toContain(i18n.t('quota_management.windows_note_weekly'));
+
+    // Weekly-only data in 5-hour mode: the loaded credential stays as an idle lane,
+    // but no bar is drawn, so there is no chart note either.
+    const empty = render('session', 168, new Date(2026, 7, 1, 12).getTime());
+    expect(empty).toContain(i18n.t('quota_management.windows_idle_session'));
+    expect(empty).not.toContain('data-info-tip');
   });
 });

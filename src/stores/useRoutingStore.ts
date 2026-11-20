@@ -8,7 +8,7 @@ import {
   applyRoutingLines,
   emptyRoutingLog,
   type RoutingLog,
-} from '@/features/routing/model/parseRoutingLines';
+} from '@/features/threads/model/parseRoutingLines';
 import { useAuthStore } from './useAuthStore';
 
 interface RoutingStoreState {

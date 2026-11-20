@@ -16,10 +16,7 @@ export function SectionLogging({
   const fieldProps = { values, disabled, onChange };
 
   return (
-    <SectionCard
-      title={t('config_management.visual.sections.logging.title')}
-      description={t('config_management.visual.sections.logging.description')}
-    >
+    <SectionCard title={t('config_management.visual.sections.logging.title')}>
       <SettingList>
         <DebugToggle {...fieldProps} />
         <ToggleSetting
@@ -78,7 +75,6 @@ export function SectionLogging({
         <ToggleSetting
           fieldId="usageStatisticsEnabled"
           label={t('config_management.visual.sections.system.usage_statistics_enabled')}
-          description={t('config_management.visual.sections.system.usage_statistics_enabled_desc')}
           checked={values.usageStatisticsEnabled}
           disabled={disabled}
           onChange={(usageStatisticsEnabled) => onChange({ usageStatisticsEnabled })}

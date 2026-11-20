@@ -278,6 +278,39 @@ export function IconLoader2({ size = 20, ...props }: IconProps) {
   );
 }
 
+export function IconRows3({ size = 20, ...props }: IconProps) {
+  return (
+    <svg {...baseSvgProps} width={size} height={size} {...props}>
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M21 9H3" />
+      <path d="M21 15H3" />
+    </svg>
+  );
+}
+
+export function IconLayoutDashboard({ size = 20, ...props }: IconProps) {
+  return (
+    <svg {...baseSvgProps} width={size} height={size} {...props}>
+      <rect width="7" height="9" x="3" y="3" rx="1" />
+      <rect width="7" height="5" x="14" y="3" rx="1" />
+      <rect width="7" height="9" x="14" y="12" rx="1" />
+      <rect width="7" height="5" x="3" y="16" rx="1" />
+    </svg>
+  );
+}
+
+export function IconGrid3x3({ size = 20, ...props }: IconProps) {
+  return (
+    <svg {...baseSvgProps} width={size} height={size} {...props}>
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M3 9h18" />
+      <path d="M3 15h18" />
+      <path d="M9 3v18" />
+      <path d="M15 3v18" />
+    </svg>
+  );
+}
+
 export function IconChevronUp({ size = 20, ...props }: IconProps) {
   return (
     <svg {...baseSvgProps} width={size} height={size} {...props}>
@@ -500,6 +533,18 @@ export function IconSidebarQuota({ size = 20, ...props }: IconProps) {
 
 export const IconSidebarLogs = IconScrollText;
 
+export function IconSidebarSystem({ size = 20, ...props }: IconProps) {
+  return (
+    <svg {...baseSvgProps} width={size} height={size} {...props}>
+      <rect width="20" height="8" x="2" y="2" rx="2" />
+      <rect width="20" height="8" x="2" y="14" rx="2" />
+      <line x1="6" x2="6.01" y1="6" y2="6" />
+      <line x1="6" x2="6.01" y1="18" y2="18" />
+    </svg>
+  );
+}
+
+/** Lucide "route". */
 export function IconSidebarRouting({ size = 20, ...props }: IconProps) {
   return (
     <svg {...baseSvgProps} width={size} height={size} {...props}>
@@ -510,13 +555,47 @@ export function IconSidebarRouting({ size = 20, ...props }: IconProps) {
   );
 }
 
-export function IconSidebarSystem({ size = 20, ...props }: IconProps) {
+/** Lucide "grip-vertical". */
+export function IconGripVertical({ size = 20, ...props }: IconProps) {
   return (
     <svg {...baseSvgProps} width={size} height={size} {...props}>
-      <rect width="20" height="8" x="2" y="2" rx="2" />
-      <rect width="20" height="8" x="2" y="14" rx="2" />
-      <line x1="6" x2="6.01" y1="6" y2="6" />
-      <line x1="6" x2="6.01" y1="18" y2="18" />
+      <circle cx="9" cy="12" r="1" />
+      <circle cx="9" cy="5" r="1" />
+      <circle cx="9" cy="19" r="1" />
+      <circle cx="15" cy="12" r="1" />
+      <circle cx="15" cy="5" r="1" />
+      <circle cx="15" cy="19" r="1" />
+    </svg>
+  );
+}
+
+/** Lucide "ellipsis". */
+export function IconEllipsis({ size = 20, ...props }: IconProps) {
+  return (
+    <svg {...baseSvgProps} width={size} height={size} {...props}>
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="19" cy="12" r="1" />
+      <circle cx="5" cy="12" r="1" />
+    </svg>
+  );
+}
+
+/** Lucide "lock". */
+export function IconLock({ size = 20, ...props }: IconProps) {
+  return (
+    <svg {...baseSvgProps} width={size} height={size} {...props}>
+      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+/** Lucide "messages-square". Fork-only: nav icon for the Threads page. */
+export function IconSidebarThreads({ size = 20, ...props }: IconProps) {
+  return (
+    <svg {...baseSvgProps} width={size} height={size} {...props}>
+      <path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z" />
+      <path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1" />
     </svg>
   );
 }

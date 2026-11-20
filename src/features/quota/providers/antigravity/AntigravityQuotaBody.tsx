@@ -1,11 +1,13 @@
 /**
- * Antigravity 额度渲染体：套餐 chip 行（ultra/ultra-lite=金卡）+ 分组水位条。
+ * Antigravity 额度渲染体：套餐 chip 行（档位见 cardTier.ts）+ 分组水位条。
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { AntigravityQuotaState } from '@/types';
+import { InfoTip } from '@/components/ui/Tooltip';
+import { planValueClassForTier, resolveAntigravityCardTier } from '../../cardTier';
 import { QuotaMeter } from '../../components/QuotaMeter';
 import { collectQuotaRowInstants, pickUrgentRowId } from '../../resetSchedule';
 import type { QuotaBodyProps } from '../../types';
@@ -69,8 +71,10 @@ export function AntigravityQuotaBody({
   const { t } = useTranslation();
   const groups = quota.groups ?? [];
   const planLabel = getAntigravityPlanLabel(quota.subscription, t);
-  const normalizedPlan = quota.subscription?.plan?.toLowerCase() ?? '';
-  const isPremiumPlan = normalizedPlan === 'ultra' || normalizedPlan === 'ultra-lite';
+  const planValueClass = planValueClassForTier(
+    resolveAntigravityCardTier(quota.subscription?.plan),
+    classes
+  );
   const serverTimeOffsetMs = quota.serverTimeOffsetMs ?? 0;
   const resetTimestamps = useMemo(
     () =>
@@ -113,11 +117,9 @@ export function AntigravityQuotaBody({
     <>
       {expanded && planLabel && (
         <div className={classes.codexPlan}>
-          <span className={classes.codexPlanItem}>
+          <span className={classes.codexPlanItem} data-quota-plan="">
             <span className={classes.codexPlanLabel}>{t('antigravity_quota.plan_label')}</span>
-            <span className={isPremiumPlan ? classes.premiumPlanValue : classes.codexPlanValue}>
-              {planLabel}
-            </span>
+            <span className={planValueClass}>{planLabel}</span>
           </span>
         </div>
       )}
@@ -140,12 +142,13 @@ export function AntigravityQuotaBody({
           return (
             <div key={group.id} className={classes.antigravityQuotaGroup}>
               <div className={classes.antigravityQuotaGroupHeader}>
-                <span className={classes.antigravityQuotaGroupTitle}>{groupLabel}</span>
-                {expanded && groupDescription && (
-                  <span className={classes.antigravityQuotaGroupDescription}>
-                    {groupDescription}
-                  </span>
-                )}
+                {/* 分组覆盖哪些模型：标题后的 InfoTip；折叠的 ribbon 只留标题，说明在抽屉里 */}
+                <span>
+                  <span className={classes.antigravityQuotaGroupTitle}>{groupLabel}</span>
+                  {expanded && groupDescription && (
+                    <InfoTip content={groupDescription} label={groupLabel} />
+                  )}
+                </span>
               </div>
               {group.buckets.map((bucket, index) => {
                 const clamped = Math.max(0, Math.min(1, bucket.remainingFraction));

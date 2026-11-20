@@ -82,6 +82,15 @@
   color: var(--ink-faint);
 }
 
+/* Label + InfoTip (FieldLabel). Plain inline flow at the label's own size, so the InfoTip
+   brings its own spacing and follows the last word when a long label wraps. */
+.labelLine {
+  display: block;
+  min-width: 0;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+}
+
 .input,
 .textarea {
   width: 100%;
@@ -188,6 +197,16 @@
   }
 }
 
+/* Checkbox row + InfoTip (CheckboxField). The InfoTip stays outside the <label>; the row
+   shrinks to its content so the icon sits right after the text. */
+.checkboxLine {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+}
+
 .fieldRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -243,6 +262,19 @@
 }
 
 /* ---------- Entry rows (credentials, rules) ---------- */
+
+/* Sponsor detail: name + InfoTip on one line, in normal inline flow. */
+.detailTitleLine {
+  display: block;
+  min-width: 0;
+  font-size: $text-dense;
+  line-height: $lh-dense;
+}
+
+.detailTitle {
+  font-weight: 600;
+  color: var(--ink);
+}
 
 .entryCard {
   display: flex;
@@ -1016,13 +1048,6 @@
   margin: 0;
   padding: 0;
   border: 0;
-}
-
-.thinkingExistingHint {
-  margin: 0;
-  color: var(--cap-watch);
-  font-size: $text-caption;
-  line-height: $lh-caption;
 }
 
 .thinkingLevelGrid {

@@ -30,6 +30,11 @@
   flex-wrap: wrap;
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+}
+
 .title {
   margin: 0;
   font-size: $text-title;
@@ -184,12 +189,12 @@
 }
 
 .axisCells {
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--timeline-columns);
 }
 
 .axisCell {
   position: relative;
-  flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -273,6 +278,15 @@
   color: var(--ink);
 }
 
+.laneGroupName {
+  @include text-ellipsis;
+  min-width: 0;
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
 .lanePeriod {
   flex: none;
   font-size: $text-caption;
@@ -313,10 +327,10 @@
 .trackGrid {
   position: absolute;
   inset: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--timeline-columns);
 
   > span {
-    flex: 1 1 0;
     border-left: 1px solid var(--hairline);
   }
 }
@@ -472,12 +486,6 @@
   width: 2px;
   border-radius: 0;
   background: var(--cap-watch);
-}
-
-.legendNote {
-  flex: 1 1 320px;
-  min-width: 0;
-  color: var(--ink-faint);
 }
 
 // ---------------------------------------------------------------- motion

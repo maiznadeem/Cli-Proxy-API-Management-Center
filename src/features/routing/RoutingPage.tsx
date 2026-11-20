@@ -1,278 +1,425 @@
 /**
- * Routing: which account served which thread, read from the proxy's application log.
+ * Routing board: CPA's priority tiers as one arrangement.
  *
- * Events live in useRoutingStore so the page survives navigation; useRoutingPoll owns the
- * 5 s read loop and its stale-request guards. Parsing and grouping are pure functions in
- * model/parseRoutingLines.
+ * Every move, weight and setting is a local draft until it is saved as one plan. Saving writes
+ * credentials one by one, then the configuration once, and always reloads the board afterwards
+ * so it shows what actually landed, including after a partial failure.
  */
 
-import { useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AutocompleteInput } from '@/components/ui/AutocompleteInput';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { IconSearch, IconTrash2, IconX } from '@/components/ui/icons';
-import { Select } from '@/components/ui/Select';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
-import { useNow } from '@/hooks/useNow';
-import { logsApi } from '@/services/api/logs';
-import { useNotificationStore, useThemeStore } from '@/stores';
-import { useRoutingStore } from '@/stores/useRoutingStore';
-import { downloadBlob } from '@/utils/download';
-import { getErrorMessage } from '@/utils/helpers';
-import { RoutingAccounts } from './components/RoutingAccounts';
-import { RoutingThreadRow } from './components/RoutingThreadRow';
-import { useRoutingPoll } from './hooks/useRoutingPoll';
+import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
+import { useRevealGroup } from '@/hooks/motion';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
 import {
-  accountLabel,
-  buildAccounts,
-  buildThreads,
-  filterThreads,
-} from './model/parseRoutingLines';
+  RoutingConflictError,
+  buildRoutingBoard,
+  routingApi,
+  type RoutingApplyResult,
+} from '@/services/api/routing';
+import { useAuthStore, useConfigStore, useNotificationStore, useThemeStore } from '@/stores';
+import type { ResolvedTheme } from '@/types';
+import type {
+  RoutingBoard,
+  RoutingDraft,
+  RoutingDropTarget,
+  RoutingModelCatalog,
+  RoutingSettings,
+  RoutingTier,
+} from '@/types/routing';
+import { getErrorMessage } from '@/utils/helpers';
+import { createSharedClock } from '@/utils/time/sharedClock';
+import {
+  assignPriorities,
+  RoutingPriorityError,
+  buildRoutingPlan,
+  collectModelOptions,
+  draftFromBoard,
+  moveMember,
+  neededChannels,
+  neededCredentialModels,
+  resolveRoute,
+  stepMember,
+} from './logic';
+import { ChangeReviewDialog } from './components/ChangeReviewDialog';
+import { PolicyPanel } from './components/PolicyPanel';
+import { RoutingSaveBar } from './components/RoutingSaveBar';
+import { usePageTransitionLayer } from '@/components/common/PageTransitionLayer';
+import { TierLadder } from './components/TierLadder';
+import { WeightDialog } from './components/WeightDialog';
 import styles from './RoutingPage.module.scss';
 
-const SKELETON_ROWS = 5;
+// Cooldown chips count down coarsely; one shared timer for the whole board.
+const cooldownClock = createSharedClock({ intervalMs: 5_000 });
+
+const EMPTY_CATALOG: RoutingModelCatalog = { channels: {}, credentials: {} };
+
+interface ModelProgress {
+  done: number;
+  total: number;
+}
 
 export function RoutingPage() {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const now = useNow();
-  const resolvedTheme = useThemeStore((state) => state.resolvedTheme);
+  const { t } = useTranslation();
+  const connectionStatus = useAuthStore((state) => state.connectionStatus);
+  const fetchConfig = useConfigStore((state) => state.fetchConfig);
   const showNotification = useNotificationStore((state) => state.showNotification);
-  const events = useRoutingStore((state) => state.log.events);
-  const loaded = useRoutingStore((state) => state.loaded);
-  const lastUpdated = useRoutingStore((state) => state.lastUpdated);
-  const live = useRoutingStore((state) => state.live);
-  const setLive = useRoutingStore((state) => state.setLive);
-  const clearEvents = useRoutingStore((state) => state.clearEvents);
-  const { loading, error, fileLoggingDisabled, connected } = useRoutingPoll();
-
-  const [search, setSearch] = useState('');
-  const [accountFilter, setAccountFilter] = useState('');
-  const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  const threads = useMemo(() => buildThreads(events), [events]);
-  const accounts = useMemo(() => buildAccounts(events, threads, now), [events, threads, now]);
-  // A filter on an account that left the ring behaves like "all".
-  const effectiveAccountFilter = accounts.some((account) => account.auth === accountFilter)
-    ? accountFilter
-    : '';
-  const visibleThreads = useMemo(
-    () => filterThreads(threads, search, effectiveAccountFilter),
-    [threads, search, effectiveAccountFilter]
+  const showConfirmation = useNotificationStore((state) => state.showConfirmation);
+  const resolvedTheme: ResolvedTheme = useThemeStore((state) => state.resolvedTheme);
+  const nowMs = useSyncExternalStore(
+    cooldownClock.subscribe,
+    cooldownClock.getSnapshot,
+    cooldownClock.getSnapshot
   );
-  const switchedCount = useMemo(
-    () => threads.filter((thread) => thread.switched).length,
-    [threads]
-  );
+  const revealRef = useRevealGroup<HTMLDivElement>();
+  const layoutRef = useRef<HTMLDivElement>(null);
+  const pageTransitionLayer = usePageTransitionLayer();
+  // A page sliding out must not leave its portalled save bar behind.
+  const isCurrentLayer = pageTransitionLayer ? pageTransitionLayer.isCurrentLayer : true;
 
-  const accountOptions = useMemo(
-    () => [
-      { value: '', label: t('routing.account_filter_all') },
-      ...accounts.map((account) => ({ value: account.auth, label: accountLabel(account.auth) })),
-    ],
-    [accounts, t]
-  );
+  const [board, setBoard] = useState<RoutingBoard | null>(null);
+  const [draft, setDraft] = useState<RoutingDraft | null>(null);
+  const [catalog, setCatalog] = useState<RoutingModelCatalog>(EMPTY_CATALOG);
+  const [modelProgress, setModelProgress] = useState<ModelProgress | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [model, setModel] = useState('');
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [weightEdit, setWeightEdit] = useState<{ key: string; session: number } | null>(null);
+  const [weightOpen, setWeightOpen] = useState(false);
+  const requestRef = useRef(0);
+  const catalogRef = useRef<RoutingModelCatalog>(EMPTY_CATALOG);
 
-  const toggleThread = (session: string) =>
-    setExpanded((current) => {
-      const next = new Set(current);
-      if (next.has(session)) next.delete(session);
-      else next.add(session);
-      return next;
-    });
+  const connected = connectionStatus === 'connected';
 
-  const downloadRequestLog = async (id: string) => {
-    const generation = useRoutingStore.getState().generation;
-    setDownloadingId(id);
+  const loadModels = useCallback((next: RoutingBoard, requestId: number) => {
+    const isCurrent = () => requestId === requestRef.current;
+    const known = catalogRef.current;
+    const channels = neededChannels(next).filter((channel) => !(channel in known.channels));
+    const credentials = neededCredentialModels(next).filter((name) => !(name in known.credentials));
+    const total = channels.length + credentials.length;
+    if (total === 0) {
+      setModelProgress(null);
+      return;
+    }
+    let done = 0;
+    setModelProgress({ done, total });
+    const record = (kind: 'channels' | 'credentials', id: string, models: string[] | null) => {
+      if (!isCurrent()) return;
+      done += 1;
+      catalogRef.current = {
+        ...catalogRef.current,
+        [kind]: { ...catalogRef.current[kind], [id]: models },
+      };
+      setCatalog(catalogRef.current);
+      setModelProgress(done >= total ? null : { done, total });
+    };
+    void routingApi.loadChannelModels(channels, (id, models) => record('channels', id, models));
+    void routingApi.loadCredentialModels(credentials, (id, models) =>
+      record('credentials', id, models)
+    );
+  }, []);
+
+  const load = useCallback(async () => {
+    const requestId = ++requestRef.current;
+    const isCurrent = () => requestId === requestRef.current;
+    if (!connected) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
     try {
-      const response = await logsApi.downloadRequestLogById(id);
-      if (generation !== useRoutingStore.getState().generation) return;
-      downloadBlob({
-        filename: `request-${id}.log`,
-        blob: new Blob([response.data], { type: 'text/plain' }),
-      });
-      showNotification(t('logs.request_log_download_success'), 'success');
-    } catch (err: unknown) {
-      if (generation !== useRoutingStore.getState().generation) return;
-      const message = getErrorMessage(err);
-      showNotification(
-        `${t('notification.download_failed')}${message ? `: ${message}` : ''}`,
-        'error'
-      );
+      const [config, files] = await Promise.all([fetchConfig(true), routingApi.listCredentials()]);
+      if (!isCurrent()) return;
+      const next = buildRoutingBoard(config.raw ?? {}, files);
+      setBoard(next);
+      setDraft(draftFromBoard(next));
+      loadModels(next, requestId);
+    } catch (err) {
+      if (!isCurrent()) return;
+      setError(getErrorMessage(err));
     } finally {
-      setDownloadingId(null);
+      if (isCurrent()) setLoading(false);
+    }
+  }, [connected, fetchConfig, loadModels]);
+
+  useEffect(() => {
+    void load();
+    return () => {
+      // Late responses from this mount must not land on a later one.
+      requestRef.current += 1;
+    };
+  }, [load]);
+
+  useEffect(() => {
+    // A new connection is a new backend: model lists are not shared across it.
+    catalogRef.current = EMPTY_CATALOG;
+    setCatalog(EMPTY_CATALOG);
+  }, [connectionStatus]);
+
+  const plan = useMemo(
+    () => (board && draft ? buildRoutingPlan(board, draft) : null),
+    [board, draft]
+  );
+  const dirty = Boolean(plan && plan.changes.length > 0);
+
+  // The global header refresh reloads the board; with a draft it asks first.
+  const refresh = useCallback(() => {
+    if (!dirty) return load();
+    showConfirmation({
+      title: t('routing.unsaved_title'),
+      message: t('routing.refresh_discards'),
+      confirmText: t('routing.refresh'),
+      cancelText: t('routing.unsaved_cancel'),
+      variant: 'danger',
+      onConfirm: () => load(),
+    });
+  }, [dirty, load, showConfirmation, t]);
+
+  useHeaderRefresh(refresh);
+
+  const { allowNextNavigation } = useUnsavedChangesGuard({
+    shouldBlock: dirty,
+    dialog: {
+      title: t('routing.unsaved_title'),
+      message: t('routing.unsaved_message'),
+      confirmText: t('routing.unsaved_confirm'),
+      cancelText: t('routing.unsaved_cancel'),
+      variant: 'danger',
+    },
+  });
+
+  const members = useMemo(
+    () => new Map((board?.members ?? []).map((member) => [member.key, member])),
+    [board]
+  );
+  const priorities = useMemo(
+    () => (board && draft ? assignPriorities(draft.tiers, board.members) : {}),
+    [board, draft]
+  );
+  const selectedModel = model.trim() || null;
+  const preview = useMemo(
+    () => (board && draft ? resolveRoute(board, draft, catalog, selectedModel, nowMs) : null),
+    [board, draft, catalog, selectedModel, nowMs]
+  );
+  const modelOptions = useMemo(
+    () => (board ? collectModelOptions(board, catalog) : []),
+    [board, catalog]
+  );
+
+  const applyTiers = useCallback(
+    (tiers: RoutingTier[]) => {
+      if (!board || !draft) return;
+      try {
+        assignPriorities(tiers, board.members);
+        setDraft({ ...draft, tiers });
+      } catch (err) {
+        if (!(err instanceof RoutingPriorityError)) throw err;
+        showNotification(t('routing.locked_priority_conflict'), 'warning');
+      }
+    },
+    [board, draft, showNotification, t]
+  );
+
+  const handleMove = useCallback(
+    (key: string, target: RoutingDropTarget) => {
+      if (draft) applyTiers(moveMember(draft.tiers, key, target));
+    },
+    [draft, applyTiers]
+  );
+
+  const handleStep = useCallback(
+    (key: string, direction: 'up' | 'down') => {
+      if (draft) applyTiers(stepMember(draft.tiers, key, direction));
+      // Keep keyboard focus on the moved card after it re-renders in its new tier.
+      requestAnimationFrame(() => {
+        const card = document.querySelector<HTMLElement>(
+          `[data-member-key="${CSS.escape(key)}"] button`
+        );
+        card?.focus();
+      });
+    },
+    [draft, applyTiers]
+  );
+
+  const handleEditWeights = useCallback((key: string) => {
+    setWeightEdit((current) => ({ key, session: (current?.session ?? 0) + 1 }));
+    setWeightOpen(true);
+  }, []);
+
+  const handleApplyWeights = useCallback((key: string, weights: (number | null)[]) => {
+    setDraft((current) =>
+      current ? { ...current, weights: { ...current.weights, [key]: weights } } : current
+    );
+  }, []);
+
+  const handleSettings = useCallback((settings: RoutingSettings) => {
+    setDraft((current) => (current ? { ...current, settings } : current));
+  }, []);
+
+  const discard = () => {
+    if (board) setDraft(draftFromBoard(board));
+  };
+
+  const reportResult = (result: RoutingApplyResult) => {
+    if (!result.failed) {
+      showNotification(t('routing.save_success', { count: plan?.changes.length ?? 0 }), 'success');
+      return;
+    }
+    if (result.failed.error instanceof RoutingConflictError) {
+      showNotification(t('routing.save_conflict'), 'error');
+      return;
+    }
+    const failedKey = result.failed.key;
+    const name =
+      failedKey === 'config'
+        ? t('routing.config_target')
+        : (members.get(failedKey)?.name ?? failedKey);
+    showNotification(
+      t('routing.save_partial', {
+        name,
+        message: getErrorMessage(result.failed.error, t('common.unknown_error')),
+        applied: result.applied.length,
+        skipped: result.notAttempted.length,
+      }),
+      'error',
+      10_000
+    );
+  };
+
+  const save = async () => {
+    if (!board || !plan || saving) return;
+    setSaving(true);
+    try {
+      const result = await routingApi.applyPlan(board, plan);
+      reportResult(result);
+    } catch (err) {
+      showNotification(getErrorMessage(err, t('common.unknown_error')), 'error');
+    } finally {
+      setSaving(false);
+      setReviewOpen(false);
+      allowNextNavigation();
+      await load();
     }
   };
 
-  const updatedLabel = lastUpdated
-    ? t('routing.summary_updated', {
-        time: new Date(lastUpdated).toLocaleTimeString(i18n.resolvedLanguage, {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        }),
-      })
-    : t('routing.summary_waiting');
+  const entryControl = (
+    <div className={styles.modelPicker}>
+      <AutocompleteInput
+        value={model}
+        onChange={setModel}
+        options={modelOptions}
+        placeholder={t('routing.model_placeholder')}
+        wrapperClassName={styles.modelInput}
+        className={styles.modelField}
+        id="routing-model-preview"
+      />
+      {modelProgress ? (
+        <span className={styles.modelProgress} role="status">
+          {t('routing.models_loading', { done: modelProgress.done, total: modelProgress.total })}
+        </span>
+      ) : null}
+    </div>
+  );
 
   const renderBody = () => {
-    if (!connected) {
-      return <p className={styles.notice}>{t('routing.disconnected')}</p>;
-    }
-    if (fileLoggingDisabled) {
+    if (loading && !board) {
       return (
-        <div className={styles.notice}>
-          <p className={styles.noticeText}>{t('routing.logging_disabled')}</p>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/config')}>
-            {t('routing.open_settings')}
-          </Button>
-        </div>
-      );
-    }
-    if (loading && !loaded) {
-      return (
-        <div className={styles.skeletons} aria-busy="true">
-          {Array.from({ length: SKELETON_ROWS }, (_, index) => (
-            <Skeleton key={index} height={64} rounded={10} />
+        <div className={styles.skeletons} aria-busy="true" aria-label={t('routing.loading')}>
+          {[0, 1, 2].map((index) => (
+            <Skeleton key={index} height={96} />
           ))}
         </div>
       );
     }
-    if (threads.length === 0) {
-      return <EmptyState title={t('routing.empty_title')} description={t('routing.empty_desc')} />;
-    }
-    if (visibleThreads.length === 0) {
+    if (error !== null && !board) {
       return (
         <EmptyState
-          title={t('routing.filtered_empty_title')}
-          description={t('routing.filtered_empty_desc')}
+          title={t('routing.load_failed', { message: error || t('common.unknown_error') })}
+          action={
+            <Button variant="secondary" onClick={() => void load()}>
+              {t('routing.retry')}
+            </Button>
+          }
         />
       );
     }
+    if (!board || !draft || !preview) return null;
+    if (board.members.length === 0) {
+      return <EmptyState title={t('routing.empty_title')} description={t('routing.empty_desc')} />;
+    }
     return (
-      <ul className={styles.threads} aria-label={t('routing.threads_label')}>
-        {visibleThreads.map((thread) => (
-          <RoutingThreadRow
-            key={thread.session}
-            thread={thread}
-            expanded={expanded.has(thread.session)}
-            onToggle={toggleThread}
-            now={now}
-            locale={i18n.resolvedLanguage}
-            downloadingId={downloadingId}
-            onDownload={(id) => void downloadRequestLog(id)}
+      <div className={styles.layout} ref={layoutRef}>
+        <section className={styles.board} aria-label={t('routing.title')}>
+          <TierLadder
+            members={members}
+            draft={draft}
+            preview={preview}
+            priorities={priorities}
+            model={selectedModel}
+            nowMs={nowMs}
+            theme={resolvedTheme}
+            entryControl={entryControl}
+            onMove={handleMove}
+            onStep={handleStep}
+            onEditWeights={handleEditWeights}
           />
-        ))}
-      </ul>
+        </section>
+        <PolicyPanel settings={draft.settings} disabled={saving} onChange={handleSettings} />
+      </div>
     );
   };
 
+  const editingMember = weightEdit ? (members.get(weightEdit.key) ?? null) : null;
+
   return (
-    <div className={styles.page}>
+    <div className={styles.page} ref={revealRef}>
       <header className={styles.header}>
-        <div className={styles.copy}>
-          <h1 className={styles.title}>{t('routing.title')}</h1>
-          <p className={styles.meta}>
-            <span className={styles.metaStrong}>
-              {t('routing.summary_threads', { count: threads.length })}
-            </span>
-            <span className={styles.metaSep} aria-hidden="true" />
-            <span>{t('routing.summary_requests', { count: events.length })}</span>
-            {switchedCount > 0 && (
-              <>
-                <span className={styles.metaSep} aria-hidden="true" />
-                <span className={styles.metaWatch}>
-                  {t('routing.summary_switched', { count: switchedCount })}
-                </span>
-              </>
-            )}
-            <span className={styles.metaSep} aria-hidden="true" />
-            <span className={styles.metaMuted}>{updatedLabel}</span>
-          </p>
-        </div>
-        <div className={styles.actions}>
-          <span title={t('routing.live_label')}>
-            <ToggleSwitch
-              checked={live}
-              onChange={setLive}
-              label={t('routing.live')}
-              ariaLabel={t('routing.live_label')}
-              disabled={!connected}
-            />
-          </span>
-          <Button
-            variant="ghost"
-            size="md"
-            className={styles.iconButton}
-            onClick={() => {
-              clearEvents();
-              setExpanded(new Set());
-            }}
-            disabled={events.length === 0}
-            aria-label={t('routing.clear')}
-            title={t('routing.clear')}
-          >
-            <IconTrash2 size={16} aria-hidden="true" />
-          </Button>
-        </div>
+        <h1 className={styles.title} data-reveal>
+          {t('routing.title')}
+        </h1>
       </header>
 
-      {error && (
-        <div className={styles.errorBanner} role="alert">
-          {t('routing.load_error', { message: error })}
-        </div>
-      )}
+      {renderBody()}
 
-      <RoutingAccounts accounts={accounts} resolvedTheme={resolvedTheme} />
+      <RoutingSaveBar
+        visible={isCurrentLayer && dirty}
+        count={plan?.changes.length ?? 0}
+        saving={saving}
+        saveDisabled={!connected}
+        onSave={() => setReviewOpen(true)}
+        onDiscard={discard}
+        layoutRef={layoutRef}
+      />
 
-      <section className={styles.workbench}>
-        <div className={styles.toolbar}>
-          <div className={styles.search}>
-            <IconSearch size={14} aria-hidden="true" className={styles.searchIcon} />
-            <input
-              ref={searchInputRef}
-              className={styles.searchInput}
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={t('routing.search_placeholder')}
-              aria-label={t('routing.search_label')}
-            />
-            {search && (
-              <button
-                type="button"
-                className={styles.clearSearch}
-                aria-label={t('routing.search_clear')}
-                title={t('routing.search_clear')}
-                onClick={() => {
-                  setSearch('');
-                  searchInputRef.current?.focus();
-                }}
-              >
-                <IconX size={14} aria-hidden="true" />
-              </button>
-            )}
-          </div>
-          <div className={styles.accountFilter}>
-            <Select
-              value={effectiveAccountFilter}
-              options={accountOptions}
-              onChange={setAccountFilter}
-              ariaLabel={t('routing.account_filter_label')}
-              size="sm"
-            />
-          </div>
-          {visibleThreads.length !== threads.length && (
-            <span className={styles.filterCount}>
-              {visibleThreads.length} / {threads.length}
-            </span>
-          )}
-        </div>
-        {renderBody()}
-      </section>
+      {plan ? (
+        <ChangeReviewDialog
+          open={reviewOpen}
+          changes={plan.changes}
+          members={members}
+          saving={saving}
+          onConfirm={() => void save()}
+          onClose={() => setReviewOpen(false)}
+        />
+      ) : null}
+
+      {weightEdit && draft ? (
+        <WeightDialog
+          key={weightEdit.session}
+          open={weightOpen}
+          member={editingMember}
+          weights={draft.weights[weightEdit.key] ?? []}
+          strategy={draft.settings.strategy}
+          onApply={handleApplyWeights}
+          onClose={() => setWeightOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

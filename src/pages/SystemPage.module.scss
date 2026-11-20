@@ -68,6 +68,25 @@
   min-width: 0;
 }
 
+/* Refresh list + update model catalog, side by side in the panel header. */
+.modelsActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.modelsActionLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
 .panelTitle {
   margin: 0;
   color: var(--ink);
@@ -282,12 +301,6 @@
   font-size: $text-body;
   line-height: $lh-body;
   font-weight: 500;
-}
-
-.linkDesc {
-  color: var(--ink-muted);
-  font-size: $text-dense;
-  line-height: $lh-dense;
 }
 
 .linkIcon {

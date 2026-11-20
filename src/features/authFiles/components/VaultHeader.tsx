@@ -5,6 +5,9 @@ import { IconRefreshCw, IconUpload } from '@/components/ui/icons';
 import styles from './VaultHeader.module.scss';
 
 export type VaultHeaderProps = {
+  syncingModelCatalog?: boolean;
+  onSyncModelCatalog?: () => void;
+  modelCatalogSyncDisabled?: boolean;
   totalCount: number;
   activeCount: number;
   problemCount: number;
@@ -27,6 +30,9 @@ export type VaultHeaderProps = {
  */
 export function VaultHeader(props: VaultHeaderProps) {
   const {
+    syncingModelCatalog = false,
+    onSyncModelCatalog,
+    modelCatalogSyncDisabled = false,
     totalCount,
     activeCount,
     problemCount,
@@ -80,6 +86,21 @@ export function VaultHeader(props: VaultHeaderProps) {
             className={refreshing ? styles.spinning : undefined}
           />
         </Button>
+        {onSyncModelCatalog && (
+          <Button
+            variant="ghost"
+            onClick={onSyncModelCatalog}
+            disabled={modelCatalogSyncDisabled || syncingModelCatalog}
+            aria-busy={syncingModelCatalog}
+          >
+            {syncingModelCatalog ? (
+              <LoadingSpinner size={14} />
+            ) : (
+              <IconRefreshCw size={14} aria-hidden="true" />
+            )}
+            {t('auth_files.sync_catalog_button')}
+          </Button>
+        )}
         {onRefreshCredentials && (
           <Button
             variant="ghost"

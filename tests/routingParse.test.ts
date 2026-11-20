@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { TFunction } from 'i18next';
-import { formatLatency, formatRelative, statusTone } from '../src/features/routing/model/format';
+import { formatLatency, formatRelative, statusTone } from '../src/features/threads/model/format';
 import {
   accountLabel,
   accountProvider,
@@ -13,7 +13,7 @@ import {
   filterThreads,
   parseLatencyMs,
   parseRoutingLine,
-} from '../src/features/routing/model/parseRoutingLines';
+} from '../src/features/threads/model/parseRoutingLines';
 
 const AUTH_A = 'claude-1776d4ba-tripp.forrest@ezspectrum.org.json';
 const AUTH_B = 'codex-0a1b2c3d-ops@example.com.json';
@@ -325,10 +325,10 @@ describe('format helpers', () => {
 
   test('formats relative time', () => {
     const now = 10 * 86_400_000;
-    expect(formatRelative(t, now, now - 30_000)).toBe('routing.relative_now');
-    expect(formatRelative(t, now, now - 5 * 60_000)).toBe('routing.relative_minutes:5');
-    expect(formatRelative(t, now, now - 3 * 3_600_000)).toBe('routing.relative_hours:3');
-    expect(formatRelative(t, now, now - 3 * 86_400_000)).toBe('routing.relative_days:3');
+    expect(formatRelative(t, now, now - 30_000)).toBe('threads.relative_now');
+    expect(formatRelative(t, now, now - 5 * 60_000)).toBe('threads.relative_minutes:5');
+    expect(formatRelative(t, now, now - 3 * 3_600_000)).toBe('threads.relative_hours:3');
+    expect(formatRelative(t, now, now - 3 * 86_400_000)).toBe('threads.relative_days:3');
   });
 
   test('maps status to tone', () => {

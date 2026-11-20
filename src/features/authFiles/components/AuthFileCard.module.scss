@@ -372,6 +372,24 @@
   min-width: 0;
 }
 
+/* ---------- SIWC binding: status pill and expiry, under the main row ---------- */
+
+.siwcRow {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.siwcExpires {
+  font-size: $text-caption;
+  line-height: $lh-caption;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+
 /* ---------- Actions: 32px ghost icon buttons ---------- */
 
 .actions {
@@ -404,9 +422,9 @@
   }
 }
 
-/* ---------- Responsive ---------- */
+/* ---------- Responsive: by card width (cell container), since stacked layouts are narrow ---------- */
 
-@media (max-width: 1280px) {
+@container (max-width: 960px) {
   .cardQuota {
     grid-template-columns: minmax(0, 1fr) minmax(180px, 0.8fr) auto;
     grid-template-areas:
@@ -415,7 +433,7 @@
   }
 }
 
-@media (max-width: 960px) {
+@container (max-width: 680px) {
   .card {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
@@ -436,7 +454,7 @@
   }
 }
 
-@include mobile {
+@container (max-width: 480px) {
   .card {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:

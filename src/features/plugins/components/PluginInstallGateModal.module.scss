@@ -217,13 +217,6 @@
   overflow-wrap: anywhere;
 }
 
-.confirmHint {
-  margin: 8px 0 0;
-  font-size: $text-caption;
-  line-height: $lh-caption;
-  color: var(--ink-faint);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .repoLink {
     transition: none;

@@ -7,7 +7,12 @@
 
 import type { ComponentType } from 'react';
 import type { TFunction } from 'i18next';
-import type { AntigravityQuotaState, ClaudeQuotaState, CodexQuotaState } from '@/types';
+import type {
+  AntigravityQuotaState,
+  ClaudeQuotaState,
+  CodexQuotaState,
+  KimiQuotaState,
+} from '@/types';
 import type { QuotaCardState } from './index';
 import type { QuotaDetailsProps, QuotaProviderType } from './types';
 import { AntigravityDetails } from './antigravity/AntigravityDetails';
@@ -39,6 +44,8 @@ export function resolvePlanLabel(
       return getCodexPlanLabel((quota as CodexQuotaState).planType, t);
     case 'antigravity':
       return getAntigravityPlanLabel((quota as AntigravityQuotaState).subscription, t);
+    case 'kimi':
+      return (quota as KimiQuotaState).planName || null;
     default:
       return null;
   }

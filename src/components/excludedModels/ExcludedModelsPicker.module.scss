@@ -400,6 +400,11 @@
   gap: 6px;
 }
 
+.ruleLabelRow {
+  min-width: 0;
+  line-height: 1.4;
+}
+
 .ruleLabel {
   color: var(--ink-muted);
   font-size: 12px;

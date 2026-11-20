@@ -27,10 +27,7 @@ export function SectionCommon({
   const fieldProps = { values, disabled, onChange };
 
   return (
-    <SectionCard
-      title={t('config_management.visual.sections.common.title')}
-      description={t('config_management.visual.sections.common.description')}
-    >
+    <SectionCard title={t('config_management.visual.sections.common.title')}>
       <SettingList>
         <HostField {...fieldProps} />
         <PortField {...fieldProps} error={portError} />

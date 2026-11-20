@@ -7,17 +7,15 @@ import { Input } from '@/components/ui/Input';
 import { SelectionCheckbox } from '@/components/ui/SelectionCheckbox';
 import { IconEye, IconEyeOff } from '@/components/ui/icons';
 import { useAuthStore, useLanguageStore, useNotificationStore } from '@/stores';
+import { getLoginTransitionTimings } from '@/stores/useLoginTransitionStore';
+import { prefersReducedMotion } from '@/hooks/motion';
+import { resolveLoginRedirect } from '@/router/loginRedirect';
 import { detectApiBaseFromLocation, normalizeApiBase } from '@/utils/connection';
 import { LANGUAGE_LABEL_KEYS, LANGUAGE_ORDER } from '@/utils/constants';
 import { isSupportedLanguage } from '@/utils/language';
 import type { ApiError } from '@/types';
 import { LegacyBackendError } from '@/services/api/legacyBackendProbe';
 import styles from './LoginPage.module.scss';
-
-/**
- * 将 API 错误转换为本地化的用户友好消息
- */
-type RedirectState = { from?: { pathname?: string } };
 
 function GlobeIcon() {
   return (
@@ -40,6 +38,9 @@ function GlobeIcon() {
   );
 }
 
+/**
+ * 将 API 错误转换为本地化的用户友好消息
+ */
 function getLocalizedErrorMessage(error: unknown, t: (key: string) => string): string {
   if (error instanceof LegacyBackendError) return t('login.error_legacy_backend');
   const apiError = error as Partial<ApiError>;
@@ -116,21 +117,35 @@ export function LoginPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const login = useAuthStore((state) => state.login);
   const restoreSession = useAuthStore((state) => state.restoreSession);
-  const storedBase = useAuthStore((state) => state.apiBase);
-  const storedKey = useAuthStore((state) => state.managementKey);
-  const storedRememberPassword = useAuthStore((state) => state.rememberPassword);
 
-  const [apiBase, setApiBase] = useState('');
-  const [managementKey, setManagementKey] = useState('');
+  const detectedBase = useMemo(() => detectApiBaseFromLocation(), []);
+  // 首帧即用已保存的连接信息填好表单：没有可恢复会话时表单直接出现，不闪启动画面
+  const [apiBase, setApiBase] = useState(() => useAuthStore.getState().apiBase || detectedBase);
+  const [managementKey, setManagementKey] = useState(
+    () => useAuthStore.getState().managementKey || ''
+  );
   const [showCustomBase, setShowCustomBase] = useState(false);
   const [showKey, setShowKey] = useState(false);
-  const [rememberPassword, setRememberPassword] = useState(false);
+  const [rememberPassword, setRememberPassword] = useState(() => {
+    const { rememberPassword: remembered, managementKey: key } = useAuthStore.getState();
+    return remembered || Boolean(key);
+  });
   const [loading, setLoading] = useState(false);
-  const [autoLoading, setAutoLoading] = useState(true);
+  // 仅在确实会自动登录时显示启动画面
+  const [autoLoading, setAutoLoading] = useState(() =>
+    useAuthStore.getState().hasRestorableSession()
+  );
   const [autoLoginSuccess, setAutoLoginSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  const detectedBase = useMemo(() => detectApiBaseFromLocation(), []);
+  const redirectTarget = resolveLoginRedirect(location.state);
+  const redirectTimerRef = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (redirectTimerRef.current !== null) window.clearTimeout(redirectTimerRef.current);
+    },
+    []
+  );
   const titleId = useId();
   const customBaseId = useId();
   const errorId = useId();
@@ -172,23 +187,31 @@ export function LoginPage() {
   }, [languageMenuOpen]);
 
   useEffect(() => {
+    const splashStartedAt = performance.now();
     const init = async () => {
       try {
         const autoLoggedIn = await restoreSession();
         if (autoLoggedIn) {
           setAutoLoginSuccess(true);
-          // 延迟跳转，让用户看到成功动画
-          setTimeout(() => {
-            const redirect = (location.state as RedirectState | null)?.from?.pathname || '/';
-            navigate(redirect, { replace: true });
-          }, 1500);
+          // 网络快时补足启动画面的最短停留，避免一闪而过；网络慢时不再额外等待
+          const { splashMin } = getLoginTransitionTimings(prefersReducedMotion());
+          const elapsed = performance.now() - splashStartedAt;
+          redirectTimerRef.current = window.setTimeout(
+            () => navigate(redirectTarget, { replace: true }),
+            Math.max(0, splashMin - elapsed)
+          );
         } else {
-          setApiBase(storedBase || detectedBase);
-          setManagementKey(storedKey || '');
-          setRememberPassword(storedRememberPassword || Boolean(storedKey));
+          // 按最新的已保存信息回填表单（restoreSession 可能迁移了旧版存储）。
+          // 自动登录被 401 拒绝时全局会登出并清空存储，此时保留首帧填入的地址与密钥，
+          // 用户修正后即可直接重试，自定义地址也不会丢失。
+          const stored = useAuthStore.getState();
+          setApiBase((previous) => stored.apiBase || previous || detectedBase);
+          setManagementKey((previous) => stored.managementKey || previous);
+          setRememberPassword(
+            (previous) => stored.rememberPassword || Boolean(stored.managementKey) || previous
+          );
         }
       } finally {
-        // 自动登录成功时 showSplash 仍由 autoLoginSuccess 维持，可无条件结束 loading
         setAutoLoading(false);
       }
     };
@@ -198,12 +221,14 @@ export function LoginPage() {
   }, []);
 
   const handleSubmit = useCallback(async () => {
+    if (loading) return;
     if (!managementKey.trim()) {
       setError(t('login.error_required'));
       return;
     }
 
     const baseToUse = apiBase ? normalizeApiBase(apiBase) : detectedBase;
+    // 先进入 loading：登录成功瞬间 isAuthenticated 变真时不会被立即重定向打断
     setLoading(true);
     setError('');
     try {
@@ -213,38 +238,37 @@ export function LoginPage() {
         rememberPassword,
       });
       showNotification(t('common.connected_status'), 'success');
-      navigate('/', { replace: true });
+      // 成功后保持 loading 直到离开本页：不播放过渡，也不触碰揭幕 store
+      navigate(redirectTarget, { replace: true });
     } catch (err: unknown) {
       const message = getLocalizedErrorMessage(err, t);
+      setLoading(false);
       setError(message);
       showNotification(`${t('notification.login_failed')}: ${message}`, 'error');
-    } finally {
-      setLoading(false);
     }
   }, [
     apiBase,
     detectedBase,
+    loading,
     login,
     managementKey,
     navigate,
+    redirectTarget,
     rememberPassword,
     showNotification,
     t,
   ]);
 
-  const handleSubmitKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === 'Enter' && !loading) {
-        event.preventDefault();
-        handleSubmit();
-      }
+  const handleFormSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      void handleSubmit();
     },
-    [loading, handleSubmit]
+    [handleSubmit]
   );
 
-  if (isAuthenticated && !autoLoading && !autoLoginSuccess) {
-    const redirect = (location.state as RedirectState | null)?.from?.pathname || '/';
-    return <Navigate to={redirect} replace />;
+  if (isAuthenticated && !autoLoading && !autoLoginSuccess && !loading) {
+    return <Navigate to={redirectTarget} replace />;
   }
 
   // 显示启动动画（自动登录中或自动登录成功）
@@ -312,7 +336,12 @@ export function LoginPage() {
               <p className={styles.subtitle}>{t('login.subtitle')}</p>
             </header>
 
-            <section className={styles.panel} aria-labelledby={titleId}>
+            <form
+              className={styles.panel}
+              aria-labelledby={titleId}
+              onSubmit={handleFormSubmit}
+              noValidate
+            >
               <div className={styles.connection}>
                 <div className={styles.connectionRow}>
                   <div className={styles.connectionText}>
@@ -320,6 +349,7 @@ export function LoginPage() {
                     <span className={styles.connectionValue}>{apiBase || detectedBase}</span>
                   </div>
                   <Button
+                    type="button"
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowCustomBase((prev) => !prev)}
@@ -361,12 +391,11 @@ export function LoginPage() {
                   placeholder={t('login.management_key_placeholder')}
                   type={showKey ? 'text' : 'password'}
                   name="cpa-management-key"
-                  autoComplete="off"
+                  autoComplete="current-password"
                   spellCheck={false}
                   className={styles.keyInput}
                   value={managementKey}
                   onChange={(e) => setManagementKey(e.target.value)}
-                  onKeyDown={handleSubmitKeyDown}
                   aria-invalid={error ? true : undefined}
                   aria-describedby={error ? errorId : undefined}
                   rightElement={
@@ -397,10 +426,10 @@ export function LoginPage() {
                 labelClassName={styles.checkboxLabel}
               />
 
-              <Button fullWidth size="lg" onClick={handleSubmit} loading={loading}>
+              <Button type="submit" fullWidth size="lg" loading={loading}>
                 {loading ? t('login.submitting') : t('login.submit_button')}
               </Button>
-            </section>
+            </form>
 
             <p className={styles.footnote}>{t('login.version_requirement')}</p>
           </>

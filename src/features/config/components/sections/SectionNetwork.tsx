@@ -6,7 +6,6 @@ import { SelectSetting, SettingList, TextSetting, ToggleSetting } from '../field
 import { ProxyUrlField } from '../fields/sharedFields';
 import { getValidationMessage } from '../blocks/shared';
 
-
 type RoutingStrategy = VisualConfigValues['routingStrategy'];
 type DisableImageGeneration = VisualConfigValues['disableImageGeneration'];
 
@@ -32,6 +31,10 @@ export function SectionNetwork({
       value: 'fill-first',
       label: t('config_management.visual.sections.network.strategy_fill_first'),
     },
+    {
+      value: 'soonest-reset',
+      label: t('config_management.visual.sections.network.strategy_soonest_reset'),
+    },
   ];
 
   const disableImageGenerationOptions: Array<{ value: DisableImageGeneration; label: string }> = [
@@ -54,10 +57,7 @@ export function SectionNetwork({
   ];
 
   return (
-    <SectionCard
-      title={t('config_management.visual.sections.network.title')}
-      description={t('config_management.visual.sections.network.description')}
-    >
+    <SectionCard title={t('config_management.visual.sections.network.title')}>
       <SettingList>
         <ProxyUrlField values={values} disabled={disabled} onChange={onChange} wide />
         <TextSetting
@@ -112,7 +112,6 @@ export function SectionNetwork({
         <SelectSetting
           fieldId="routingStrategy"
           label={t('config_management.visual.sections.network.routing_strategy')}
-          description={t('config_management.visual.sections.network.routing_strategy_hint')}
           value={values.routingStrategy}
           options={routingStrategyOptions}
           disabled={disabled}
@@ -121,7 +120,6 @@ export function SectionNetwork({
         <SelectSetting
           fieldId="disableImageGeneration"
           label={t('config_management.visual.sections.network.disable_image_generation')}
-          description={t('config_management.visual.sections.network.disable_image_generation_hint')}
           value={values.disableImageGeneration}
           options={disableImageGenerationOptions}
           disabled={disabled}
@@ -206,7 +204,6 @@ export function SectionNetwork({
         <ToggleSetting
           fieldId="passthroughHeaders"
           label={t('config_management.visual.sections.network.passthrough_headers')}
-          description={t('config_management.visual.sections.network.passthrough_headers_desc')}
           checked={values.passthroughHeaders}
           disabled={disabled}
           onChange={(passthroughHeaders) => onChange({ passthroughHeaders })}

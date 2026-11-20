@@ -237,6 +237,12 @@
   }
 }
 
+/* Switch + trailing InfoTip: the InfoTip must stay outside the switch's <label>. */
+.switchRow {
+  display: flex;
+  align-items: center;
+}
+
 .filterPanelCount {
   padding: 0 6px;
   border-radius: var(--radius-pill);

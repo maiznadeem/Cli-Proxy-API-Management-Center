@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { CardLayoutSwitch } from '@/components/ui/CardLayoutSwitch';
+import type { CardLayout } from '@/components/ui/cardLayout';
 import { IconSearch, IconSlidersHorizontal, IconTrash2, IconX } from '@/components/ui/icons';
 import { MAX_CARD_PAGE_SIZE, MIN_CARD_PAGE_SIZE } from '@/features/authFiles/constants';
 import type { AuthFilesSortMode, AuthFilesStatusFilterMode } from '@/features/authFiles/uiState';
@@ -20,8 +22,8 @@ export type AuthFilesToolbarProps = {
   pageSizeInput: string;
   onPageSizeInputChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onPageSizeCommit: (rawValue: string) => void;
-  compactMode: boolean;
-  onCompactModeChange: (value: boolean) => void;
+  layout: CardLayout;
+  onLayoutChange: (layout: CardLayout) => void;
   deleteLabel: string;
   deleteDisabled: boolean;
   deleteLoading: boolean;
@@ -45,8 +47,8 @@ export function AuthFilesToolbar(props: AuthFilesToolbarProps) {
     pageSizeInput,
     onPageSizeInputChange,
     onPageSizeCommit,
-    compactMode,
-    onCompactModeChange,
+    layout,
+    onLayoutChange,
     deleteLabel,
     deleteDisabled,
     deleteLoading,
@@ -78,11 +80,6 @@ export function AuthFilesToolbar(props: AuthFilesToolbarProps) {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [displaySettingsOpen]);
-
-  const viewOptions = [
-    { compact: false, label: t('auth_files.view_regular') },
-    { compact: true, label: t('auth_files.view_compact') },
-  ];
 
   return (
     <div className={styles.toolbar}>
@@ -139,22 +136,7 @@ export function AuthFilesToolbar(props: AuthFilesToolbarProps) {
       </div>
 
       <div className={styles.end}>
-        <div className={styles.segmented} role="group" aria-label={t('auth_files.view_label')}>
-          {viewOptions.map((option) => {
-            const isActive = compactMode === option.compact;
-            return (
-              <button
-                key={String(option.compact)}
-                type="button"
-                className={`${styles.segment} ${isActive ? styles.segmentActive : ''}`}
-                aria-pressed={isActive}
-                onClick={() => onCompactModeChange(option.compact)}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
+        <CardLayoutSwitch value={layout} onChange={onLayoutChange} />
 
         <div className={styles.display} ref={displaySettingsRef}>
           <button

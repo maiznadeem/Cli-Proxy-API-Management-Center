@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
+import { InfoTip } from '@/components/ui/Tooltip';
 import { lockScroll, unlockScroll } from '@/components/ui/scrollLock';
 import {
   IconCopy,
@@ -660,19 +661,21 @@ export function LogsPage() {
                     onChange={setWrapLogs}
                     label={t('logs.wrap_lines')}
                   />
-                  <ToggleSwitch
-                    checked={showRawLogs}
-                    onChange={setShowRawLogs}
-                    label={
-                      <span
-                        title={t('logs.show_raw_logs_hint', {
-                          defaultValue: 'Show original log text for easier multi-line copy',
-                        })}
-                      >
-                        {t('logs.show_raw_logs', { defaultValue: 'Show raw logs' })}
-                      </span>
-                    }
-                  />
+                  <div className={styles.switchRow}>
+                    <ToggleSwitch
+                      checked={showRawLogs}
+                      onChange={setShowRawLogs}
+                      label={
+                        <span>{t('logs.show_raw_logs', { defaultValue: 'Show raw logs' })}</span>
+                      }
+                    />
+                    <InfoTip
+                      content={t('logs.show_raw_logs_hint', {
+                        defaultValue: 'Show original log text for easier multi-line copy',
+                      })}
+                      label={t('logs.show_raw_logs', { defaultValue: 'Show raw logs' })}
+                    />
+                  </div>
                 </div>
               </Modal>
 
@@ -938,7 +941,15 @@ export function LogsPage() {
         {activeTab === 'errors' && (
           <Card
             className={styles.errorCard}
-            title={t('logs.error_logs_modal_title')}
+            title={
+              <>
+                {t('logs.error_logs_modal_title')}
+                <InfoTip
+                  content={t('logs.error_logs_description')}
+                  label={t('logs.error_logs_modal_title')}
+                />
+              </>
+            }
             extra={
               <Button
                 variant="secondary"
@@ -952,8 +963,6 @@ export function LogsPage() {
             }
           >
             <div className={styles.errorBody}>
-              <p className={styles.errorDescription}>{t('logs.error_logs_description')}</p>
-
               {requestLogEnabled && (
                 <div>
                   <div className="status-badge warning">

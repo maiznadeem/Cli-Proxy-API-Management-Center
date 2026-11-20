@@ -105,7 +105,6 @@
 
 .deadline,
 .observed,
-.note,
 .unknown {
   color: var(--ink-faint);
   font-size: $text-caption;
@@ -118,21 +117,25 @@
 }
 
 .observed,
-.note,
 .unknown {
   margin: 0;
 }
 
-.note {
-  margin-top: 6px;
-}
-
-.actionRow {
+/* Snapshot time (and hint) on the left, reset on the right; without a button, one quiet row. */
+.foot {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--hairline);
+}
+
+.foot .observed {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .elapsed {

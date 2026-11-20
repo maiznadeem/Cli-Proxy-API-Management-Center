@@ -76,9 +76,9 @@ describe('Claude reset grant details', () => {
     expect(markup).toContain('Launch bonus');
     expect(markup).toContain('12-month loyalty bonus');
     expect(markup).toContain('6-month loyalty bonus');
-    expect(markup).toContain('7-day limit');
+    expect(markup).toContain('Weekly limit');
     expect(markup).toContain('1 reset left');
-    expect(markup).not.toContain('7-day limit, 7-day limit');
+    expect(markup).not.toContain('Weekly limit, Weekly limit');
     expect(markup).toContain(`title="${copy}"`);
     expect(markup).not.toContain('>New model launch');
   });

@@ -18,7 +18,7 @@ import { getRoutingMode } from '@/features/authFiles/routingMode';
 import { RoutingModeBadge } from '@/features/authFiles/components/RoutingModeBadge';
 import { RoutingModeControl } from '@/features/authFiles/components/RoutingModeControl';
 import { statusBarDataFromRecentRequests } from '@/utils/recentRequests';
-import { formatFileSize } from '@/utils/format';
+import { formatDateTimeValue, formatFileSize } from '@/utils/format';
 import {
   formatModified,
   getAuthFileIcon,
@@ -38,6 +38,8 @@ import { resolveAuthFileQuotaType } from '@/features/authFiles/logic';
 import type { AuthFileStatusBarData } from '@/features/authFiles/hooks/useAuthFilesStatusBarCache';
 import { AuthFileQuotaSection } from '@/features/authFiles/components/AuthFileQuotaSection';
 import { AuthFileCooldownSection } from './AuthFileCooldownSection';
+import { getSiwcBindingStatus, supportsSiwcBinding } from '@/features/oauth/siwcBinding';
+import { SiwcStatusBadge } from '@/features/oauth/components/SiwcStatusBadge';
 import styles from './AuthFileCard.module.scss';
 
 export type AuthFileCardProps = {
@@ -74,7 +76,7 @@ export type AuthFileCardProps = {
  * Identity leads with the account; the filename is a mono fact underneath.
  */
 export function AuthFileCard(props: AuthFileCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const {
     file,
     compact,
@@ -130,6 +132,9 @@ export function AuthFileCard(props: AuthFileCardProps) {
   const isExhausted = file.quota?.exhausted === true;
   const isOnCredits = isExhausted && file.quota?.usage_credits?.enabled === true;
   const routingMode = getRoutingMode(file);
+  const siwcExpires = file.siwcExpiresAt
+    ? formatDateTimeValue(file.siwcExpiresAt, i18n.language)
+    : '';
 
   // Capture the entrance delay once on mount so a later null does not cut the fade short.
   const [mountEntranceDelayMs] = useState<number | null>(entranceDelayMs ?? null);
@@ -305,9 +310,24 @@ export function AuthFileCard(props: AuthFileCardProps) {
         />
       </div>
 
+      {supportsSiwcBinding(file) && (
+        <div className={styles.siwcRow}>
+          <SiwcStatusBadge status={getSiwcBindingStatus(file)} />
+          {siwcExpires && (
+            <span className={styles.siwcExpires} title={file.siwcExpiresAt}>
+              {t('siwc.expires', { date: siwcExpires })}
+            </span>
+          )}
+        </div>
+      )}
+
       {showQuotaLayout && quotaType && (
         <div className={styles.quota}>
-          <AuthFileQuotaSection file={file} quotaType={quotaType} disableControls={disableControls} />
+          <AuthFileQuotaSection
+            file={file}
+            quotaType={quotaType}
+            disableControls={disableControls}
+          />
         </div>
       )}
 

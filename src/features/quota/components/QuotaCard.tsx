@@ -11,7 +11,7 @@
 import { useState, type CSSProperties, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconChevronDown, IconRefreshCw } from '@/components/ui/icons';
-import type { ClaudeQuotaState, ResolvedTheme, RoutingMode } from '@/types';
+import type { ClaudeQuotaState, CodexQuotaState, ResolvedTheme, RoutingMode } from '@/types';
 import { getRoutingMode } from '@/features/authFiles/routingMode';
 import { RoutingModeControl } from '@/features/authFiles/components/RoutingModeControl';
 import { deriveAuthFileIdentity } from '@/features/authFiles/identity';
@@ -28,7 +28,10 @@ import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
 import { QUOTA_DETAILS, resolvePlanLabel } from '../providers/details';
 import { isQuotaRefreshDisabled, type QuotaFileEntry } from '../logic';
 import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
+import { ClaudeResetGrantDialog } from '../providers/claude/ClaudeResetGrantDialog';
 import { hasClaudeUsageData } from '../providers/claude/data';
+import { CodexCreditOverageDialog } from '../providers/codex/CodexCreditOverageDialog';
+import { useCodexCreditOverage } from '../providers/codex/useCodexCreditOverage';
 import bodyStyles from './QuotaBody.module.scss';
 import styles from './QuotaCard.module.scss';
 
@@ -45,6 +48,8 @@ export type QuotaCardProps = {
   resetting: boolean;
   /** Initial cascade delay; null disables entrance motion for later mounts. */
   entranceDelayMs?: number | null;
+  /** Codex only: credentials in the panel sharing this account user's credit setting. */
+  creditOverageSharedCount?: number;
   onRefresh: () => void;
   onReset: () => void;
   /** When omitted the routing control is not rendered. */
@@ -61,6 +66,7 @@ export function QuotaCard(props: QuotaCardProps) {
     canRefresh,
     resetting,
     entranceDelayMs,
+    creditOverageSharedCount = 1,
     onRefresh,
     onReset,
     onRoutingModeChange,
@@ -116,6 +122,11 @@ export function QuotaCard(props: QuotaCardProps) {
     quota?.error || t('common.unknown_error'),
     quota?.failure
   );
+  const creditOverage = useCodexCreditOverage(
+    file,
+    entry.type === 'codex' ? (quota as CodexQuotaState | undefined) : undefined,
+    !canRefresh || loading || resetting
+  );
   const showReset =
     status === 'success' &&
     Boolean(adapter.resetQuota) &&
@@ -131,6 +142,8 @@ export function QuotaCard(props: QuotaCardProps) {
   const onCardClick = (event: MouseEvent<HTMLElement>) => {
     if (!canExpand) return;
     const target = event.target as HTMLElement;
+    // Dialogs portal out of the ribbon but their clicks still bubble here through React.
+    if (!event.currentTarget.contains(target)) return;
     if (target.closest(INTERACTIVE_SELECTOR)) return;
     if (window.getSelection()?.toString()) return;
     setExpanded((value) => !value);
@@ -272,7 +285,8 @@ export function QuotaCard(props: QuotaCardProps) {
               type="button"
               className={styles.actionPill}
               disabled={claudeReset.blocked}
-              onClick={claudeReset.confirm}
+              onClick={claudeReset.openDialog}
+              aria-haspopup="dialog"
               title={t(`claude_reset.${claudeReset.buttonLabel}`)}
             >
               <IconRefreshCw size={13} className={claudeReset.busy ? styles.spinning : undefined} />
@@ -289,6 +303,19 @@ export function QuotaCard(props: QuotaCardProps) {
             >
               <IconRefreshCw size={13} className={resetting ? styles.spinning : undefined} />
               {t('codex_quota.reset_button')}
+            </button>
+          )}
+          {creditOverage.visible && (
+            <button
+              type="button"
+              className={styles.actionPill}
+              onClick={creditOverage.openDialog}
+              disabled={creditOverage.blocked}
+              aria-haspopup="dialog"
+              aria-label={t('codex_quota.credit_overage_manage_aria', { name: identity.primary })}
+              title={t('codex_quota.credit_overage_manage')}
+            >
+              {t('codex_quota.credit_overage_label')}
             </button>
           )}
           {status !== 'idle' && (
@@ -324,9 +351,46 @@ export function QuotaCard(props: QuotaCardProps) {
             quota={quota}
             file={file}
             classes={quotaClasses}
-            extras={{ grants: claudeReset.grants, grantMessage: claudeReset.message }}
+            extras={{
+              grants: claudeReset.grants,
+              grantMessage: claudeReset.message,
+              creditOverage: creditOverage.visible ? { entry: creditOverage.entry } : null,
+            }}
           />
         </div>
+      )}
+      {entry.type === 'claude' && (
+        <ClaudeResetGrantDialog
+          open={claudeReset.open}
+          grants={claudeReset.grants}
+          selected={claudeReset.selected}
+          canRedeemGrant={claudeReset.canRedeemGrant}
+          onSelect={claudeReset.selectGrant}
+          busy={claudeReset.busy}
+          loading={claudeReset.loading}
+          pendingGrantId={claudeReset.pendingGrantId}
+          message={claudeReset.message}
+          name={identity.primary}
+          onConfirm={() => void claudeReset.confirm()}
+          onClose={claudeReset.closeDialog}
+        />
+      )}
+      {creditOverage.context && (
+        <CodexCreditOverageDialog
+          open={creditOverage.open}
+          context={creditOverage.context}
+          entry={creditOverage.entry}
+          operation={creditOverage.operation}
+          writeDisabled={creditOverage.writeDisabled}
+          contextCurrent={creditOverage.contextCurrent}
+          sharedCredentialCount={creditOverageSharedCount}
+          selection={creditOverage.selection}
+          pendingTarget={creditOverage.pendingTarget}
+          feedback={creditOverage.feedback}
+          onSelect={creditOverage.selectValue}
+          onSave={() => void creditOverage.save()}
+          onClose={creditOverage.closeDialog}
+        />
       )}
     </article>
   );

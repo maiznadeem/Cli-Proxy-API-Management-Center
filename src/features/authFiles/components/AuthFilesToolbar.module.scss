@@ -110,55 +110,6 @@
   min-width: 140px;
 }
 
-/* ---------- View switch: segmented control ---------- */
-
-.segmented {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  height: 32px;
-  padding: 2px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-control);
-  background: var(--panel-raised);
-}
-
-.segment {
-  display: inline-flex;
-  align-items: center;
-  height: 26px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-  font-size: $text-dense;
-  line-height: $lh-dense;
-  font-weight: 500;
-  color: var(--ink-muted);
-  white-space: nowrap;
-  transition:
-    color var(--dur-hover) var(--ease-standard),
-    background-color var(--dur-hover) var(--ease-standard),
-    transform var(--dur-press) var(--ease-standard);
-
-  &:active {
-    transform: scale(0.98);
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: var(--focus-ring);
-  }
-}
-
-.segmentActive {
-  border-color: var(--hairline);
-  background: var(--panel);
-  color: var(--ink);
-}
-
 /* ---------- Display options (page size) ---------- */
 
 .display {
@@ -222,6 +173,10 @@
   color: var(--ink);
 }
 
+.popoverRow > span {
+  white-space: nowrap;
+}
+
 .pageSizeInput {
   width: 64px;
   height: 28px;
@@ -255,10 +210,6 @@
     color: var(--ink);
   }
 
-  .segment:hover:not(.segmentActive) {
-    color: var(--ink);
-  }
-
   .displayButton:hover {
     background: var(--panel-hover);
     color: var(--ink);
@@ -287,14 +238,12 @@
 @media (prefers-reduced-motion: reduce) {
   .search,
   .clearSearch,
-  .segment,
   .displayButton,
   .pageSizeInput {
     transition: none;
   }
 
   .clearSearch:active,
-  .segment:active,
   .displayButton:active {
     transform: none;
   }

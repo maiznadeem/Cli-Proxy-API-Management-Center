@@ -5,7 +5,7 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CodexQuotaState } from '@/types';
+import type { CodexCreditOverageEntry, CodexQuotaState } from '@/types';
 import {
   buildResetDisplay,
   formatInstantShort,
@@ -16,13 +16,27 @@ import {
 import { formatDateTimeValue } from '@/utils/format';
 import { resolveTimeZoneLabel } from '@/utils/time/timezone';
 import { useNow } from '@/hooks/useNow';
-import { FactNotice, FactRow, FactSection, FactSheet } from '../../components/FactSheet';
+import { FactNotice, FactPill, FactRow, FactSection, FactSheet } from '../../components/FactSheet';
 import { QuotaResetLabel } from '../../components/QuotaResetLabel';
 import { collectQuotaRowInstants, pickUrgentRowId, resetCreditRowId } from '../../resetSchedule';
 import type { QuotaDetailsProps } from '../types';
+import {
+  formatCodexCreditOverageConfirmedAt,
+  resolveCodexCreditOverageState,
+} from './creditOverage';
 import { getCodexPlanLabel } from './planLabel';
 
-export function CodexDetails({ quota, file, classes }: QuotaDetailsProps<CodexQuotaState>) {
+export interface CodexDetailsExtras {
+  /** Account-level "credits after the usage limit" setting; null when this credential can't carry it. */
+  creditOverage?: { entry: CodexCreditOverageEntry | undefined } | null;
+}
+
+export function CodexDetails({
+  quota,
+  file,
+  classes,
+  extras,
+}: QuotaDetailsProps<CodexQuotaState, CodexDetailsExtras>) {
   const { t, i18n } = useTranslation();
   const now = useNow();
   const locale = i18n.resolvedLanguage;
@@ -49,6 +63,8 @@ export function CodexDetails({ quota, file, classes }: QuotaDetailsProps<CodexQu
     : null;
   const credits = quota.rateLimitResetCredits ?? [];
   const available = quota.rateLimitResetCreditsAvailableCount ?? null;
+  const overage = extras?.creditOverage ?? null;
+  const overageState = overage ? resolveCodexCreditOverageState(overage.entry) : null;
 
   return (
     <FactSheet>
@@ -66,6 +82,30 @@ export function CodexDetails({ quota, file, classes }: QuotaDetailsProps<CodexQu
         {(quota.creditsUnlimited || (quota.creditBalance ?? null) !== null) && (
           <FactRow label={t('codex_quota.credit_balance_label')}>
             {quota.creditsUnlimited ? t('codex_quota.credit_unlimited') : quota.creditBalance}
+          </FactRow>
+        )}
+        {overage && overageState && (
+          <FactRow
+            label={t('codex_quota.credit_overage_label')}
+            hint={
+              overage.entry?.status === 'known'
+                ? t('codex_quota.credit_overage_confirmed_at', {
+                    time: formatCodexCreditOverageConfirmedAt(overage.entry.at),
+                  })
+                : undefined
+            }
+          >
+            <FactPill
+              tone={
+                overageState === 'allowed'
+                  ? 'on'
+                  : overageState === 'unconfirmed'
+                    ? 'warn'
+                    : 'default'
+              }
+            >
+              {t(`codex_quota.credit_overage_state_${overageState}`)}
+            </FactPill>
           </FactRow>
         )}
         <FactRow label={t('quota_management.details_credential')}>

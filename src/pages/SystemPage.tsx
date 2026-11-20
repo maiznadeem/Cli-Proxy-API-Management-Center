@@ -11,9 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table';
-import { IconExternalLink } from '@/components/ui/icons';
+import { InfoTip, Tooltip } from '@/components/ui/Tooltip';
+import { IconDownload, IconExternalLink, IconRefreshCw } from '@/components/ui/icons';
 import { useAuthStore, useConfigStore, useNotificationStore, useModelsStore } from '@/stores';
-import { configApi, versionApi } from '@/services/api';
+import { apiClient, configApi, modelsApi, versionApi } from '@/services/api';
 import { useApiKeysForModels } from '@/hooks/useApiKeysForModels';
 import { formatDateTimeValue } from '@/utils/format';
 import { classifyModels } from '@/utils/models';
@@ -26,17 +27,14 @@ const QUICK_LINKS = [
   {
     href: 'https://github.com/router-for-me/CLIProxyAPI',
     titleKey: 'system_info.link_main_repo',
-    descKey: 'system_info.link_main_repo_desc',
   },
   {
     href: 'https://github.com/router-for-me/Cli-Proxy-API-Management-Center',
     titleKey: 'system_info.link_webui_repo',
-    descKey: 'system_info.link_webui_repo_desc',
   },
   {
     href: 'https://help.router-for.me/',
     titleKey: 'system_info.link_docs',
-    descKey: 'system_info.link_docs_desc',
   },
 ] as const;
 
@@ -79,18 +77,20 @@ export function SystemPage() {
   const updateConfigValue = useConfigStore((state) => state.updateConfigValue);
 
   const models = useModelsStore((state) => state.models);
-  const modelsLoading = useModelsStore((state) => state.loading);
-  const modelsError = useModelsStore((state) => state.error);
+  const modelsStoreLoading = useModelsStore((state) => state.loading);
   const fetchModelsFromStore = useModelsStore((state) => state.fetchModels);
 
   const [modelStatus, setModelStatus] = useState<{
-    type: StatusTone;
+    type: 'warning' | 'error';
     message: string;
   }>();
   const [updateStatus, setUpdateStatus] = useState<{
     type: StatusTone;
     message: string;
   }>();
+  const [modelsRequestLoading, setModelsRequestLoading] = useState(false);
+  const [syncingModelCatalog, setSyncingModelCatalog] = useState(false);
+  const modelsLoading = modelsStoreLoading || modelsRequestLoading;
   const [requestLogModalOpen, setRequestLogModalOpen] = useState(false);
   const [requestLogDraft, setRequestLogDraft] = useState(false);
   const [requestLogTouched, setRequestLogTouched] = useState(false);
@@ -98,6 +98,8 @@ export function SystemPage() {
   const [checkingVersion, setCheckingVersion] = useState(false);
 
   const versionTapCount = useRef(0);
+  const modelsRequestId = useRef(0);
+  const catalogRequestId = useRef(0);
   const versionTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const headingId = useId();
 
@@ -117,7 +119,14 @@ export function SystemPage() {
 
   const resolveApiKeysForModels = useApiKeysForModels();
 
-  const fetchModels = async ({ forceRefresh = false }: { forceRefresh?: boolean } = {}) => {
+  const fetchModels = async ({
+    forceRefresh = false,
+    notify = false,
+  }: { forceRefresh?: boolean; notify?: boolean } = {}) => {
+    const requestId = ++modelsRequestId.current;
+    const revision = apiClient.getConnectionRevision();
+    const isCurrent = () =>
+      requestId === modelsRequestId.current && revision === apiClient.getConnectionRevision();
     if (auth.connectionStatus !== 'connected') {
       setModelStatus({
         type: 'warning',
@@ -131,23 +140,54 @@ export function SystemPage() {
       return;
     }
 
-    setModelStatus({ type: 'muted', message: t('system_info.models_loading') });
+    setModelStatus(undefined);
+    setModelsRequestLoading(true);
     try {
       const apiKeys = await resolveApiKeysForModels({ force: forceRefresh });
+      if (!isCurrent()) return;
       const primaryKey = apiKeys[0];
       const list = await fetchModelsFromStore(auth.apiBase, primaryKey, forceRefresh);
-      const hasModels = list.length > 0;
-      setModelStatus({
-        type: hasModels ? 'success' : 'warning',
-        message: hasModels
-          ? t('system_info.models_count', { count: list.length })
-          : t('system_info.models_empty'),
-      });
+      if (!isCurrent()) return;
+      if (notify) {
+        showNotification(
+          t('system_info.models_refresh_success', { count: list.length }),
+          'success'
+        );
+      }
     } catch (err: unknown) {
+      if (!isCurrent()) return;
       const message = err instanceof Error ? err.message : typeof err === 'string' ? err : '';
       const suffix = message ? `: ${message}` : '';
       const text = `${t('system_info.models_error')}${suffix}`;
       setModelStatus({ type: 'error', message: text });
+      if (notify) showNotification(text, 'error');
+    } finally {
+      if (isCurrent()) setModelsRequestLoading(false);
+    }
+  };
+
+  const handleCatalogRefresh = async () => {
+    if (syncingModelCatalog || modelsLoading || auth.connectionStatus !== 'connected') return;
+    const requestId = ++catalogRequestId.current;
+    const revision = apiClient.getConnectionRevision();
+    const isCurrent = () =>
+      requestId === catalogRequestId.current && revision === apiClient.getConnectionRevision();
+    setSyncingModelCatalog(true);
+    try {
+      await modelsApi.refreshCatalog(isCurrent);
+      if (!isCurrent()) return;
+      await fetchModels({ forceRefresh: true });
+      if (!isCurrent()) return;
+      showNotification(t('system_info.models_catalog_refresh_success'), 'success');
+    } catch (error: unknown) {
+      if (!isCurrent()) return;
+      const message = error instanceof Error ? error.message : '';
+      showNotification(
+        `${t('system_info.models_catalog_refresh_failed')}${message ? `: ${message}` : ''}`,
+        'error'
+      );
+    } finally {
+      if (isCurrent()) setSyncingModelCatalog(false);
     }
   };
 
@@ -228,9 +268,13 @@ export function SystemPage() {
 
   const handleVersionCheck = useCallback(async () => {
     // Result shows inline next to the button and as a toast, as before.
-    const report = (type: 'success' | 'warning' | 'error', message: string) => {
+    const report = (
+      type: 'success' | 'warning' | 'error',
+      message: string,
+      notificationType: 'success' | 'warning' | 'error' | 'info' = type
+    ) => {
       setUpdateStatus({ type, message });
-      showNotification(message, type);
+      showNotification(message, notificationType);
     };
     setCheckingVersion(true);
     try {
@@ -250,7 +294,7 @@ export function SystemPage() {
       }
 
       if (comparison > 0) {
-        report('warning', t('system_info.version_update_available', { version: latest }));
+        report('warning', t('system_info.version_update_available', { version: latest }), 'info');
       } else {
         report('success', t('system_info.version_is_latest'));
       }
@@ -285,9 +329,15 @@ export function SystemPage() {
   }, []);
 
   useEffect(() => {
+    setModelsRequestLoading(false);
+    setSyncingModelCatalog(false);
     fetchModels();
+    return () => {
+      modelsRequestId.current += 1;
+      catalogRequestId.current += 1;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.connectionStatus, auth.apiBase]);
+  }, [auth.connectionStatus, auth.apiBase, auth.managementKey]);
 
   const sectionId = (name: string) => `${headingId}-${name}`;
   const connectionTone: StatusTone =
@@ -368,28 +418,56 @@ export function SystemPage() {
           <div className={styles.panelHeader}>
             <h2 id={sectionId('models')} className={styles.panelTitle}>
               {t('system_info.models_title')}
+              {/* When to use which of the two buttons on the right. */}
+              <InfoTip
+                content={t('system_info.models_desc')}
+                label={t('system_info.models_title')}
+              />
             </h2>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => fetchModels({ forceRefresh: true })}
-              loading={modelsLoading}
-            >
-              {t('common.refresh')}
-            </Button>
+            <div className={styles.modelsActions}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => void fetchModels({ forceRefresh: true, notify: true })}
+                loading={modelsLoading}
+                disabled={syncingModelCatalog || auth.connectionStatus !== 'connected'}
+              >
+                <span className={styles.modelsActionLabel}>
+                  {!modelsLoading && <IconRefreshCw size={16} />}
+                  {t('system_info.models_refresh_button')}
+                </span>
+              </Button>
+              {/* The catalog is shared by every user of the backend: say so before it is pressed. */}
+              <Tooltip content={t('system_info.models_catalog_refresh_hint')}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => void handleCatalogRefresh()}
+                  loading={syncingModelCatalog}
+                  disabled={modelsLoading || auth.connectionStatus !== 'connected'}
+                >
+                  <span className={styles.modelsActionLabel}>
+                    {!syncingModelCatalog && <IconDownload size={16} />}
+                    {t('system_info.models_catalog_refresh_button')}
+                  </span>
+                </Button>
+              </Tooltip>
+            </div>
           </div>
-          <p className={styles.description}>{t('system_info.models_desc')}</p>
-          {modelStatus && (
+          {modelStatus && models.length === 0 && (
             <span className={styles.status} data-tone={modelStatus.type} role="status">
               <span className={styles.statusDot} aria-hidden="true" />
               {modelStatus.message}
             </span>
           )}
-          {modelsError && <div className="error-box">{modelsError}</div>}
-          {modelsLoading ? (
+          {modelsLoading && models.length === 0 ? (
             <p className={styles.description}>{t('common.loading')}</p>
           ) : models.length === 0 ? (
-            <p className={styles.description}>{t('system_info.models_empty')}</p>
+            modelStatus ? null : (
+              <p className={styles.description}>{t('system_info.models_empty')}</p>
+            )
           ) : (
             <div className={styles.modelsTable}>
               <Table>
@@ -408,7 +486,11 @@ export function SystemPage() {
                       >
                         <TableCell>
                           <span className={styles.modelName}>{model.name}</span>
-                          {model.alias && <span className={styles.modelAlias}>{model.alias}</span>}
+                          {(model.alias || model.displayName) && (
+                            <span className={styles.modelAlias}>
+                              {model.alias || model.displayName}
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell className={styles.providerCell}>{group.label}</TableCell>
                       </TableRow>
@@ -424,7 +506,6 @@ export function SystemPage() {
           <h2 id={sectionId('links')} className={styles.panelTitle}>
             {t('system_info.quick_links_title')}
           </h2>
-          <p className={styles.description}>{t('system_info.quick_links_desc')}</p>
           <ul className={styles.links}>
             {QUICK_LINKS.map((link) => (
               <li key={link.href}>
@@ -436,7 +517,6 @@ export function SystemPage() {
                 >
                   <span className={styles.linkText}>
                     <span className={styles.linkTitle}>{t(link.titleKey)}</span>
-                    <span className={styles.linkDesc}>{t(link.descKey)}</span>
                   </span>
                   <IconExternalLink size={14} className={styles.linkIcon} />
                 </a>

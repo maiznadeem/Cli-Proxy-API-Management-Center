@@ -4,7 +4,6 @@ import { SectionCard } from '../SectionCard';
 import { SettingList, TextSetting } from '../fields/FieldPrimitives';
 import { getValidationMessage } from '../blocks/shared';
 
-
 /** 04 流式传输：keepalive 与 bootstrap 重试；nonstream-keepalive-interval 是顶层 YAML 键。 */
 export function SectionStreaming({
   values,
@@ -26,16 +25,12 @@ export function SectionStreaming({
     !nonstreamKeepaliveError && Number(streaming.nonstreamKeepaliveInterval) <= 0;
 
   return (
-    <SectionCard
-      title={t('config_management.visual.sections.streaming.title')}
-      description={t('config_management.visual.sections.streaming.description')}
-    >
+    <SectionCard title={t('config_management.visual.sections.streaming.title')}>
       <SettingList>
         <TextSetting
           fieldId="streamingKeepaliveSeconds"
           size="sm"
           label={t('config_management.visual.sections.streaming.keepalive_seconds')}
-          description={t('config_management.visual.sections.streaming.keepalive_hint')}
           type="number"
           placeholder="0"
           value={streaming.keepaliveSeconds}

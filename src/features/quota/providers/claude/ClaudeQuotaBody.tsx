@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import type { ClaudeDollarBucket, ClaudeQuotaState } from '@/types';
 import { buildResetDisplay } from '@/utils/quota';
 import { useNow } from '@/hooks/useNow';
+import { planValueClassForTier, resolveClaudeCardTier } from '../../cardTier';
 import { QuotaMeter } from '../../components/QuotaMeter';
 import { QuotaResetLabel } from '../../components/QuotaResetLabel';
 import { collectQuotaRowInstants, pickUrgentRowId } from '../../resetSchedule';
@@ -27,6 +28,8 @@ export function ClaudeQuotaBody({
   quota,
   classes,
   expanded = true,
+  planItems,
+  afterPlan,
 }: QuotaBodyProps<ClaudeQuotaState>) {
   const { t, i18n } = useTranslation();
   const now = useNow();
@@ -53,6 +56,8 @@ export function ClaudeQuotaBody({
   const showDetails = Boolean(quota.extraUsage || quota.dollarWindows?.length || quota.stale);
   const hasFacts =
     Boolean(planType) ||
+    Boolean(planItems) ||
+    Boolean(afterPlan) ||
     showCredits ||
     allowances.some((bucket) => bucket.limitDollars !== null) ||
     showDetails;
@@ -62,7 +67,9 @@ export function ClaudeQuotaBody({
     !credits &&
     !allowances.length &&
     !quota.extraUsage &&
-    !quota.dollarWindows?.length
+    !quota.dollarWindows?.length &&
+    // Hosts that show everything still list the account facts (plan, stale notice).
+    (!expanded || !hasFacts)
   ) {
     return <div className={classes.quotaMessage}>{t('claude_quota.empty_windows')}</div>;
   }
@@ -128,11 +135,7 @@ export function ClaudeQuotaBody({
   );
 
   if (!expanded) {
-    return (
-      <div className={styles.layout}>
-        {meters}
-      </div>
-    );
+    return <div className={styles.layout}>{meters}</div>;
   }
 
   return (
@@ -157,13 +160,23 @@ export function ClaudeQuotaBody({
       <div className={styles.layout}>
         {hasFacts && (
           <div className={styles.facts}>
-            {planType && (
+            {(planType || planItems) && (
               <div className={classes.codexPlan}>
-                <span className={classes.codexPlanLabel}>{t('claude_quota.plan_label')}</span>
-                <span className={classes.codexPlanValue}>{t(`claude_quota.${planType}`)}</span>
+                {planType && (
+                  <span className={classes.codexPlanItem} data-quota-plan="">
+                    <span className={classes.codexPlanLabel}>{t('claude_quota.plan_label')}</span>
+                    <span
+                      className={planValueClassForTier(resolveClaudeCardTier(planType), classes)}
+                    >
+                      {t(`claude_quota.${planType}`)}
+                    </span>
+                  </span>
+                )}
                 {billingPill}
+                {planItems}
               </div>
             )}
+            {afterPlan}
             {credits && showCredits && (
               <div className={styles.credits}>
                 <div className={styles.line}>
