@@ -50,6 +50,8 @@ export type ClaudeQuotaData = {
   observedAt: string;
   billing?: ClaudeBilling | null;
   breakdown?: ClaudeUsageBreakdown | null;
+  /** When the subscription started; the renewal date is derived from it. */
+  subscriptionCreatedAt?: string | null;
 };
 
 /** Minor units at `decimalPlaces` -> cents. Null when the amount is absent. */
@@ -301,6 +303,14 @@ export const resolveClaudeBilling = (
 };
 
 /**
+ * A cancelled subscription keeps serving until its paid period ends (Apple and
+ * Stripe both report "canceled" as soon as auto-renew is turned off). When the
+ * usage call still succeeds, the account is not inactive yet, only not renewing.
+ */
+export const confirmClaudeBillingServing = (billing: ClaudeBilling | null): ClaudeBilling | null =>
+  billing?.access === 'inactive' ? { ...billing, access: 'ending' } : billing;
+
+/**
  * Placeholder row pinned at 0% remaining for an account whose subscription
  * lapsed. Only the 7-day window: Anthropic retired the 5-hour one in 2026-11. Anthropic returns no usage payload for it, but "0% left, pay the
  * invoice" is the truthful reading, not "failed to load".
@@ -391,6 +401,7 @@ const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<Claud
       : null;
   const planType = resolveClaudePlanType(profile);
   const billing = resolveClaudeBilling(profile);
+  const subscriptionCreatedAt = profile?.organization?.subscription_created_at ?? null;
 
   if (usageResult.status === 'rejected') {
     throw usageResult.reason;
@@ -407,6 +418,7 @@ const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<Claud
         observedAt: new Date().toISOString(),
         planType,
         billing,
+        subscriptionCreatedAt,
       };
     }
     throw createStatusError(
@@ -442,7 +454,8 @@ const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<Claud
     dollarWindows,
     observedAt: new Date().toISOString(),
     planType,
-    billing,
+    billing: confirmClaudeBillingServing(billing),
+    subscriptionCreatedAt,
   };
 };
 
@@ -466,6 +479,7 @@ export const CLAUDE_CONFIG: QuotaProviderData<ClaudeQuotaState, ClaudeQuotaData>
     stale: false,
     billing: data.billing ?? null,
     breakdown: data.breakdown ?? null,
+    subscriptionCreatedAt: data.subscriptionCreatedAt ?? null,
   }),
   buildErrorState: (message, status, failure) => ({
     status: 'error',

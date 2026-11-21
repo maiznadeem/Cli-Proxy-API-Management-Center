@@ -65,23 +65,30 @@ export function CodexDetails({
   const available = quota.rateLimitResetCreditsAvailableCount ?? null;
   const overage = extras?.creditOverage ?? null;
   const overageState = overage ? resolveCodexCreditOverageState(overage.entry) : null;
+  const unavailable = <FactPill>{t('quota_management.unavailable')}</FactPill>;
 
   return (
     <FactSheet>
       <FactSection title={t('quota_management.details_account')}>
-        {planLabel && (
-          <FactRow label={t('codex_quota.plan_label')}>
-            <span className={planClass}>{planLabel}</span>
-          </FactRow>
-        )}
-        {renewal && (
-          <FactRow label={t('codex_quota.expires_label')}>
-            <QuotaResetLabel display={renewal} classes={classes} />
-          </FactRow>
-        )}
-        {(quota.creditsUnlimited || (quota.creditBalance ?? null) !== null) && (
-          <FactRow label={t('codex_quota.credit_balance_label')}>
-            {quota.creditsUnlimited ? t('codex_quota.credit_unlimited') : quota.creditBalance}
+        <FactRow label={t('codex_quota.plan_label')}>
+          {planLabel ? <span className={planClass}>{planLabel}</span> : unavailable}
+        </FactRow>
+        <FactRow label={t('codex_quota.expires_label')}>
+          {renewal ? <QuotaResetLabel display={renewal} classes={classes} /> : unavailable}
+        </FactRow>
+        <FactRow label={t('codex_quota.credit_balance_label')}>
+          {quota.creditsUnlimited
+            ? t('codex_quota.credit_unlimited')
+            : (quota.creditBalance ?? null) !== null
+              ? quota.creditBalance
+              : unavailable}
+        </FactRow>
+        {!(overage && overageState) && (
+          <FactRow
+            label={t('codex_quota.credit_overage_label')}
+            hint={t('quota_management.reset_overage_unavailable_hint')}
+          >
+            {unavailable}
           </FactRow>
         )}
         {overage && overageState && (
@@ -113,54 +120,51 @@ export function CodexDetails({
         </FactRow>
       </FactSection>
 
-      {(credits.length > 0 || available !== null || quota.rateLimitResetCreditsError) && (
-        <FactSection
-          title={t('codex_quota.reset_credits_label')}
-          count={available}
-          note={
-            credits.length > 0
-              ? t('codex_quota.reset_credits_expiry_label', { timezone: resolveTimeZoneLabel() })
-              : undefined
-          }
-        >
-          {credits.map((credit, index) => {
-            const expiresAtMs = parseIsoToMs(credit.expiresAt);
-            const display = buildResetDisplay(
-              expiresAtMs === null ? credit.expiresAt : formatInstantShort(expiresAtMs),
-              expiresAtMs,
-              now,
-              locale
-            );
-            const rowId = resetCreditRowId(credit, index);
-            const soon = rowId === soonestRowId;
-            return (
-              <FactRow
-                key={rowId}
-                label={t('codex_quota.reset_credit_number', { index: index + 1 })}
-                tone={soon ? 'warn' : 'default'}
-                title={soon ? t('quota_management.soonest_row_hint') : undefined}
-                aside={
-                  display ? (
-                    <QuotaResetLabel
-                      display={display}
-                      classes={classes}
-                      soon={soon}
-                      verb="expires"
-                    />
-                  ) : undefined
-                }
-              />
-            );
-          })}
-          {quota.rateLimitResetCreditsError && (
-            <FactNotice tone="error">
-              {t('codex_quota.reset_credits_expiry_failed', {
-                message: quota.rateLimitResetCreditsError,
-              })}
-            </FactNotice>
-          )}
-        </FactSection>
-      )}
+      <FactSection
+        title={t('codex_quota.reset_credits_label')}
+        count={available}
+        note={
+          credits.length > 0
+            ? t('codex_quota.reset_credits_expiry_label', { timezone: resolveTimeZoneLabel() })
+            : available === null && !quota.rateLimitResetCreditsError
+              ? t('quota_management.state_resets_unavailable')
+              : available === 0
+                ? t('quota_management.reset_none_hint')
+                : undefined
+        }
+      >
+        {credits.map((credit, index) => {
+          const expiresAtMs = parseIsoToMs(credit.expiresAt);
+          const display = buildResetDisplay(
+            expiresAtMs === null ? credit.expiresAt : formatInstantShort(expiresAtMs),
+            expiresAtMs,
+            now,
+            locale
+          );
+          const rowId = resetCreditRowId(credit, index);
+          const soon = rowId === soonestRowId;
+          return (
+            <FactRow
+              key={rowId}
+              label={t('codex_quota.reset_credit_number', { index: index + 1 })}
+              tone={soon ? 'warn' : 'default'}
+              title={soon ? t('quota_management.soonest_row_hint') : undefined}
+              aside={
+                display ? (
+                  <QuotaResetLabel display={display} classes={classes} soon={soon} verb="expires" />
+                ) : undefined
+              }
+            />
+          );
+        })}
+        {quota.rateLimitResetCreditsError && (
+          <FactNotice tone="error">
+            {t('codex_quota.reset_credits_expiry_failed', {
+              message: quota.rateLimitResetCreditsError,
+            })}
+          </FactNotice>
+        )}
+      </FactSection>
     </FactSheet>
   );
 }

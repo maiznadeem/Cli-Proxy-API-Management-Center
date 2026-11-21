@@ -49,9 +49,11 @@ export function ClaudeQuotaBody({
   const billingNoticeKey =
     billingAccess === 'inactive'
       ? 'claude_quota.billing_inactive_notice'
-      : locked
-        ? 'claude_quota.billing_locked_notice'
-        : 'claude_quota.billing_warning_notice';
+      : billingAccess === 'ending'
+        ? 'claude_quota.billing_ending_notice'
+        : locked
+          ? 'claude_quota.billing_locked_notice'
+          : 'claude_quota.billing_warning_notice';
   const showCredits = Boolean(credits && credits.status !== 'unknown');
   const showDetails = Boolean(quota.extraUsage || quota.dollarWindows?.length || quota.stale);
   const hasFacts =

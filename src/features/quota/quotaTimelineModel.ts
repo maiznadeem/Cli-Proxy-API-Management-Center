@@ -12,6 +12,12 @@
 
 import { DAY_MS, HOUR_MS } from '@/utils/time/durations';
 import type { QuotaProviderType } from './providers/types';
+import {
+  renewalAfter,
+  resolveRenewalInfo,
+  type QuotaRenewal,
+  type QuotaRenewalInfo,
+} from './renewal';
 
 export { DAY_MS, HOUR_MS };
 
@@ -61,6 +67,8 @@ export interface TimelineLane {
   remaining: number | null;
   limits: TimelineLimit[];
   resetCredits: TimelineResetCredit[];
+  /** Subscription renewal (or end of access); drawn as a marker when it falls in the span. */
+  renewal?: QuotaRenewalInfo | null;
 }
 
 /** One drawn bar: a single window occurrence within the visible span. */
@@ -252,6 +260,30 @@ export function projectLane(
       };
     })
     .filter((window): window is TimelineWindow => window !== null);
+}
+
+/** A renewal projected onto the visible span. */
+export interface TimelineRenewalMark extends QuotaRenewal {
+  leftPercent: number;
+}
+
+/**
+ * The renewal that falls inside the visible span, if any. Only future dates:
+ * an ending subscription is marked once, on the day access stops; a renewing
+ * one on the first renewal at or after the span start.
+ */
+export function projectRenewal(
+  lane: TimelineLane,
+  spanStartMs: number,
+  spanEndMs: number,
+  now: number
+): TimelineRenewalMark | null {
+  const span = spanEndMs - spanStartMs;
+  if (span <= 0 || !lane.renewal) return null;
+  const from = lane.renewal.ending ? now : Math.max(now, spanStartMs - 1);
+  const renewal = renewalAfter(lane.renewal, from);
+  if (!renewal || renewal.atMs < spanStartMs || renewal.atMs >= spanEndMs) return null;
+  return { ...renewal, leftPercent: ((renewal.atMs - spanStartMs) / span) * 100 };
 }
 
 /** Project unexpired reset-credit expiry instants onto the visible span. */
@@ -508,6 +540,7 @@ export function buildTimelineLane(input: TimelineLaneInput): TimelineLane {
           remaining: clampPercent(100 - (window.usedPercent as number)),
         })),
       resetCredits,
+      renewal: resolveRenewalInfo(provider, quota),
     };
   }
 

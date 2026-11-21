@@ -25,6 +25,7 @@ import {
   buildTimelineLanes,
   laneHasWindow,
   projectLane,
+  projectRenewal,
   projectResetCredits,
   timelineCells,
   timelineSpan,
@@ -349,6 +350,10 @@ export function QuotaTimeline({
               defaultValue: 'manual reset expiry',
             })}
           </span>
+          <span className={styles.legendItem}>
+            <span className={`${styles.swatch} ${styles.swatchRenewal}`} />
+            {t('quota_management.windows_legend_renewal')}
+          </span>
         </footer>
       )}
     </section>
@@ -372,6 +377,10 @@ function Lane({ lane, span, now, mode, cells }: LaneProps) {
   );
   const resetCredits = useMemo(
     () => projectResetCredits(lane, span.startMs, span.endMs, now),
+    [lane, span, now]
+  );
+  const renewal = useMemo(
+    () => projectRenewal(lane, span.startMs, span.endMs, now),
     [lane, span, now]
   );
 
@@ -507,6 +516,31 @@ function Lane({ lane, span, now, mode, cells }: LaneProps) {
             />
           );
         })}
+
+        {renewal &&
+          (() => {
+            const title = [
+              t(
+                renewal.ending
+                  ? 'quota_management.windows_renewal_ending'
+                  : 'quota_management.windows_renewal'
+              ),
+              `${formatDay(renewal.atMs)} ${formatTime(renewal.atMs)}`,
+              formatRelativeInstant(renewal.atMs, now, i18n.resolvedLanguage),
+              renewal.estimated ? t('quota_management.renewal_estimated_hint') : null,
+            ]
+              .filter((line): line is string => line !== null)
+              .join('\n');
+            return (
+              <span
+                className={`${styles.renewalTick} ${renewal.ending ? styles.renewalEnding : ''}`}
+                style={{ left: `${renewal.leftPercent}%` }}
+                title={title}
+                role="img"
+                aria-label={title.split('\n').join(', ')}
+              />
+            );
+          })()}
       </div>
     </div>
   );

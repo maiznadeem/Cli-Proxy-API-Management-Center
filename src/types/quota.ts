@@ -307,7 +307,8 @@ export interface QuotaFailure {
 }
 
 /** Subscription standing read from the Claude OAuth profile. */
-export type ClaudeBillingAccess = 'active' | 'past_due' | 'inactive';
+/** `ending`: the profile reports a cancelled subscription but usage still loads (paid period not over). */
+export type ClaudeBillingAccess = 'active' | 'past_due' | 'inactive' | 'ending';
 
 export interface ClaudeBilling {
   access: ClaudeBillingAccess;
@@ -349,6 +350,7 @@ export interface ClaudeQuotaState {
   planType?: string | null;
   billing?: ClaudeBilling | null;
   breakdown?: ClaudeUsageBreakdown | null;
+  subscriptionCreatedAt?: string | null;
   error?: string;
   errorStatus?: number;
   failure?: QuotaFailure;

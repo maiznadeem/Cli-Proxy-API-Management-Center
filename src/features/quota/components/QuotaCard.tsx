@@ -28,6 +28,8 @@ import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
 import { QUOTA_DETAILS, resolvePlanLabel } from '../providers/details';
 import { isQuotaRefreshDisabled, type QuotaFileEntry } from '../logic';
 import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
+import { formatRenewalDay, resolveQuotaRenewal } from '../renewal';
+import { useNow } from '@/hooks/useNow';
 import { ClaudeResetGrantDialog } from '../providers/claude/ClaudeResetGrantDialog';
 import { hasClaudeUsageData } from '../providers/claude/data';
 import { CodexCreditOverageDialog } from '../providers/codex/CodexCreditOverageDialog';
@@ -99,7 +101,9 @@ export function QuotaCard(props: QuotaCardProps) {
     entry.type === 'claude'
       ? ((quota as { billing?: { access?: string } } | undefined)?.billing?.access ?? 'active')
       : 'active';
-  const claudeLocked = billingAccess !== 'active';
+  const claudeLocked = billingAccess === 'past_due' || billingAccess === 'inactive';
+  const now = useNow();
+  const renewal = status === 'success' ? resolveQuotaRenewal(entry.type, quota, now) : null;
   const claudeReset = useClaudeResetGrants(
     file,
     entry.type === 'claude' && status !== 'idle' && !claudeLocked,
@@ -127,17 +131,42 @@ export function QuotaCard(props: QuotaCardProps) {
     entry.type === 'codex' ? (quota as CodexQuotaState | undefined) : undefined,
     !canRefresh || loading || resetting
   );
-  const showReset =
-    status === 'success' &&
-    Boolean(adapter.resetQuota) &&
-    quota !== undefined &&
-    Boolean(adapter.canResetQuota?.(quota));
+  // The reset button stays on the card; it is disabled, not removed, when no reset is banked.
+  const showReset = status === 'success' && Boolean(adapter.resetQuota) && quota !== undefined;
+  const canReset = showReset && Boolean(adapter.canResetQuota?.(quota));
   const hasBody = status === 'success' || retainedClaudeUsage;
   const canExpand = hasBody && Boolean(Details) && quota !== undefined;
   const toggleLabel = t(
     expanded ? 'quota_management.details_hide' : 'quota_management.details_show'
   );
-  const freeResets = entry.type === 'claude' && !claudeLocked ? claudeReset.count : null;
+  // Resets are always accounted for on providers that have them: a count
+  // (zero included) or "unavailable", never a missing badge.
+  const resetsPill =
+    status !== 'success'
+      ? null
+      : entry.type === 'claude'
+        ? {
+            count: claudeLocked ? null : claudeReset.count,
+            key: 'quota_management.state_free_resets',
+            title: t(claudeLocked ? 'quota_management.reset_locked_hint' : 'claude_reset.title'),
+          }
+        : entry.type === 'codex'
+          ? {
+              count:
+                (quota as CodexQuotaState | undefined)?.rateLimitResetCreditsAvailableCount ?? null,
+              key: 'quota_management.state_manual_resets',
+              title: t('codex_quota.reset_credits_label'),
+            }
+          : null;
+  const claudeResetRetry = claudeReset.buttonLabel === 'retry';
+  const claudeResetNone = !claudeResetRetry && !((claudeReset.count ?? 0) > 0);
+  const claudeResetHint = claudeLocked
+    ? t('quota_management.reset_locked_hint')
+    : claudeResetNone
+      ? claudeReset.count === null
+        ? t('quota_management.state_resets_unavailable')
+        : t('quota_management.reset_none_hint')
+      : t(`claude_reset.${claudeReset.buttonLabel}`);
 
   const onCardClick = (event: MouseEvent<HTMLElement>) => {
     if (!canExpand) return;
@@ -242,10 +271,45 @@ export function QuotaCard(props: QuotaCardProps) {
       </div>
 
       <div className={styles.state}>
-        {claudeLocked && status === 'success' && (
-          <span className={`${styles.pill} ${styles.pillWarn}`}>
+        {billingAccess !== 'active' &&
+          status === 'success' &&
+          !(billingAccess === 'ending' && renewal) && (
+            <span className={`${styles.pill} ${styles.pillWarn}`}>
+              <span className={styles.pillDot} aria-hidden="true" />
+              {t(`claude_quota.billing_${billingAccess}`)}
+            </span>
+          )}
+        {status === 'success' && !renewal && (
+          <span
+            className={`${styles.pill} ${styles.pillMuted}`}
+            title={t('quota_management.renewal_unavailable_hint')}
+          >
             <span className={styles.pillDot} aria-hidden="true" />
-            {t(`claude_quota.billing_${billingAccess}`)}
+            {t('quota_management.renewal_unavailable')}
+          </span>
+        )}
+        {renewal && (
+          <span
+            className={renewal.ending ? `${styles.pill} ${styles.pillWarn}` : styles.pill}
+            title={[
+              t(
+                renewal.ending
+                  ? 'quota_management.renewal_ends_label'
+                  : 'quota_management.renewal_label'
+              ),
+              new Date(renewal.atMs).toLocaleString(),
+              renewal.estimated ? t('quota_management.renewal_estimated_hint') : null,
+            ]
+              .filter(Boolean)
+              .join('\n')}
+          >
+            <span className={styles.pillDot} aria-hidden="true" />
+            {t(
+              renewal.ending ? 'quota_management.renewal_ends' : 'quota_management.renewal_renews',
+              {
+                date: `${renewal.estimated ? '~' : ''}${formatRenewalDay(renewal.atMs)}`,
+              }
+            )}
           </span>
         )}
         {routingMode !== 'normal' && (
@@ -261,10 +325,17 @@ export function QuotaCard(props: QuotaCardProps) {
             )}
           </span>
         )}
-        {freeResets !== null && freeResets > 0 && (
-          <span className={styles.pill} title={t('claude_reset.title')}>
+        {resetsPill && (
+          <span
+            className={
+              resetsPill.count === null ? `${styles.pill} ${styles.pillMuted}` : styles.pill
+            }
+            title={resetsPill.title}
+          >
             <span className={styles.pillDot} aria-hidden="true" />
-            {t('quota_management.state_free_resets', { count: freeResets })}
+            {resetsPill.count === null
+              ? t('quota_management.state_resets_unavailable')
+              : t(resetsPill.key, { count: resetsPill.count })}
           </span>
         )}
       </div>
@@ -280,14 +351,14 @@ export function QuotaCard(props: QuotaCardProps) {
               onChange={onRoutingModeChange}
             />
           )}
-          {status !== 'idle' && entry.type === 'claude' && !claudeLocked && (
+          {status !== 'idle' && entry.type === 'claude' && (
             <button
               type="button"
               className={styles.actionPill}
-              disabled={claudeReset.blocked}
+              disabled={claudeLocked || claudeResetNone || claudeReset.blocked}
               onClick={claudeReset.openDialog}
               aria-haspopup="dialog"
-              title={t(`claude_reset.${claudeReset.buttonLabel}`)}
+              title={claudeResetHint}
             >
               <IconRefreshCw size={13} className={claudeReset.busy ? styles.spinning : undefined} />
               {t(`claude_reset.${claudeReset.buttonLabel}`)}
@@ -298,14 +369,16 @@ export function QuotaCard(props: QuotaCardProps) {
               type="button"
               className={styles.actionPill}
               onClick={onReset}
-              disabled={!canRefresh || loading || resetting}
-              title={t('codex_quota.reset_button')}
+              disabled={!canReset || !canRefresh || loading || resetting}
+              title={
+                canReset ? t('codex_quota.reset_button') : t('quota_management.reset_none_hint')
+              }
             >
               <IconRefreshCw size={13} className={resetting ? styles.spinning : undefined} />
               {t('codex_quota.reset_button')}
             </button>
           )}
-          {creditOverage.visible && (
+          {entry.type === 'codex' && status === 'success' && (
             <button
               type="button"
               className={styles.actionPill}
@@ -313,7 +386,11 @@ export function QuotaCard(props: QuotaCardProps) {
               disabled={creditOverage.blocked}
               aria-haspopup="dialog"
               aria-label={t('codex_quota.credit_overage_manage_aria', { name: identity.primary })}
-              title={t('codex_quota.credit_overage_manage')}
+              title={t(
+                creditOverage.visible
+                  ? 'codex_quota.credit_overage_manage'
+                  : 'quota_management.reset_overage_unavailable_hint'
+              )}
             >
               {t('codex_quota.credit_overage_label')}
             </button>

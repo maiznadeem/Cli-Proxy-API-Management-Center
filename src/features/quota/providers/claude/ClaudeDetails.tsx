@@ -23,6 +23,7 @@ import { QuotaResetLabel } from '../../components/QuotaResetLabel';
 import type { QuotaDetailsProps } from '../types';
 import { ClaudeResetGrantDetails } from './ClaudeResetGrantDetails';
 import { ClaudeWeekBreakdown } from './ClaudeWeekBreakdown';
+import { resolveQuotaRenewal } from '../../renewal';
 import { CLAUDE_BILLING_URL, CLAUDE_USAGE_SETTINGS_URL } from './ClaudeQuotaBody';
 import { planValueClassForTier, resolveClaudeCardTier } from '../../cardTier';
 import {
@@ -47,6 +48,8 @@ export function ClaudeDetails({
   const { t, i18n } = useTranslation();
   const now = useNow();
   const language = i18n.resolvedLanguage;
+  const renewal = resolveQuotaRenewal('claude', quota, now);
+  const renewalDisplay = renewal ? buildResetDisplay(null, renewal.atMs, now, language) : null;
   const billing = quota.billing ?? null;
   const billingAccess = billing?.access ?? 'active';
   const locked = (quota.windows ?? []).some((window) => window.locked === true);
@@ -54,6 +57,8 @@ export function ClaudeDetails({
   const weekUsed =
     (quota.windows ?? []).find((window) => window.id === 'seven-day')?.usedPercent ?? null;
   const credits = quota.credits ?? null;
+  const creditsKnown = credits !== null && credits.status !== 'unknown';
+  const unavailable = <FactPill>{t('quota_management.unavailable')}</FactPill>;
   const allowances = quota.allowances ?? [];
   const extraUsage = quota.extraUsage ?? null;
   const extraUsageStatusKey = claudeExtraUsageStatusKey(extraUsage);
@@ -75,9 +80,11 @@ export function ClaudeDetails({
   const billingNoticeKey =
     billingAccess === 'inactive'
       ? 'claude_quota.billing_inactive_notice'
-      : locked
-        ? 'claude_quota.billing_locked_notice'
-        : 'claude_quota.billing_warning_notice';
+      : billingAccess === 'ending'
+        ? 'claude_quota.billing_ending_notice'
+        : locked
+          ? 'claude_quota.billing_locked_notice'
+          : 'claude_quota.billing_warning_notice';
   const money = (value: number | null, currency = 'USD', divisor = 1) =>
     value === null
       ? '--'
@@ -86,8 +93,8 @@ export function ClaudeDetails({
   return (
     <FactSheet>
       <FactSection title={t('quota_management.details_account')}>
-        {quota.planType && (
-          <FactRow label={t('claude_quota.plan_label')}>
+        <FactRow label={t('claude_quota.plan_label')}>
+          {quota.planType ? (
             <span
               className={
                 planTier === 'standard' ? undefined : planValueClassForTier(planTier, classes)
@@ -95,9 +102,14 @@ export function ClaudeDetails({
             >
               {t(`claude_quota.${quota.planType}`)}
             </span>
-          </FactRow>
+          ) : (
+            unavailable
+          )}
+        </FactRow>
+        {!creditsKnown && !extraUsage && (
+          <FactRow label={t('claude_quota.credits_label')}>{unavailable}</FactRow>
         )}
-        {credits && credits.status !== 'unknown' && (
+        {credits && creditsKnown && (
           <FactRow
             label={t('claude_quota.credits_label')}
             hint={
@@ -148,7 +160,7 @@ export function ClaudeDetails({
             </FactRow>
           );
         })}
-        {extraUsage && !credits && (
+        {extraUsage && !creditsKnown && (
           <FactRow
             label={t('claude_quota.extra_usage_label')}
             hint={extraUsageNotes.length > 0 ? extraUsageNotes.join('. ') : undefined}
@@ -196,19 +208,21 @@ export function ClaudeDetails({
         <FactRow label={t('quota_management.details_credential')}>
           <span className={classes.quotaAmount}>{file.name}</span>
         </FactRow>
-        {observed && (
-          <FactRow
-            label={t('quota_management.details_checked')}
-            tone={quota.stale ? 'warn' : 'default'}
-            hint={
-              quota.stale
-                ? t('claude_quota.stale_snapshot', { time: observed.absolute })
-                : undefined
-            }
-          >
+        <FactRow
+          label={t('quota_management.details_checked')}
+          tone={observed && quota.stale ? 'warn' : 'default'}
+          hint={
+            observed && quota.stale
+              ? t('claude_quota.stale_snapshot', { time: observed.absolute })
+              : undefined
+          }
+        >
+          {observed ? (
             <span>{observed.relative ?? t('quota_management.just_now')}</span>
-          </FactRow>
-        )}
+          ) : (
+            unavailable
+          )}
+        </FactRow>
       </FactSection>
 
       <FactSection title={t('quota_management.details_billing')}>
@@ -216,6 +230,24 @@ export function ClaudeDetails({
           <FactPill tone={billingAccess === 'active' ? 'on' : 'warn'}>
             {t(`claude_quota.billing_${billingAccess}`)}
           </FactPill>
+        </FactRow>
+        <FactRow
+          label={t(
+            renewal?.ending
+              ? 'quota_management.renewal_ends_label'
+              : 'quota_management.renewal_label'
+          )}
+          hint={t(
+            renewalDisplay
+              ? 'quota_management.renewal_estimated_hint'
+              : 'quota_management.renewal_unavailable_hint'
+          )}
+        >
+          {renewalDisplay ? (
+            <QuotaResetLabel display={renewalDisplay} classes={classes} />
+          ) : (
+            unavailable
+          )}
         </FactRow>
         {billingAccess !== 'active' && (
           <FactNotice>

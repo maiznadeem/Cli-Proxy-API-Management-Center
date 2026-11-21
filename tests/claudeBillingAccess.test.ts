@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import type { TFunction } from 'i18next';
 import {
   buildLockedClaudeWindows,
+  confirmClaudeBillingServing,
   resolveClaudeBilling,
 } from '@/features/quota/providers/claude/data';
 import {
@@ -51,17 +52,40 @@ describe('Claude billing standing', () => {
     ['canceled', 'inactive'],
     ['INACTIVE', 'inactive'],
   ])('maps subscription status %s to %s', (status, access) => {
-    expect(
-      resolveClaudeBilling({ organization: { subscription_status: status } })?.access
-    ).toBe(access);
+    expect(resolveClaudeBilling({ organization: { subscription_status: status } })?.access).toBe(
+      access
+    );
   });
 
   test('treats an unknown status with an invoice link as past due', () => {
     expect(
       resolveClaudeBilling({
-        organization: { subscription_status: 'mystery', payment_auth_hosted_invoice_url: INVOICE_URL },
+        organization: {
+          subscription_status: 'mystery',
+          payment_auth_hosted_invoice_url: INVOICE_URL,
+        },
       })?.access
     ).toBe('past_due');
+  });
+
+  test('a cancelled subscription whose usage still loads is not renewing, not inactive', () => {
+    const cancelled = resolveClaudeBilling({
+      organization: { subscription_status: 'canceled', billing_type: 'apple_subscription' },
+    });
+    expect(cancelled?.access).toBe('inactive');
+    expect(confirmClaudeBillingServing(cancelled)?.access).toBe('ending');
+    expect(confirmClaudeBillingServing(resolveClaudeBilling(pastDueProfile))?.access).toBe(
+      'past_due'
+    );
+    expect(confirmClaudeBillingServing(null)).toBeNull();
+  });
+
+  test('every locale names the not-renewing state', async () => {
+    for (const locale of ['en', 'ko', 'ru', 'vi', 'zh-CN', 'zh-TW', 'tr']) {
+      const data = await Bun.file(`src/i18n/locales/${locale}.json`).json();
+      expect(data.claude_quota.billing_ending).toBeTruthy();
+      expect(data.claude_quota.billing_ending_notice).toBeTruthy();
+    }
   });
 
   test('returns null when the profile carries no billing signal', () => {
@@ -117,7 +141,11 @@ describe('Quota failure classification', () => {
         { 'Retry-After': ['3593'] }
       )
     );
-    expect(failure).toEqual({ kind: 'rate_limited', code: 'rate_limit_error', retryAfterSeconds: 3593 });
+    expect(failure).toEqual({
+      kind: 'rate_limited',
+      code: 'rate_limit_error',
+      retryAfterSeconds: 3593,
+    });
     expect(resolveQuotaErrorMessage(t, 429, 'raw', failure)).toBe(
       'common.quota_failure_rate_limited_retry:{"minutes":60}'
     );

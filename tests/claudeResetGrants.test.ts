@@ -685,8 +685,9 @@ test('card retains one dialog trigger with explicit selection and no second conf
   const card = await Bun.file('src/features/quota/components/QuotaCard.tsx').text();
   const hook = await Bun.file('src/features/quota/providers/claude/ClaudeResetGrants.tsx').text();
   // The remaining-resets count is a state pill on the ribbon, not a line of prose.
-  expect(card).toContain("t('quota_management.state_free_resets', { count: freeResets })");
-  expect(card).toContain('disabled={claudeReset.blocked}');
+  expect(card).toContain("key: 'quota_management.state_free_resets'");
+  // Never hidden: disabled when billing is locked or no reset is banked.
+  expect(card).toContain('disabled={claudeLocked || claudeResetNone || claudeReset.blocked}');
   const dialog = await Bun.file(
     'src/features/quota/providers/claude/ClaudeResetGrantDialog.tsx'
   ).text();

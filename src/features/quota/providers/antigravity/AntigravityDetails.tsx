@@ -5,7 +5,7 @@
 
 import { useTranslation } from 'react-i18next';
 import type { AntigravityQuotaState } from '@/types';
-import { FactRow, FactSection, FactSheet } from '../../components/FactSheet';
+import { FactPill, FactRow, FactSection, FactSheet } from '../../components/FactSheet';
 import type { QuotaDetailsProps } from '../types';
 import {
   resolveAntigravityGroupLabelKey,
@@ -41,28 +41,38 @@ export function AntigravityDetails({
       };
     })
     .filter((group) => Boolean(group.description));
+  const unavailable = <FactPill>{t('quota_management.unavailable')}</FactPill>;
 
   return (
     <FactSheet>
       <FactSection title={t('quota_management.details_account')}>
-        {planLabel && (
-          <FactRow label={t('antigravity_quota.plan_label')}>
+        <FactRow label={t('antigravity_quota.plan_label')}>
+          {planLabel ? (
             <span className={premium ? classes.premiumPlanValue : undefined}>{planLabel}</span>
-          </FactRow>
-        )}
+          ) : (
+            unavailable
+          )}
+        </FactRow>
+        <FactRow
+          label={t('quota_management.renewal_label')}
+          hint={t('quota_management.renewal_unavailable_hint')}
+        >
+          {unavailable}
+        </FactRow>
         <FactRow label={t('quota_management.details_credential')}>
           <span className={classes.quotaAmount}>{file.name}</span>
         </FactRow>
       </FactSection>
-      {groups.length > 0 && (
-        <FactSection title={t('quota_management.details_model_groups')}>
-          {groups.map((group) => (
-            <FactRow key={group.id} label={group.label}>
-              {group.description}
-            </FactRow>
-          ))}
-        </FactSection>
-      )}
+      <FactSection
+        title={t('quota_management.details_model_groups')}
+        note={groups.length > 0 ? undefined : t('quota_management.unavailable')}
+      >
+        {groups.map((group) => (
+          <FactRow key={group.id} label={group.label}>
+            {group.description}
+          </FactRow>
+        ))}
+      </FactSection>
     </FactSheet>
   );
 }
