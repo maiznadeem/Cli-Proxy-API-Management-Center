@@ -253,7 +253,10 @@ export function QuotaCard(props: QuotaCardProps) {
           </div>
         ) : status === 'error' ? (
           <div className={styles.errorStrip} role="alert">
-            {t(`${adapter.i18nPrefix}.load_failed`, { message: errorMessage })}
+            {/* A sign-out is a state, not a load failure: say it plainly. */}
+            {quota?.failure?.kind === 'signed_out'
+              ? errorMessage
+              : t(`${adapter.i18nPrefix}.load_failed`, { message: errorMessage })}
           </div>
         ) : quota && !retainedClaudeUsage ? (
           <adapter.Body quota={quota} classes={quotaClasses} expanded={false} />

@@ -59,6 +59,7 @@
     "unsaved_changes_message": "你有未儲存的變更，離開後將遺失這些變更。確定要離開嗎？",
     "quota_failure_oauth_blocked": "該帳號所屬組織已禁止 OAuth 存取，代理無法使用它",
     "quota_failure_unauthorized": "權杖被拒絕，請重新登入該帳號",
+    "quota_failure_signed_out": "已登出：此帳號的登入已被撤銷或過期，請重新登入。",
     "quota_failure_forbidden": "請檢查憑證狀態",
     "quota_failure_rate_limited": "已被提供商限流，請稍後重試",
     "quota_failure_rate_limited_retry": "已被提供商限流，請 {{minutes}} 分鐘後重試",

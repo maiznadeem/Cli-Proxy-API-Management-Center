@@ -247,9 +247,8 @@ describe('Claude quota usage reads', () => {
 
   test('does not fabricate a snapshot when a read fails without cached data', async () => {
     apiCallApi.request = async () => result(401, { error: 'usage unavailable' });
-    await expect(CLAUDE_CONFIG.fetchQuota(file, translations.t)).rejects.toThrow(
-      '401 usage unavailable'
-    );
+    // Usage and profile both 401: the token is dead, so the read fails as a sign-out.
+    await expect(CLAUDE_CONFIG.fetchQuota(file, translations.t)).rejects.toThrow('Signed out');
   });
 
   test('preserves legacy Fable-only payloads and partial credit pools', async () => {

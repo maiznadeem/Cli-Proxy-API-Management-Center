@@ -296,7 +296,13 @@ export interface ClaudeProfileResponse {
  * of a generic "check the credential".
  */
 export type QuotaFailureKind =
-  'oauth_blocked' | 'unauthorized' | 'forbidden' | 'rate_limited' | 'upstream' | 'unknown';
+  | 'oauth_blocked'
+  | 'unauthorized'
+  | 'signed_out'
+  | 'forbidden'
+  | 'rate_limited'
+  | 'upstream'
+  | 'unknown';
 
 export interface QuotaFailure {
   kind: QuotaFailureKind;

@@ -9,6 +9,7 @@ import type { ComponentType } from 'react';
 import type { TFunction } from 'i18next';
 import { useQuotaStore } from '@/stores';
 import type { AuthFileItem, QuotaFailure } from '@/types';
+import { requireSignedIn } from '@/utils/quota/errors';
 import type { QuotaBodyProps } from '../types';
 import type { QuotaProviderType, QuotaStore } from './types';
 import { ANTIGRAVITY_CONFIG } from './antigravity/data';
@@ -52,18 +53,24 @@ export interface QuotaAdapter {
   Body: ComponentType<QuotaBodyProps<QuotaCardState>>;
 }
 
+/** Every adapter skips the provider call when the proxy already knows the sign-in is dead. */
+const guarded = <T extends { fetchQuota: QuotaAdapter['fetchQuota'] }>(config: T): T => ({
+  ...config,
+  fetchQuota: requireSignedIn(config.fetchQuota),
+});
+
 export const QUOTA_ADAPTERS: Record<QuotaProviderType, QuotaAdapter> = {
   antigravity: {
-    ...ANTIGRAVITY_CONFIG,
+    ...guarded(ANTIGRAVITY_CONFIG),
     Body: AntigravityQuotaBody,
   } as unknown as QuotaAdapter,
-  claude: { ...CLAUDE_CONFIG, Body: ClaudeQuotaBody } as unknown as QuotaAdapter,
-  codex: { ...CODEX_CONFIG, Body: CodexQuotaBody } as unknown as QuotaAdapter,
-  devin: { ...DEVIN_CONFIG, Body: DevinQuotaBody } as unknown as QuotaAdapter,
-  kimi: { ...KIMI_CONFIG, Body: KimiQuotaBody } as unknown as QuotaAdapter,
-  meta: { ...META_CONFIG, Body: MetaQuotaBody } as unknown as QuotaAdapter,
-  plugin: { ...PLUGIN_CONFIG, Body: PluginQuotaBody } as unknown as QuotaAdapter,
-  xai: { ...XAI_CONFIG, Body: XaiQuotaBody } as unknown as QuotaAdapter,
+  claude: { ...guarded(CLAUDE_CONFIG), Body: ClaudeQuotaBody } as unknown as QuotaAdapter,
+  codex: { ...guarded(CODEX_CONFIG), Body: CodexQuotaBody } as unknown as QuotaAdapter,
+  devin: { ...guarded(DEVIN_CONFIG), Body: DevinQuotaBody } as unknown as QuotaAdapter,
+  kimi: { ...guarded(KIMI_CONFIG), Body: KimiQuotaBody } as unknown as QuotaAdapter,
+  meta: { ...guarded(META_CONFIG), Body: MetaQuotaBody } as unknown as QuotaAdapter,
+  plugin: { ...guarded(PLUGIN_CONFIG), Body: PluginQuotaBody } as unknown as QuotaAdapter,
+  xai: { ...guarded(XAI_CONFIG), Body: XaiQuotaBody } as unknown as QuotaAdapter,
 };
 
 export type QuotaMapUpdater = (

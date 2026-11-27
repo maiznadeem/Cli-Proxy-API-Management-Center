@@ -59,6 +59,7 @@
     "unsaved_changes_message": "Kaydedilmemiş Değişiklikler Var. Şimdi Ayrılırsan Bunlar Silinir. Ayrılmak İstiyor Musun?",
     "quota_failure_oauth_blocked": "Bu hesabın kuruluşu için OAuth erişimi engelli, bu yüzden proxy kullanamıyor",
     "quota_failure_unauthorized": "Token reddedildi; bu hesapta yeniden oturum açın",
+    "quota_failure_signed_out": "Oturum kapandı: bu hesabın oturumu iptal edildi veya süresi doldu. Kullanmak için yeniden oturum açın.",
     "quota_failure_forbidden": "Lütfen kimlik bilgisi durumunu kontrol edin",
     "quota_failure_rate_limited": "Sağlayıcı istek sınırına ulaştı; daha sonra tekrar deneyin",
     "quota_failure_rate_limited_retry": "Sağlayıcı istek sınırına ulaştı; {{minutes}} dk sonra tekrar deneyin",

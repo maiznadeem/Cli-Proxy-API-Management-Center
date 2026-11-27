@@ -410,6 +410,15 @@ const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<Claud
   const result = usageResult.value;
 
   if (result.statusCode < 200 || result.statusCode >= 300) {
+    // Without a live token Anthropic answers the usage call with 429; the
+    // profile call's 401 is the honest signal, so report a sign-out instead.
+    if (profileResult.status === 'fulfilled' && profileResult.value.statusCode === 401) {
+      throw createStatusError(t('common.quota_failure_signed_out'), 401, {
+        kind: 'signed_out',
+        code: null,
+        retryAfterSeconds: null,
+      });
+    }
     if (billing && billing.access !== 'active') {
       return {
         windows: buildLockedClaudeWindows(t),

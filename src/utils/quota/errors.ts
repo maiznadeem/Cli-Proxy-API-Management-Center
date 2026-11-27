@@ -5,7 +5,9 @@
 import type { TFunction } from 'i18next';
 import type { QuotaFailure, QuotaFailureKind } from '@/types';
 import type { ApiCallResult } from '@/services/api/apiCall';
+import type { AuthFileItem } from '@/types';
 import { isRecord } from '@/utils/helpers';
+import { createStatusError } from './formatters';
 
 const readHeader = (header: Record<string, string[]> | undefined, name: string): string | null => {
   if (!header) return null;
@@ -58,7 +60,9 @@ export const classifyQuotaFailure = (result: ApiCallResult, nowMs = Date.now()):
     kind,
     code,
     retryAfterSeconds:
-      kind === 'rate_limited' ? parseRetryAfterSeconds(readHeader(result.header, 'retry-after'), nowMs) : null,
+      kind === 'rate_limited'
+        ? parseRetryAfterSeconds(readHeader(result.header, 'retry-after'), nowMs)
+        : null,
   };
 };
 
@@ -84,3 +88,31 @@ export const resolveQuotaErrorMessage = (
   if (status === 403) return t('common.quota_check_credential');
   return fallback;
 };
+
+const SIGNED_OUT_PATTERN = /refresh token|revoked|invalid_grant|unauthori[sz]ed/i;
+
+/**
+ * The proxy's own verdict that a credential's sign-in is dead, e.g.
+ * "unauthorized (refresh token invalid)". Probing the provider then goes out
+ * without a token and comes back as a misleading 429, so callers skip it.
+ */
+export const isCredentialSignedOut = (file: AuthFileItem): boolean => {
+  const status = typeof file.status === 'string' ? file.status.trim().toLowerCase() : '';
+  if (status !== 'error' && file.unavailable !== true) return false;
+  const raw = file['status_message'] ?? file.statusMessage;
+  return typeof raw === 'string' && SIGNED_OUT_PATTERN.test(raw);
+};
+
+/** Wraps a quota fetcher so a signed-out credential fails as "signed out" without a request. */
+export const requireSignedIn =
+  <TData>(fetch: (file: AuthFileItem, t: TFunction) => Promise<TData>) =>
+  (file: AuthFileItem, t: TFunction): Promise<TData> => {
+    if (!isCredentialSignedOut(file)) return fetch(file, t);
+    return Promise.reject(
+      createStatusError(t('common.quota_failure_signed_out'), 401, {
+        kind: 'signed_out',
+        code: null,
+        retryAfterSeconds: null,
+      })
+    );
+  };

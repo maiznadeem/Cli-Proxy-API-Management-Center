@@ -211,9 +211,11 @@ export function AuthFileQuotaSection(props: AuthFileQuotaSectionProps) {
         </button>
       ) : quotaStatus === 'error' ? (
         <div className={styles.quotaError}>
-          {t(`${adapter.i18nPrefix}.load_failed`, {
-            message: quotaErrorMessage,
-          })}
+          {quota?.failure?.kind === 'signed_out'
+            ? quotaErrorMessage
+            : t(`${adapter.i18nPrefix}.load_failed`, {
+                message: quotaErrorMessage,
+              })}
         </div>
       ) : quota && !retainedClaudeUsage ? (
         <adapter.Body quota={quota} classes={compactQuotaClasses} />
