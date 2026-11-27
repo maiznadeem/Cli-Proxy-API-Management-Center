@@ -34,6 +34,8 @@ const SESSION_PERIOD_HOURS = 5;
 
 /** A limit summarized in the lane's left column. */
 export interface TimelineLimit {
+  /** Provider window id, when the limit comes from a window (for example "seven-day"). */
+  id?: string;
   label: string;
   /** Remaining percent, 0..100. */
   remaining: number;
@@ -536,6 +538,7 @@ export function buildTimelineLane(input: TimelineLaneInput): TimelineLane {
       limits: windows
         .filter((window) => typeof window.usedPercent === 'number')
         .map((window) => ({
+          id: window.id,
           label: window.label ?? '',
           remaining: clampPercent(100 - (window.usedPercent as number)),
         })),

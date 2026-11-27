@@ -19,21 +19,25 @@ export interface ProviderCapacity {
   segments: Array<number | null>;
   /** Soonest reset instant among loaded credentials. */
   nextResetMs: number | null;
-  /** Label of the headline window (for example "7-day Fable" or "Weekly limit"). */
+  /** Label of the headline window (for example "Weekly limit"). */
   headlineLabel: string | null;
 }
 
 const pickHeadline = (lane: TimelineLane): { remaining: number | null; label: string | null } => {
+  // Claude: the overall weekly limit, which caps every model. The Fable-only
+  // window can sit far above it and would overstate what is left.
   if (lane.provider === 'claude') {
-    const fable = lane.limits.find((limit) => /fable/i.test(limit.label));
-    if (fable) return { remaining: fable.remaining, label: fable.label };
+    const weekly = lane.limits.find((limit) => limit.id?.replace(/_/g, '-') === 'seven-day');
+    if (weekly) return { remaining: weekly.remaining, label: weekly.label };
   }
   if (lane.remaining !== null) {
     const match = lane.limits.find((limit) => limit.remaining === lane.remaining);
     return { remaining: lane.remaining, label: match?.label ?? null };
   }
   const first = lane.limits[0];
-  return first ? { remaining: first.remaining, label: first.label } : { remaining: null, label: null };
+  return first
+    ? { remaining: first.remaining, label: first.label }
+    : { remaining: null, label: null };
 };
 
 export function summarizeCapacity(
@@ -75,4 +79,3 @@ export function summarizeCapacity(
     (type) => byProvider.get(type) as ProviderCapacity
   );
 }
-

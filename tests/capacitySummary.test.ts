@@ -39,7 +39,7 @@ const claudeQuota = (fableUsed: number, sevenDayUsed: number, resetAtMs: number)
   }) as unknown as QuotaCardState;
 
 describe('summarizeCapacity', () => {
-  test('sums the Fable window across loaded Claude credentials and keeps unloaded ones', () => {
+  test('sums the overall weekly window, not the Fable one, across loaded Claude credentials', () => {
     const entries = [
       entry('claude-a.json', 'claude'),
       entry('claude-b.json', 'claude'),
@@ -55,11 +55,11 @@ describe('summarizeCapacity', () => {
     expect(claude.provider).toBe('claude');
     expect(claude.total).toBe(3);
     expect(claude.loaded).toBe(2);
-    // 90 remaining + 40 remaining
+    // Weekly: 50 remaining + 80 remaining (Fable would have read 90 + 40)
     expect(claude.remainingSum).toBe(130);
-    expect(claude.segments).toEqual([90, 40, null]);
+    expect(claude.segments).toEqual([50, 80, null]);
     expect(claude.nextResetMs).toBe(1_000_000);
-    expect(claude.headlineLabel).toBe('7-day Fable');
+    expect(claude.headlineLabel).toBe('7-day limit');
   });
 
   test('orders providers by the tab order and omits providers without credentials', () => {
